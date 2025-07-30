@@ -93,7 +93,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-white/20 pt-8 text-center text-white/60">
-          <p>&copy; 2024 Traver. All rights reserved. Made with ❤️ for travelers worldwide.</p>
+          <p>&copy; 2025 Traver. All rights reserved. Made with ❤️ for travelers worldwide.</p>
         </div>
       </div>
     </footer>
