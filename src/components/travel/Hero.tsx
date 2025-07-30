@@ -12,26 +12,29 @@ const Hero = () => {
         <div className="space-y-8">
           <div className="space-y-4">
             <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Explore the best{" "}
-              <span className="text-primary">destinations</span> in the world
+              Instant ID Cards{" "}
+              Aadhaar, PAN, Voter, Vaccine & More
             </h1>
-            <p className="text-lg text-muted-foreground max-w-lg">
-              Discover amazing places and create unforgettable memories with our curated travel experiences. 
-              Your next adventure awaits with expert guides and seamless planning.
-            </p>
+           <ul className="text-lg text-muted-foreground max-w-lg list-disc pl-5 space-y-2">
+  <li>
+    <strong>Fast & user-friendly:</strong> Generate multiple ID types in one place.
+  </li>
+  <li>
+    <strong>Designed for everyone:</strong> No prior design skills needed.
+  </li>
+  <li>
+    <strong>Reliable & secure:</strong> Supports Aadhaar, PAN, Voter, Ayushman, Sambal 2.0 & more.
+  </li>
+</ul>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Start Trip
+             Get Started
             </Button>
             <div className="flex items-center space-x-3">
-              <div className="flex -space-x-2">
-                <div className="w-10 h-10 rounded-full bg-travel-coral border-2 border-background"></div>
-                <div className="w-10 h-10 rounded-full bg-travel-warm border-2 border-background"></div>
-                <div className="w-10 h-10 rounded-full bg-travel-orange border-2 border-background"></div>
-              </div>
-              <span className="text-sm text-muted-foreground">More than 20k</span>
+              
+              
             </div>
           </div>
         </div>

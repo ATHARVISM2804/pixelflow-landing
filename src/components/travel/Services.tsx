@@ -1,97 +1,90 @@
-import { MapPin, Plane, Building } from "lucide-react";
+import React from "react";
+import { CheckCircle2, Zap, Rocket } from "lucide-react";
 
-const services = [
-	{
-		icon: MapPin,
-		title: "01 Travel plan",
-		description:
-			"Travel plans aren’t destinations; they’re the gateways to new experiences, the energy to explore, and the path to unforgettable moments.",
-	},
-	{
-		icon: Plane,
-		title: "02 Flights booking",
-		description:
-			"Flight bookings aren’t just travel; they’re the first step of what you’ll live. The promise of places to chase, and adventures waiting to unfold.",
-	},
-	{
-		icon: Building,
-		title: "03 Accommodation",
-		description:
-			"Home isn’t a place, it’s where it’s elevated in your journey, the comfort in your adventure, and the backdrop to your memory.",
-	},
+const plans = [
+  {
+    title: "Free Forever",
+    price: "₹0",
+    icon: <Zap className="text-white" />,
+    features: ["Image Editor", "Kundli", "Page Maker", "Cards"],
+    buttonStyle: "bg-[#F97316] hover:bg-[#fb8c3c] text-white",
+    cardStyle: "bg-[#FFF6F2] border border-[#FCD9B8]",
+  },
+  {
+    title: "Professional Plan",
+    price: "₹2.2",
+    subtext: "/ Per card",
+    icon: <Rocket className="text-white" />,
+    features: [
+      "All paid cards",
+      "All cards slip",
+      "Premium support",
+      "Custom service request",
+      "Passport size photo",
+      "Unlimited updates",
+      "All from free plan",
+    ],
+    buttonStyle: "bg-[#F97316] hover:bg-[#fb8c3c] text-white",
+    cardStyle: "bg-[#FFF6F2] border-2 border-[#F97316]",
+  },
 ];
 
-const imageUrls = [
-	"https://images.pexels.com/photos/1549323/pexels-photo-1549323.jpeg", // Airplane
-	"https://images.pexels.com/photos/1371360/pexels-photo-1371360.jpeg", // Girl w/ camera
-	"https://images.pexels.com/photos/1008155/pexels-photo-1008155.jpeg", // Mountain/lake
-	"https://images.pexels.com/photos/3328051/pexels-photo-3328051.jpeg", // Parachute
-];
+const PricingSection = () => {
+  return (
+    <section className="min-h-screen bg-white text-[#1F2937] py-20 px-6 flex flex-col items-center">
+      <div className="text-center mb-16">
+        <h1 className="text-4xl md:text-5xl font-extrabold">
+          Simple and affordable{" "}
+          <span className="relative inline-block text-[#F97316]">
+            Pricing
+            <span className="absolute -bottom-1 left-0 w-full h-[8px] bg-[#F97316] opacity-30 rounded-full blur-md" />
+          </span>
+        </h1>
+        <p className="text-[#6B7280] mt-4 text-lg">
+          Clear and cost-effective pricing packages to match any budget.
+        </p>
+      </div>
 
-const Services = () => {
-	return (
-		<section className="py-20 bg-white">
-			<div className="container mx-auto px-6 lg:px-20">
-				<div className="grid lg:grid-cols-2 gap-16 items-center">
-					{/* Text & Services List */}
-					<div className="space-y-10">
-						<div>
-							<p className="text-travel-orange font-semibold mb-2">
-								Our Service —
-							</p>
-							<h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
-								Discover what we <br /> provide exclusively
-							</h2>
-							<p className="text-muted-foreground text-base">
-								Explore our unique offerings and experience services designed
-								for you. Discover what we provide intentionally tailored to
-								meet your every need.
-							</p>
-						</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl">
+        {plans.map((plan, index) => (
+          <div
+            key={index}
+            className={`rounded-2xl p-8 shadow-md transition-all duration-300 hover:scale-[1.02] ${plan.cardStyle}`}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold">{plan.title}</h3>
+              <div className="w-10 h-10 rounded-full bg-[#F97316] flex items-center justify-center">
+                {plan.icon}
+              </div>
+            </div>
 
-						<div className="space-y-6">
-							{services.map((service, index) => (
-								<div
-									key={index}
-									className="bg-white shadow-sm rounded-xl p-5 flex items-start gap-4"
-								>
-									<div className="w-12 h-12 flex items-center justify-center rounded-full bg-travel-orange-light flex-shrink-0">
-										<service.icon className="w-6 h-6 text-travel-orange" />
-									</div>
-									<div>
-										<h4 className="text-md font-semibold text-foreground mb-1">
-											{service.title}
-										</h4>
-										<p className="text-sm text-muted-foreground leading-relaxed">
-											{service.description}
-										</p>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
+            <div className="text-4xl font-bold mb-6 text-[#1F2937]">
+              {plan.price}
+              <span className="text-base font-normal text-[#6B7280] ml-1">
+                {plan.subtext}
+              </span>
+            </div>
 
-					{/* Circular Image Grid */}
-					<div className="grid grid-cols-2 gap-2 justify-items-center">
-						{imageUrls.map((url, idx) => (
-							<div
-								key={idx}
-								className={`${
-									idx === 1 || idx === 2 ? "w-60 h-60" : "w-40 h-40"
-								} rounded-full overflow-hidden shadow-lg border-4 border-white`}
-							>
-								<img
-									src={url}
-									alt={`Service ${idx + 1}`}
-									className="object-cover w-full h-full"
-								/>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
-		</section>
-	);
+            <ul className="space-y-4 mb-8">
+              {plan.features.map((feature, i) => (
+                <li key={i} className="flex items-center text-[#4B5563]">
+                  <CheckCircle2 className="text-[#10B981] mr-3 w-5 h-5" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              className={`${plan.buttonStyle} font-semibold py-3 w-full rounded-xl transition-all shadow hover:shadow-lg`}
+            >
+              Get Started
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 };
 
-export default Services;
+export default PricingSection;
+
