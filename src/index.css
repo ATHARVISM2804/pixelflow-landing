@@ -9,32 +9,53 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 220 14% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 14% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 14% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 15 88% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 15 100% 96%;
+    --secondary-foreground: 15 88% 55%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 15 88% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 15 88% 55%;
+
+    /* Travel-specific design tokens */
+    --travel-orange: 15 88% 55%;
+    --travel-orange-light: 15 100% 96%;
+    --travel-orange-dark: 15 88% 45%;
+    --travel-coral: 10 85% 60%;
+    --travel-warm: 25 85% 50%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(15 88% 55%), hsl(10 85% 60%));
+    --gradient-warm: linear-gradient(180deg, hsl(15 100% 96%), hsl(0 0% 100%));
+    --gradient-hero: linear-gradient(135deg, hsl(15 88% 55%) 0%, hsl(25 85% 50%) 100%);
+    
+    /* Shadows */
+    --shadow-warm: 0 10px 30px -10px hsl(15 88% 55% / 0.2);
+    --shadow-card: 0 4px 20px -2px hsl(15 88% 55% / 0.1);
+    --shadow-float: 0 20px 40px -10px hsl(15 88% 55% / 0.15);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
