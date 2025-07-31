@@ -11,6 +11,8 @@ import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import Editor from "./pages/Editor.tsx";
 import Resume from "./pages/Resume.tsx";
+import Kundali from "./pages/Kundali.tsx";
+import IdCard from "./pages/IdCard.tsx";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/passport-photo" element={<PassportPhoto />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/resume" element={<Resume />} />
+          <Route path="/kundli" element={<Kundali />} />
+          <Route path="/id-card" element={<IdCard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

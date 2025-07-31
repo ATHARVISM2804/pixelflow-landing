@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   Card,
   CardContent,
@@ -26,6 +26,25 @@ export function Editor() {
   const [brightness, setBrightness] = useState([100])
   const [width, setWidth] = useState('')
   const [height, setHeight] = useState('')
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click()
+  }
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr] bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -141,10 +160,20 @@ export function Editor() {
                   <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
                     Reset
                   </Button>
-                  <Button className="bg-indigo-500 text-white hover:bg-indigo-600">
+                  <Button 
+                    className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    onClick={triggerFileUpload}
+                  >
                     <Upload className="h-4 w-4 mr-2" />
                     Choose Image
                   </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -159,30 +188,41 @@ export function Editor() {
                     Download
                   </Button>
                 </div>
-                <p className="text-gray-400 text-sm">Processed image after edit will be visible here</p>
+                <p className="text-gray-400 text-sm">
+                  {selectedImage ? `Editing: ${selectedImage.name}` : 'Processed image after edit will be visible here'}
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="aspect-[4/3] bg-white rounded-lg p-6 flex items-center justify-center">
-                  <div className="w-full max-w-sm space-y-6">
-                    {/* Mock image placeholder with elements */}
-                    <div className="flex gap-4">
-                      <div className="w-20 h-16 bg-gray-400 rounded"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 bg-gray-300 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                        <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                  {imagePreview ? (
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="max-w-full max-h-full object-contain"
+                      style={{ filter: `brightness(${brightness[0]}%)` }}
+                    />
+                  ) : (
+                    <div className="w-full max-w-sm space-y-6">
+                      {/* Mock image placeholder with elements */}
+                      <div className="flex gap-4">
+                        <div className="w-20 h-16 bg-gray-400 rounded"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                          <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                        </div>
                       </div>
+                      
+                      <div className="space-y-2">
+                        <div className="h-2 bg-gray-200 rounded w-full"></div>
+                        <div className="h-2 bg-gray-200 rounded w-5/6"></div>
+                        <div className="h-2 bg-gray-200 rounded w-4/5"></div>
+                        <div className="h-2 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+                      
+                      <div className="w-24 h-24 bg-gray-300 rounded-full ml-auto"></div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="h-2 bg-gray-200 rounded w-full"></div>
-                      <div className="h-2 bg-gray-200 rounded w-5/6"></div>
-                      <div className="h-2 bg-gray-200 rounded w-4/5"></div>
-                      <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                    
-                    <div className="w-24 h-24 bg-gray-300 rounded-full ml-auto"></div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
