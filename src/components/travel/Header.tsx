@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const navigate = useNavigate();
+
   return (
     <header className="bg-background border-b border-border sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -19,11 +22,18 @@ const Header = () => {
         </nav>
         
         <div className="flex items-center gap-2">
-          <Button variant="ghost" className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2"
+            onClick={() => navigate('/login')}
+          >
             <LogIn className="w-4 h-4" />
             Login
           </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2">
+          <Button 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2"
+            onClick={() => navigate('/signup')}
+          >
             <LogIn className="w-4 h-4" />
             Sign Up
           </Button>
