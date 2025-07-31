@@ -23,15 +23,12 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
-<<<<<<< HEAD
           <Route path="/passport-image" element={<PassportPhoto />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-=======
           <Route path="/passport-photo" element={<PassportPhoto />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/resume" element={<Resume />} />
->>>>>>> ea86e2e63b999324158dd2a8704cca124afc99e6
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
