@@ -7,8 +7,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard.tsx";
 import PassportPhoto from "./pages/PassportPhoto.tsx";
-import Login from "./components/auth/Login";
-import Signup from "./components/auth/Signup";
 
 const queryClient = new QueryClient();
 
@@ -22,8 +20,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/passport-image" element={<PassportPhoto />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
