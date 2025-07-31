@@ -72,8 +72,8 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation */}
-        <div className="px-2 sm:px-3 py-2 sm:py-4 overflow-y-auto max-h-[calc(100vh-80px)]">
-          <div className="space-y-1 sm:space-y-2">
+        <div className="px-2 sm:px-3 py-2 sm:py-4 h-[calc(100vh-80px)] flex flex-col">
+          <div className="space-y-1 sm:space-y-2 flex-1">
             {menuItems.map((item, index) => (
               <Link
                 key={index}
@@ -105,8 +105,11 @@ const Sidebar = () => {
                 <span className="truncate">{item.label}</span>
               </Link>
             ))}
-            
-            <button className="w-full text-left p-2 sm:p-3 mt-4 sm:mt-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base">
+          </div>
+          
+          {/* Logout button at bottom */}
+          <div className="mt-auto">
+            <button className="w-full text-left p-2 sm:p-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base">
               <LogOut className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Log out</span>
             </button>
