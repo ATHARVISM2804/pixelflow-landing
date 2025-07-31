@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import {
   Card,
   CardContent,
@@ -30,6 +30,31 @@ import {
 import Sidebar from "@/components/Sidebar"
 
 export function PassportPhoto() {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [formData, setFormData] = useState({
+    name: '',
+    date: '',
+    number: 1,
+    pageSize: 'a4-full',
+    backgroundColor: '#ffffff'
+  })
+  const [isMultiple, setIsMultiple] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setSelectedFiles(files)
+  }
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click()
+  }
+
+  const toggleMultiple = () => {
+    setIsMultiple(!isMultiple)
+    setSelectedFiles([])
+  }
+
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr] bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -85,13 +110,39 @@ export function PassportPhoto() {
                 <div>
                   <Label className="text-white">Select Photo</Label>
                   <div className="mt-2 flex items-center gap-4">
-                    <Button variant="outline" className="w-full bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                      onClick={triggerFileUpload}
+                    >
                       Choose File
                     </Button>
-                    <Button variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white">
+                    <Button 
+                      variant={isMultiple ? "default" : "outline"}
+                      className={`${isMultiple ? 'bg-indigo-500 text-white' : 'bg-gray-800/50 border-gray-700/50 text-gray-300'} hover:bg-gray-700/50 hover:text-white`}
+                      onClick={toggleMultiple}
+                    >
                       Multiple
                     </Button>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple={isMultiple}
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-gray-400">Selected files:</p>
+                      {selectedFiles.map((file, index) => (
+                        <p key={index} className="text-xs text-gray-500">
+                          {file.name}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -99,23 +150,38 @@ export function PassportPhoto() {
                     <Label className="text-white">Name</Label>
                     <Input 
                       placeholder="Enter name" 
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
                     />
                   </div>
 
                   <div>
                     <Label className="text-white">Date</Label>
-                    <Input type="date" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white" />
+                    <Input 
+                      type="date" 
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      className="mt-1 bg-gray-800/50 border-gray-700/50 text-white" 
+                    />
                   </div>
 
                   <div>
                     <Label className="text-white">Number</Label>
-                    <Input type="number" placeholder="Images range 1 to 30" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
+                    <Input 
+                      type="number" 
+                      placeholder="Images range 1 to 30" 
+                      min="1" 
+                      max="30"
+                      value={formData.number}
+                      onChange={(e) => setFormData({...formData, number: parseInt(e.target.value)})}
+                      className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" 
+                    />
                   </div>
 
                   <div>
                     <Label className="text-white">Page Size</Label>
-                    <Select>
+                    <Select value={formData.pageSize} onValueChange={(value) => setFormData({...formData, pageSize: value})}>
                       <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
                         <SelectValue placeholder="A4-Full page (30 photos)" />
                       </SelectTrigger>
@@ -128,7 +194,12 @@ export function PassportPhoto() {
 
                   <div>
                     <Label className="text-white">Background Color</Label>
-                    <Input type="color" className="mt-1 h-10 bg-gray-800/50 border-gray-700/50" />
+                    <Input 
+                      type="color" 
+                      value={formData.backgroundColor}
+                      onChange={(e) => setFormData({...formData, backgroundColor: e.target.value})}
+                      className="mt-1 h-10 bg-gray-800/50 border-gray-700/50" 
+                    />
                   </div>
 
                   <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg">
@@ -160,8 +231,25 @@ export function PassportPhoto() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center">
-                  <p className="text-gray-600">Preview will appear here</p>
+                <div className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center overflow-hidden">
+                  {selectedFiles.length > 0 ? (
+                    <div className="grid grid-cols-5 gap-2 p-4 max-h-full overflow-auto">
+                      {Array.from({ length: formData.number }).map((_, index) => (
+                        <div key={index} className="aspect-[3/4] bg-gray-200 rounded border overflow-hidden">
+                          {selectedFiles[index % selectedFiles.length] && (
+                            <img 
+                              src={URL.createObjectURL(selectedFiles[index % selectedFiles.length])}
+                              alt={`Photo ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              style={{ backgroundColor: formData.backgroundColor }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">Preview will appear here</p>
+                  )}
                 </div>
                 <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white">
                   <Download className="h-4 w-4 mr-2" />

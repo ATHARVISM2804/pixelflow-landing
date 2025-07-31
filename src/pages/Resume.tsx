@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   Card,
   CardContent,
@@ -28,6 +28,25 @@ import Sidebar from "@/components/Sidebar"
 export function Resume() {
   const [academicEntries, setAcademicEntries] = useState([{ exam: '', board: '', year: '', marks: '', division: '' }])
   const [professionalEntries, setProfessionalEntries] = useState([{ exam: '', board: '', year: '', marks: '', division: '' }])
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhoto(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setPhotoPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const triggerPhotoUpload = () => {
+    fileInputRef.current?.click()
+  }
 
   const addAcademicEntry = () => {
     setAcademicEntries([...academicEntries, { exam: '', board: '', year: '', marks: '', division: '' }])
@@ -85,10 +104,26 @@ export function Resume() {
                     </div>
                     <div>
                       <Label className="text-white">Photo</Label>
-                      <Button variant="outline" className="w-full mt-1 bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Choose File
-                      </Button>
+                      <div className="mt-1 space-y-1">
+                        <Button 
+                          variant="outline" 
+                          className="w-full bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50"
+                          onClick={triggerPhotoUpload}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Choose File
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handlePhotoUpload}
+                        />
+                        <p className="text-xs text-gray-500">
+                          {photo ? photo.name : 'No file chosen'}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -243,7 +278,15 @@ export function Resume() {
                   {/* Mock Resume Preview */}
                   <div className="h-full flex flex-col space-y-4">
                     <div className="flex gap-4">
-                      <div className="w-20 h-24 bg-gray-300 rounded"></div>
+                      <div className="w-20 h-24 bg-gray-300 rounded overflow-hidden">
+                        {photoPreview ? (
+                          <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                            <User className="h-8 w-8 text-gray-500" />
+                          </div>
+                        )}
+                      </div>
                       <div className="flex-1">
                         <div className="h-4 bg-gray-400 rounded mb-2"></div>
                         <div className="h-3 bg-gray-300 rounded mb-1 w-3/4"></div>
