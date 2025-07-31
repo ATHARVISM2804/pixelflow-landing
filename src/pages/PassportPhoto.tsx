@@ -17,90 +17,22 @@ import {
 import { Label } from "@/components/ui/label"
 import {
   Download,
-  Upload,
   ZoomIn,
   ZoomOut,
   RotateCw,
   Share,
   Info,
-  Home,
   CreditCard,
-  FileText,
-  Settings,
-  HelpCircle,
-  LogOut,
   Plus,
   User,
-  Edit3,
-  FileStack,
   Bell,
-  DollarSign,
-  MessageSquare,
 } from "lucide-react"
+import Sidebar from "@/components/Sidebar"
 
 export function PassportPhoto() {
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr] bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
-      {/* Custom Sidebar */}
-      <div className="hidden lg:block bg-gray-900/50 backdrop-blur-xl border-r border-gray-800/50">
-        <div className="px-6 py-6 border-b border-gray-800/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-              <CreditCard className="h-6 w-6 text-white" />
-            </div>
-            <span className="font-bold text-xl text-white">ID Maker</span>
-          </div>
-        </div>
-        
-        <div className="px-3 py-4">
-          <div className="space-y-2">
-            <button 
-              onClick={() => { window.location.href = "/dashboard" }}
-              className="w-full text-left p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-200">
-              <div className="flex items-center gap-3">
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
-              </div>
-            </button>
-            
-            <div className="text-xs text-gray-500 uppercase tracking-wider px-3 py-2 mt-4">Services</div>
-            
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-4 w-4" />
-                <span>Passport Photo</span>
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => { window.location.href = "/editor" }}
-              className="w-full text-left p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-200">
-              <div className="flex items-center gap-3">
-                <Edit3 className="h-4 w-4" />
-                <span>Editor</span>
-              </div>
-            </button>
-            
-            <button 
-              onClick={() => { window.location.href = "/resume" }}
-              className="w-full text-left p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-200">
-              <div className="flex items-center gap-3">
-                <FileText className="h-4 w-4" />
-                <span>Resume Maker</span>
-              </div>
-            </button>
-            
-            {/* ...existing sidebar menu items... */}
-            
-            <button className="w-full text-left p-2 mt-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200">
-              <div className="flex items-center gap-3">
-                <LogOut className="h-4 w-4" />
-                <span>Log out</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
+      <Sidebar />
 
       {/* Main Content */}
       <div className="flex flex-col">
