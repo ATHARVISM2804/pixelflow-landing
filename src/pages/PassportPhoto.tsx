@@ -62,64 +62,68 @@ export function PassportPhoto() {
       {/* Main Content */}
       <div className="flex flex-col">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 text-indigo-400" />
-              <span className="text-2xl font-bold text-white">Passport Size Photo</span>
+        <header className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400 flex-shrink-0" />
+              <span className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">
+                <span className="hidden sm:inline">Passport Size Photo</span>
+                <span className="sm:hidden">Passport</span>
+              </span>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg transition-all">
-              <Plus className="h-4 w-4 mr-2" />
-              New Service Request
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg font-medium shadow-lg transition-all text-xs sm:text-sm">
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">New Service Request</span>
+              <span className="sm:hidden">New</span>
             </Button>
             
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-300">Hey, Ashish Ranjan</span>
-              <Bell className="h-5 w-5 text-slate-400" />
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-xs sm:text-sm text-slate-300 hidden md:inline">Hey, Ashish Ranjan</span>
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 p-6">
-          <div className="mb-6">
-            <p className="text-gray-400">Create passport size photos in one click</p>
+        <main className="flex-1 p-3 sm:p-6">
+          <div className="mb-4 sm:mb-6">
+            <p className="text-gray-400 text-sm">Create passport size photos in one click</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Upload Form Section */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
               <CardHeader>
                 <CardTitle className="text-white">
                   <div className="flex items-center gap-2">
-                    <Info className="h-5 w-5 text-indigo-400" />
+                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400" />
                     Information
                   </div>
                 </CardTitle>
                 <div className="space-y-2 mt-2">
-                  <p className="text-indigo-400 text-sm">Hindi: फोटो अपलोड करने से पहले, फोटो का आकार करें 35 x 17 मि (280 x 210 पिक्सेल) ।</p>
-                  <p className="text-gray-400 text-sm">English: Before uploading the photo, resize the photo to 35 x 17 or 280 x 210 pixels.</p>
+                  <p className="text-indigo-400 text-xs sm:text-sm">Hindi: फोटो अपलोड करने से पहले, फोटो का आकार करें 35 x 17 मि (280 x 210 पिक्सेल) ।</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">English: Before uploading the photo, resize the photo to 35 x 17 or 280 x 210 pixels.</p>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label className="text-white">Select Photo</Label>
-                  <div className="mt-2 flex items-center gap-4">
+                  <Label className="text-white text-xs sm:text-sm">Select Photo</Label>
+                  <div className="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                     <Button 
                       variant="outline" 
-                      className="w-full bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                      className="flex-1 bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white text-xs sm:text-sm"
                       onClick={triggerFileUpload}
                     >
                       Choose File
                     </Button>
                     <Button 
                       variant={isMultiple ? "default" : "outline"}
-                      className={`${isMultiple ? 'bg-indigo-500 text-white' : 'bg-gray-800/50 border-gray-700/50 text-gray-300'} hover:bg-gray-700/50 hover:text-white`}
+                      className={`${isMultiple ? 'bg-indigo-500 text-white' : 'bg-gray-800/50 border-gray-700/50 text-gray-300'} hover:bg-gray-700/50 hover:text-white text-xs sm:text-sm w-full sm:w-auto`}
                       onClick={toggleMultiple}
                     >
                       Multiple
@@ -145,29 +149,31 @@ export function PassportPhoto() {
                   )}
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-white">Name</Label>
-                    <Input 
-                      placeholder="Enter name" 
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
-                    />
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                      <Label className="text-white text-xs sm:text-sm">Name</Label>
+                      <Input 
+                        placeholder="Enter name" 
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-white text-xs sm:text-sm">Date</Label>
+                      <Input 
+                        type="date" 
+                        value={formData.date}
+                        onChange={(e) => setFormData({...formData, date: e.target.value})}
+                        className="mt-1 bg-gray-800/50 border-gray-700/50 text-white text-sm" 
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <Label className="text-white">Date</Label>
-                    <Input 
-                      type="date" 
-                      value={formData.date}
-                      onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      className="mt-1 bg-gray-800/50 border-gray-700/50 text-white" 
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Number</Label>
+                    <Label className="text-white text-xs sm:text-sm">Number</Label>
                     <Input 
                       type="number" 
                       placeholder="Images range 1 to 30" 
@@ -180,7 +186,7 @@ export function PassportPhoto() {
                   </div>
 
                   <div>
-                    <Label className="text-white">Page Size</Label>
+                    <Label className="text-white text-xs sm:text-sm">Page Size</Label>
                     <Select value={formData.pageSize} onValueChange={(value) => setFormData({...formData, pageSize: value})}>
                       <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
                         <SelectValue placeholder="A4-Full page (30 photos)" />
@@ -193,7 +199,7 @@ export function PassportPhoto() {
                   </div>
 
                   <div>
-                    <Label className="text-white">Background Color</Label>
+                    <Label className="text-white text-xs sm:text-sm">Background Color</Label>
                     <Input 
                       type="color" 
                       value={formData.backgroundColor}
@@ -202,7 +208,7 @@ export function PassportPhoto() {
                     />
                   </div>
 
-                  <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg">
+                  <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg text-sm">
                     Submit
                   </Button>
                 </div>
@@ -212,20 +218,20 @@ export function PassportPhoto() {
             {/* Preview Section */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
               <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
-                  <span>A4 size PDF</span>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white">
-                      <ZoomOut className="h-4 w-4" />
+                <CardTitle className="text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <span className="text-lg sm:text-xl">A4 size PDF</span>
+                  <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
+                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white flex-1 sm:flex-none">
+                      <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white">
-                      <ZoomIn className="h-4 w-4" />
+                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white flex-1 sm:flex-none">
+                      <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white">
-                      <RotateCw className="h-4 w-4" />
+                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white flex-1 sm:flex-none">
+                      <RotateCw className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white">
-                      <Share className="h-4 w-4" />
+                    <Button size="sm" variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 hover:text-white flex-1 sm:flex-none">
+                      <Share className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </CardTitle>
@@ -233,7 +239,7 @@ export function PassportPhoto() {
               <CardContent>
                 <div className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center overflow-hidden">
                   {selectedFiles.length > 0 ? (
-                    <div className="grid grid-cols-5 gap-2 p-4 max-h-full overflow-auto">
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2 p-2 sm:p-4 max-h-full overflow-auto">
                       {Array.from({ length: formData.number }).map((_, index) => (
                         <div key={index} className="aspect-[3/4] bg-gray-200 rounded border overflow-hidden">
                           {selectedFiles[index % selectedFiles.length] && (
@@ -248,11 +254,11 @@ export function PassportPhoto() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-600">Preview will appear here</p>
+                    <p className="text-gray-600 text-sm">Preview will appear here</p>
                   )}
                 </div>
-                <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white">
-                  <Download className="h-4 w-4 mr-2" />
+                <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm">
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Download
                 </Button>
               </CardContent>

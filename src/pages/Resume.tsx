@@ -63,38 +63,41 @@ export function Resume() {
       {/* Main Content */}
       <div className="flex flex-col">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-indigo-400" />
-              <span className="text-2xl font-bold text-white">Resume Maker</span>
+        <header className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400 flex-shrink-0" />
+              <span className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">
+                <span className="hidden sm:inline">Resume Maker</span>
+                <span className="sm:hidden">Resume</span>
+              </span>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-300">Hey, Ashish Ranjan</span>
-            <Bell className="h-5 w-5 text-slate-400" />
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-white" />
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <span className="text-xs sm:text-sm text-slate-300 hidden md:inline">Hey, Ashish Ranjan</span>
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+              <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
           </div>
         </header>
 
-        <main className="flex-1 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+        <main className="flex-1 p-3 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Form Section */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-white">Make Resume @2/-</CardTitle>
+                  <CardTitle className="text-lg sm:text-2xl font-bold text-white">Make Resume @2/-</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 sm:space-y-6">
                   {/* Basic Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label className="text-white">Type *</Label>
+                      <Label className="text-white text-xs sm:text-sm">Type *</Label>
                       <Select>
-                        <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
+                        <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white text-sm">
                           <SelectValue placeholder="Resume" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
@@ -103,14 +106,14 @@ export function Resume() {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-white">Photo</Label>
+                      <Label className="text-white text-xs sm:text-sm">Photo</Label>
                       <div className="mt-1 space-y-1">
                         <Button 
                           variant="outline" 
-                          className="w-full bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50"
+                          className="w-full bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50 text-xs sm:text-sm"
                           onClick={triggerPhotoUpload}
                         >
-                          <Upload className="h-4 w-4 mr-2" />
+                          <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                           Choose File
                         </Button>
                         <input
@@ -127,18 +130,18 @@ export function Resume() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                     <div>
-                      <Label className="text-white">Name *</Label>
-                      <Input placeholder="Name" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
+                      <Label className="text-white text-xs sm:text-sm">Name *</Label>
+                      <Input placeholder="Name" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-sm" />
                     </div>
                     <div>
-                      <Label className="text-white">Phone *</Label>
-                      <Input placeholder="Phone" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
+                      <Label className="text-white text-xs sm:text-sm">Phone *</Label>
+                      <Input placeholder="Phone" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-sm" />
                     </div>
                     <div>
-                      <Label className="text-white">Email *</Label>
-                      <Input placeholder="Email" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
+                      <Label className="text-white text-xs sm:text-sm">Email *</Label>
+                      <Input placeholder="Email" className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-sm" />
                     </div>
                   </div>
 
@@ -194,20 +197,20 @@ export function Resume() {
 
                   {/* Academic Qualification */}
                   <div>
-                    <Label className="text-white text-lg">Academic Qualification *</Label>
-                    <div className="space-y-4 mt-2">
+                    <Label className="text-white text-sm sm:text-lg">Academic Qualification *</Label>
+                    <div className="space-y-3 sm:space-y-4 mt-2">
                       {academicEntries.map((entry, index) => (
-                        <div key={index} className="grid grid-cols-5 gap-2">
-                          <Input placeholder="Exam" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
-                          <Input placeholder="Board/University" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
-                          <Input placeholder="Passing year" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
-                          <Input placeholder="Marks %" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
-                          <Input placeholder="Division" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
+                        <div key={index} className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          <Input placeholder="Exam" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-xs sm:text-sm" />
+                          <Input placeholder="Board/University" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-xs sm:text-sm" />
+                          <Input placeholder="Passing year" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-xs sm:text-sm" />
+                          <Input placeholder="Marks %" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-xs sm:text-sm" />
+                          <Input placeholder="Division" className="bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-xs sm:text-sm" />
                         </div>
                       ))}
                       <Button 
                         onClick={addAcademicEntry}
-                        className="bg-indigo-500 text-white hover:bg-indigo-600"
+                        className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm"
                       >
                         Add +
                       </Button>
@@ -254,7 +257,7 @@ export function Resume() {
                     />
                   </div>
 
-                  <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white">
+                  <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm">
                     Submit
                   </Button>
                 </CardContent>
@@ -264,17 +267,17 @@ export function Resume() {
             {/* PDF Preview Section */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-bold text-white">A4 size PDF</CardTitle>
-                  <Button className="bg-indigo-500 text-white hover:bg-indigo-600">
-                    <Download className="h-4 w-4 mr-2" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <CardTitle className="text-lg sm:text-xl font-bold text-white">A4 size PDF</CardTitle>
+                  <Button className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm w-full sm:w-auto">
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Download
                   </Button>
                 </div>
-                <p className="text-gray-400 text-sm">This is A4 size paper. This page might not work for PWA user.</p>
+                <p className="text-gray-400 text-xs sm:text-sm">This is A4 size paper. This page might not work for PWA user.</p>
               </CardHeader>
               <CardContent>
-                <div className="aspect-[1/1.4] bg-white rounded-lg p-4">
+                <div className="aspect-[1/1.4] bg-white rounded-lg p-2 sm:p-4">
                   {/* Mock Resume Preview */}
                   <div className="h-full flex flex-col space-y-4">
                     <div className="flex gap-4">
