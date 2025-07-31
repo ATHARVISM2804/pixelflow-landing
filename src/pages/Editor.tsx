@@ -53,59 +53,62 @@ export function Editor() {
       {/* Main Content */}
       <div className="flex flex-col">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Edit3 className="h-5 w-5 text-indigo-400" />
-              <span className="text-2xl font-bold text-white">Image Editor</span>
+        <header className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Edit3 className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400 flex-shrink-0" />
+              <span className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">
+                <span className="hidden sm:inline">Image Editor</span>
+                <span className="sm:hidden">Editor</span>
+              </span>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-300">Hey, Ashish Ranjan</span>
-            <Bell className="h-5 w-5 text-slate-400" />
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-white" />
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <span className="text-xs sm:text-sm text-slate-300 hidden md:inline">Hey, Ashish Ranjan</span>
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+              <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
-            <Moon className="h-5 w-5 text-slate-400" />
+            <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
           </div>
         </header>
 
-        <main className="flex-1 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+        <main className="flex-1 p-3 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Editor Panel */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-2xl font-bold text-white">Free Editor</CardTitle>
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="text-lg sm:text-2xl font-bold text-white">Free Editor</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 {/* Control Buttons */}
-                <div className="grid grid-cols-3 gap-3">
-                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
                     Brightness
                   </Button>
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
+                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
                     Saturation
                   </Button>
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
+                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm col-span-2 sm:col-span-1">
                     Inversion
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
                     Grayscale
                   </Button>
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
+                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
                     Quality
                   </Button>
                 </div>
 
                 {/* Brightness Slider */}
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="text-gray-300 text-sm">Brightness</label>
-                    <span className="text-gray-300 text-sm">{brightness[0]}%</span>
+                    <label className="text-gray-300 text-xs sm:text-sm">Brightness</label>
+                    <span className="text-gray-300 text-xs sm:text-sm">{brightness[0]}%</span>
                   </div>
                   <Slider
                     value={brightness}
@@ -118,53 +121,53 @@ export function Editor() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <RotateCcw className="h-4 w-4" />
+                    <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <RotateCw className="h-4 w-4" />
+                    <RotateCw className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <Play className="h-4 w-4" />
+                    <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
 
                 {/* Width & Height Inputs */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
-                    <label className="text-gray-300 text-sm">Width</label>
+                    <label className="text-gray-300 text-xs sm:text-sm">Width</label>
                     <Input
                       placeholder="Width"
                       value={width}
                       onChange={(e) => setWidth(e.target.value)}
-                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
+                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-gray-300 text-sm">Height</label>
+                    <label className="text-gray-300 text-xs sm:text-sm">Height</label>
                     <Input
                       placeholder="Height"
                       value={height}
                       onChange={(e) => setHeight(e.target.value)}
-                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
+                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 text-sm"
                     />
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
                     Reset
                   </Button>
                   <Button 
-                    className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm"
                     onClick={triggerFileUpload}
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Choose Image
                   </Button>
                   <input
@@ -180,20 +183,20 @@ export function Editor() {
 
             {/* Preview Panel */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-bold text-white">Image</CardTitle>
-                  <Button className="bg-indigo-500 text-white hover:bg-indigo-600">
-                    <Download className="h-4 w-4 mr-2" />
+              <CardHeader className="pb-2 sm:pb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <CardTitle className="text-lg sm:text-xl font-bold text-white">Image</CardTitle>
+                  <Button className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm w-full sm:w-auto">
+                    <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Download
                   </Button>
                 </div>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-400 text-xs sm:text-sm">
                   {selectedImage ? `Editing: ${selectedImage.name}` : 'Processed image after edit will be visible here'}
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="aspect-[4/3] bg-white rounded-lg p-6 flex items-center justify-center">
+                <div className="aspect-[4/3] bg-white rounded-lg p-3 sm:p-6 flex items-center justify-center">
                   {imagePreview ? (
                     <img 
                       src={imagePreview} 

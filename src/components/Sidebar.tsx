@@ -49,37 +49,37 @@ const Sidebar = () => {
       <Button
         variant="ghost"
         size="sm"
-        className="md:hidden fixed top-4 left-4 z-50 text-white"
+        className="md:hidden fixed top-2 left-2 z-50 text-white bg-gray-900/80 backdrop-blur"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </Button>
 
       {/* Sidebar */}
       <aside className={`
-        fixed left-0 top-0 h-full w-64 bg-gray-900/50 backdrop-blur-xl border-r border-gray-800/50 z-40 transform transition-transform duration-300 ease-in-out
+        fixed left-0 top-0 h-full w-64 sm:w-72 lg:w-64 bg-gray-900/50 backdrop-blur-xl border-r border-gray-800/50 z-40 transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0 md:static
       `}>
         {/* Logo */}
-        <div className="px-6 py-6 border-b border-gray-800/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-              <CreditCard className="h-6 w-6 text-white" />
+        <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-800/50">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg sm:rounded-xl shadow-lg">
+              <CreditCard className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
-            <span className="font-bold text-xl text-white">ID Maker</span>
+            <span className="font-bold text-lg sm:text-xl text-white">ID Maker</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="px-3 py-4">
-          <div className="space-y-2">
+        <div className="px-2 sm:px-3 py-2 sm:py-4 overflow-y-auto max-h-[calc(100vh-80px)]">
+          <div className="space-y-1 sm:space-y-2">
             {menuItems.map((item, index) => (
               <Link
                 key={index}
                 to={item.path}
                 className={`
-                  w-full text-left p-2 rounded-xl transition-all duration-200 flex items-center gap-3
+                  w-full text-left p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base
                   ${isActiveRoute(item.path) 
                     ? 'bg-indigo-500/10 text-indigo-400' 
                     : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
@@ -87,27 +87,27 @@ const Sidebar = () => {
                 `}
                 onClick={() => setIsOpen(false)}
               >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <item.icon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">{item.label}</span>
               </Link>
             ))}
             
-            <div className="text-xs text-gray-500 uppercase tracking-wider px-3 py-2 mt-4">Other</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wider px-2 sm:px-3 py-1 sm:py-2 mt-3 sm:mt-4">Other</div>
             
             {otherItems.map((item, index) => (
               <Link
                 key={index}
                 to={item.path}
-                className="w-full text-left p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-200 flex items-center gap-3"
+                className="w-full text-left p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
                 onClick={() => setIsOpen(false)}
               >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <item.icon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">{item.label}</span>
               </Link>
             ))}
             
-            <button className="w-full text-left p-2 mt-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200 flex items-center gap-3">
-              <LogOut className="h-4 w-4" />
+            <button className="w-full text-left p-2 sm:p-3 mt-4 sm:mt-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base">
+              <LogOut className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Log out</span>
             </button>
           </div>
