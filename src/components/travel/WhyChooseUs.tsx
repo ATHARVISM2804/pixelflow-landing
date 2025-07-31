@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Package, Clock, MapPin } from "lucide-react";
+import { Package, Clock, ShieldCheck } from "lucide-react";
 
 const features = [
   {
@@ -14,11 +14,11 @@ const features = [
     description:
       "Get your ID cards, resumes, or passport photos instantly — no waiting, no hassle. As soon as you're done customizing, your document is ready to download in high quality. Whether it's for school, work, or official use, we ensure a smooth, fast, and reliable delivery process so you can move forward without delays.",
   },
-  {
-    icon: MapPin,
-    title: "Privacy First — Your Data Is Protected",
-    description:
-      "Your data security is our top priority — from ID cards to resumes and photos, every file you upload or generate stays private and protected. We never store your personal information or share it with third parties. All processing happens securely in real time, ensuring complete confidentiality at every step, so you can create with confidence and peace of mind.",
+ {
+  icon: ShieldCheck,
+  title: "Privacy First — Your Data Is Protected",
+  description:
+    "Your data security is our top priority — from ID cards to resumes and photos, every file you upload or generate stays private and protected. We never store your personal information or share it with third parties. All processing happens securely in real time, ensuring complete confidentiality at every step, so you can create with confidence and peace of mind.",
   },
 ];
 
