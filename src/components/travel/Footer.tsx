@@ -18,7 +18,7 @@ const Footer = () => {
         
         <div className=" border-white/20 pt-6 text-center text-white/60">
           <p className="text-lg">
-            &copy; 2025 Traver. All rights reserved. Made with ❤️ for ID Card Maker.
+            &copy; 2025 ID Card. All rights reserved. Made with ❤️ for ID Card Maker.
           </p>
         </div>
       </div>
