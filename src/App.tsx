@@ -9,10 +9,17 @@ import Dashboard from "./pages/Dashboard.tsx";
 import PassportPhoto from "./pages/PassportPhoto.tsx";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
-import Editor from "./pages/Editor.tsx";
-import Resume from "./pages/Resume.tsx";
-import Kundali from "./pages/Kundali.tsx";
-import IdCard from "./pages/IdCard.tsx";
+import VoterSlip from "./pages/VoterSlip";
+import IMPDSRation from "./pages/IMPDSRation";
+import DrivingLicense from "./pages/DrivingLicense";
+import AePDSRation from "./pages/AePDSRation";
+import Cards from "./pages/Cards";
+import IdCard from "./pages/IdCard";
+import Kundali from "./pages/Kundali";
+import Editor from "./pages/Editor";
+import Resume from "./pages/Resume";
+import PageMaker from "./pages/Pagemaker.tsx";
+import AddMoney from "./pages/AddMoney.tsx";
 
 const queryClient = new QueryClient();
 
@@ -25,14 +32,20 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/passport-image" element={<PassportPhoto />} />
+          <Route path="/passport-photo" element={<PassportPhoto />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/passport-photo" element={<PassportPhoto />} />
+          <Route path="/cards" element={<Cards />} />
+          <Route path="/id-card" element={<IdCard />} />
+          <Route path="/kundli" element={<Kundali />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/resume" element={<Resume />} />
-          <Route path="/kundli" element={<Kundali />} />
-          <Route path="/id-card" element={<IdCard />} />
+          <Route path="/voter-slip" element={<VoterSlip />} />
+          <Route path="/impds-ration" element={<IMPDSRation />} />
+          <Route path="/driving-license" element={<DrivingLicense />} />
+          <Route path="/aepds-ration" element={<AePDSRation />} />
+          <Route path="/page-maker" element={<PageMaker />} />
+          <Route path="/add-money" element={<AddMoney />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

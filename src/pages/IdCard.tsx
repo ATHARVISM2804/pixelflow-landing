@@ -127,11 +127,6 @@ export function IdCard() {
           </div>
         </header>
 
-        {/* Top Banner */}
-        <div className="bg-gradient-to-r from-green-500 to-purple-500 p-3 text-center">
-          <p className="text-white text-sm">Tell your friends about ID Maker — share the love! ❤️</p>
-        </div>
-
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Designer Section */}

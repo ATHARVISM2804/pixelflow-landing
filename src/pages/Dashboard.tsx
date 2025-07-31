@@ -62,27 +62,6 @@ export function Dashboard() {
         </header>
 
         <main className="flex-1 p-6 space-y-6">
-          {/* WhatsApp Channel Banner */}
-          <Card className="bg-gradient-to-r from-indigo-600 to-purple-600 border-0 text-white overflow-hidden relative">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <CardContent className="p-6 relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <MessageSquare className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold mb-1">Follow Whatsapp Channel 📱</h3>
-                    <p className="text-indigo-100 text-sm">Follow our WhatsApp Channel to stay updated with the latest news and updates about our services. Don't miss out on important information!</p>
-                  </div>
-                </div>
-                <Button className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-2 rounded-lg font-semibold">
-                  Follow Now
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[{
@@ -276,4 +255,3 @@ export function Dashboard() {
 }
 
 export default Dashboard;
- 
