@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const navigate = useNavigate();
