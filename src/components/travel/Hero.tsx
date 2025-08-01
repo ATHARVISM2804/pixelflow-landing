@@ -9,7 +9,22 @@ const Hero = () => {
       <div className="absolute top-20 sm:top-40 right-16 sm:right-32 w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-travel-warm opacity-50"></div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        <div className="space-y-6 lg:space-y-8 text-center lg:text-left">
+        {/* Image Section - Appears first on mobile */}
+        <div className="relative order-1 lg:order-2">
+          <div className="absolute -top-2 sm:-top-4 -left-2 sm:-left-4 w-full h-full rounded-full bg-gradient-to-br from-travel-orange to-travel-coral opacity-20"></div>
+          <div className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto">
+            <img 
+              src={heroTraveler} 
+              alt="Happy traveler with backpack" 
+              className="w-full h-auto rounded-full object-cover"
+            />
+          </div>
+          <div className="absolute top-5 sm:top-10 -right-2 sm:-right-4 w-10 sm:w-16 h-10 sm:h-16 rounded-full bg-travel-orange opacity-80"></div>
+          <div className="absolute bottom-10 sm:bottom-20 -left-4 sm:-left-8 w-16 sm:w-24 h-16 sm:h-24 rounded-full bg-travel-coral opacity-60"></div>
+        </div>
+
+        {/* Text Section - Appears second on mobile */}
+        <div className="space-y-6 lg:space-y-8 text-center lg:text-left order-2 lg:order-1">
           <div className="space-y-4">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground leading-tight">
               Instant ID Cards{" "}
@@ -33,19 +48,6 @@ const Hero = () => {
              Get Started
             </Button>
           </div>
-        </div>
-        
-        <div className="relative mt-8 lg:mt-0">
-          <div className="absolute -top-2 sm:-top-4 -left-2 sm:-left-4 w-full h-full rounded-full bg-gradient-to-br from-travel-orange to-travel-coral opacity-20"></div>
-          <div className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto">
-            <img 
-              src={heroTraveler} 
-              alt="Happy traveler with backpack" 
-              className="w-full h-auto rounded-full object-cover"
-            />
-          </div>
-          <div className="absolute top-5 sm:top-10 -right-2 sm:-right-4 w-10 sm:w-16 h-10 sm:h-16 rounded-full bg-travel-orange opacity-80"></div>
-          <div className="absolute bottom-10 sm:bottom-20 -left-4 sm:-left-8 w-16 sm:w-24 h-16 sm:h-24 rounded-full bg-travel-coral opacity-60"></div>
         </div>
       </div>
     </section>
