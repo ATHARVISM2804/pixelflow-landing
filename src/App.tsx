@@ -25,7 +25,8 @@ import ProtectedRoute from './auth/ProtectedRoute.tsx'
 import FreeCards from "./pages/FreeCards";
 import StateCards from "./pages/StateCards";
 import CardMaker from "./pages/CardMaker";
-
+import Aadhar from "./pages/Aadhar.tsx";
+import PdfProcessor from "./pages/PdfProcessor";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +38,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/passport-photo" element={<ProtectedRoute><PassportPhoto /></ProtectedRoute>} />
@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/id-card" element={<ProtectedRoute><IdCard /></ProtectedRoute>} />
             <Route path="/kundli" element={<ProtectedRoute><Kundali /></ProtectedRoute>} />
             <Route path="/editor" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
+            <Route path="/aadhaar" element={<ProtectedRoute><PdfProcessor /></ProtectedRoute>} />
             <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
             <Route path="/voter-slip" element={<ProtectedRoute><VoterSlip /></ProtectedRoute>} />
             <Route path="/impds-ration" element={<ProtectedRoute><IMPDSRation /></ProtectedRoute>} />
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/free-cards" element={<FreeCards />} />
             <Route path="/free-cards/:stateCode" element={<StateCards />} />
             <Route path="/card/:cardType/:stateCode" element={<CardMaker />} />
+            {/* <Route path="/aadhaar" element={<ProtectedRoute><Aadhar /></ProtectedRoute>} /> */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
