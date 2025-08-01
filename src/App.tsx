@@ -37,7 +37,7 @@ const App = () => (
 
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/passport-photo" element={<PassportPhoto />} />
+            <Route path="/passport-photo" element={<ProtectedRoute><PassportPhoto /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/cards" element={<ProtectedRoute><Cards /></ProtectedRoute>} />
@@ -46,11 +46,11 @@ const App = () => (
             <Route path="/editor" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
             <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
             <Route path="/voter-slip" element={<ProtectedRoute><VoterSlip /></ProtectedRoute>} />
-            <Route path="/impds-ration" element={<IMPDSRation />} />
-            <Route path="/driving-license" element={<DrivingLicense />} />
-            <Route path="/aepds-ration" element={<AePDSRation />} />
-            <Route path="/page-maker" element={<PageMaker />} />
-            <Route path="/add-money" element={<AddMoney />} />
+            <Route path="/impds-ration" element={<ProtectedRoute><IMPDSRation /></ProtectedRoute>} />
+            <Route path="/driving-license" element={<ProtectedRoute><DrivingLicense /></ProtectedRoute>} />
+            <Route path="/aepds-ration" element={<ProtectedRoute><AePDSRation /></ProtectedRoute>} />
+            <Route path="/page-maker" element={<ProtectedRoute><PageMaker /></ProtectedRoute>} />
+            <Route path="/add-money" element={<ProtectedRoute><AddMoney /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
