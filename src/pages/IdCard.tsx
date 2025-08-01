@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -18,14 +18,14 @@ import { Label } from "@/components/ui/label"
 import {
   CreditCard,
   User,
-  Bell,
   Upload,
   Download,
   FileImage,
-  Moon
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import { useToast } from "@/components/ui/use-toast"
+import { PDFDocument, rgb } from 'pdf-lib'
 
 export function IdCard() {
   const [formData, setFormData] = useState({
@@ -53,13 +53,485 @@ export function IdCard() {
   })
 
   const [files, setFiles] = useState({
-    photo: null,
-    logo: null,
-    sign: null
+    photo: null as File | null,
+    logo: null as File | null,
+    sign: null as File | null
   })
+
+  const [fileUrls, setFileUrls] = useState({
+    photo: null as string | null,
+    logo: null as string | null,
+    sign: null as string | null
+  })
+
+  const cardRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
   const handleFileChange = (field: string, file: File | null) => {
     setFiles(prev => ({ ...prev, [field]: file }))
+    
+    // Create preview URL
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setFileUrls(prev => ({ ...prev, [field]: url }))
+    } else {
+      setFileUrls(prev => ({ ...prev, [field]: null }))
+    }
+  }
+
+  // Clean up URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(fileUrls).forEach(url => {
+        if (url) URL.revokeObjectURL(url)
+      })
+    }
+  }, [])
+
+  // Template configurations
+  const templateConfigs = {
+    'school-blue': {
+      primaryColor: '#2563eb',
+      secondaryColor: '#1e40af',
+      backgroundColor: '#ffffff',
+      textColor: '#1f2937'
+    },
+    'school-red': {
+      primaryColor: '#dc2626',
+      secondaryColor: '#b91c1c',
+      backgroundColor: '#ffffff',
+      textColor: '#1f2937'
+    },
+    'school-green': {
+      primaryColor: '#16a34a',
+      secondaryColor: '#15803d',
+      backgroundColor: '#ffffff',
+      textColor: '#1f2937'
+    }
+  }
+
+  const currentTemplate = templateConfigs[formData.template] || templateConfigs['school-blue']
+
+  // Generate ID card as image with exact dimensions
+  const generateCardImage = async (): Promise<string> => {
+    // Standard ID card size: 85.6mm x 53.98mm at 300 DPI
+    const mmToPixels = 11.811 // 300 DPI conversion
+    const cardWidthPx = Math.round(30.6 * mmToPixels)
+    const cardHeightPx = Math.round(20.98 * mmToPixels)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = cardWidthPx
+    canvas.height = cardHeightPx
+    const ctx = canvas.getContext('2d')!
+
+    // Layout constants (scaled to match preview proportions)
+    const layout = {
+      padding: 12,
+      headerHeight: 56, // Matches preview h-14 (56px)
+      photo: {
+        width: 80,
+        height: 96,
+        x: 12,
+        y: 68
+      },
+      text: {
+        x: 104, // photo.x + photo.width + gap
+        y: 78,
+        lineHeight: 14,
+        labelWidth: 50
+      },
+      footerHeight: 30
+    }
+
+    // Fill background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    // Draw header with exact height
+    ctx.fillStyle = currentTemplate.primaryColor
+    ctx.fillRect(0, 0, canvas.width, layout.headerHeight)
+
+    // Draw school logo if available (positioned like preview)
+    if (fileUrls.logo) {
+      const logoImg = new Image()
+      logoImg.crossOrigin = 'anonymous'
+      await new Promise((resolve) => {
+        logoImg.onload = resolve
+        logoImg.src = fileUrls.logo!
+      })
+
+      // Draw logo (circular) - matches preview w-10 h-10
+      const logoSize = 40
+      const logoX = 16
+      const logoY = (layout.headerHeight - logoSize) / 2
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2)
+      ctx.clip()
+      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
+      ctx.restore()
+
+      // Draw white border around logo
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2)
+      ctx.stroke()
+    } else {
+      // Default logo placeholder
+      const logoSize = 40
+      const logoX = 16
+      const logoY = (layout.headerHeight - logoSize) / 2
+      
+      ctx.fillStyle = 'rgba(255,255,255,0.2)'
+      ctx.beginPath()
+      ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2)
+      ctx.fill()
+      
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2)
+      ctx.stroke()
+      
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 10px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('LOGO', logoX + logoSize/2, logoY + logoSize/2 + 3)
+    }
+
+    // Draw school name (centered, matches preview)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 14px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(
+      formData.schoolName || 'SCHOOL NAME', 
+      canvas.width / 2, 
+      layout.headerHeight / 2 - 4
+    )
+
+    // Draw school subtitle
+    ctx.font = '10px Arial'
+    ctx.fillText(
+      formData.schoolSubTitle || 'School Subtitle', 
+      canvas.width / 2, 
+      layout.headerHeight / 2 + 12
+    )
+
+    // Draw student photo with exact positioning
+    if (fileUrls.photo) {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise((resolve) => {
+        img.onload = resolve
+        img.src = fileUrls.photo!
+      })
+
+      // Draw photo with border (exact size from preview)
+      ctx.strokeStyle = '#d1d5db'
+      ctx.lineWidth = 1
+      ctx.strokeRect(
+        layout.photo.x, 
+        layout.photo.y, 
+        layout.photo.width, 
+        layout.photo.height
+      )
+      ctx.drawImage(
+        img, 
+        layout.photo.x, 
+        layout.photo.y, 
+        layout.photo.width, 
+        layout.photo.height
+      )
+
+      // Draw decorative corners (exact size from preview - w-2 h-2)
+      ctx.fillStyle = currentTemplate.primaryColor
+      const cornerSize = 8
+      
+      // Top-left
+      ctx.beginPath()
+      ctx.moveTo(layout.photo.x, layout.photo.y)
+      ctx.lineTo(layout.photo.x + cornerSize, layout.photo.y)
+      ctx.lineTo(layout.photo.x, layout.photo.y + cornerSize)
+      ctx.closePath()
+      ctx.fill()
+      
+      // Top-right
+      ctx.beginPath()
+      ctx.moveTo(layout.photo.x + layout.photo.width, layout.photo.y)
+      ctx.lineTo(layout.photo.x + layout.photo.width - cornerSize, layout.photo.y)
+      ctx.lineTo(layout.photo.x + layout.photo.width, layout.photo.y + cornerSize)
+      ctx.closePath()
+      ctx.fill()
+      
+      // Bottom-left
+      ctx.beginPath()
+      ctx.moveTo(layout.photo.x, layout.photo.y + layout.photo.height)
+      ctx.lineTo(layout.photo.x + cornerSize, layout.photo.y + layout.photo.height)
+      ctx.lineTo(layout.photo.x, layout.photo.y + layout.photo.height - cornerSize)
+      ctx.closePath()
+      ctx.fill()
+      
+      // Bottom-right
+      ctx.beginPath()
+      ctx.moveTo(layout.photo.x + layout.photo.width, layout.photo.y + layout.photo.height)
+      ctx.lineTo(layout.photo.x + layout.photo.width - cornerSize, layout.photo.y + layout.photo.height)
+      ctx.lineTo(layout.photo.x + layout.photo.width, layout.photo.y + layout.photo.height - cornerSize)
+      ctx.closePath()
+      ctx.fill()
+    } else {
+      // Photo placeholder (exact size from preview)
+      ctx.fillStyle = '#f3f4f6'
+      ctx.fillRect(
+        layout.photo.x, 
+        layout.photo.y, 
+        layout.photo.width, 
+        layout.photo.height
+      )
+      ctx.strokeStyle = '#d1d5db'
+      ctx.lineWidth = 1
+      ctx.strokeRect(
+        layout.photo.x, 
+        layout.photo.y, 
+        layout.photo.width, 
+        layout.photo.height
+      )
+      
+      // Placeholder text
+      ctx.fillStyle = '#9ca3af'
+      ctx.font = '10px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText(
+        'PHOTO', 
+        layout.photo.x + layout.photo.width/2, 
+        layout.photo.y + layout.photo.height/2 + 3
+      )
+    }
+
+    // Draw student information (matches preview text-xs spacing)
+    ctx.fillStyle = currentTemplate.textColor
+    ctx.font = '10px Arial'
+    ctx.textAlign = 'left'
+    
+    let currentY = layout.text.y
+    const drawInfoLine = (label: string, value: string) => {
+      // Draw bold label
+      ctx.font = 'bold 10px Arial'
+      ctx.fillText(`${label}:`, layout.text.x, currentY)
+      
+      // Draw normal value
+      ctx.font = '10px Arial'
+      const labelMetrics = ctx.measureText(`${label}: `)
+      ctx.fillText(
+        value || '-', 
+        layout.text.x + labelMetrics.width, 
+        currentY
+      )
+      currentY += layout.text.lineHeight
+    }
+
+    // Student info lines (matches preview order)
+    drawInfoLine('Name', formData.name)
+    drawInfoLine('Father', formData.father)
+    drawInfoLine('Mother', formData.mother)
+    drawInfoLine('Class', formData.class)
+    drawInfoLine('Roll No', formData.rollNo)
+    drawInfoLine('DOB', formData.dob)
+    drawInfoLine('Session', formData.session)
+    drawInfoLine('Admission', formData.admissionNo)
+
+    // Draw address (matches preview mt-2 spacing)
+    currentY += 8
+    ctx.font = 'bold 10px Arial'
+    ctx.fillText('Address:', layout.text.x, currentY)
+    currentY += layout.text.lineHeight
+    
+    const address = formData.address || '-'
+    const maxWidth = canvas.width - layout.text.x - layout.padding
+    const words = address.split(' ')
+    let line = ''
+    
+    ctx.font = '10px Arial'
+    for (const word of words) {
+      const testLine = line + word + ' '
+      const metrics = ctx.measureText(testLine)
+      
+      if (metrics.width > maxWidth && line !== '') {
+        ctx.fillText(line.trim(), layout.text.x, currentY)
+        line = word + ' '
+        currentY += layout.text.lineHeight
+      } else {
+        line = testLine
+      }
+    }
+    if (line.trim()) {
+      ctx.fillText(line.trim(), layout.text.x, currentY)
+      currentY += layout.text.lineHeight
+    }
+
+    // Draw custom fields
+    customFields.forEach(field => {
+      if (field.key && field.value) {
+        ctx.font = 'bold 10px Arial'
+        ctx.fillText(`${field.key}:`, layout.text.x, currentY)
+        
+        ctx.font = '10px Arial'
+        const labelMetrics = ctx.measureText(`${field.key}: `)
+        ctx.fillText(field.value, layout.text.x + labelMetrics.width, currentY)
+        currentY += layout.text.lineHeight
+      }
+    })
+
+    // Footer area (matches preview mt-4 positioning)
+    const footerY = canvas.height - 24
+
+    // Draw school contact (bottom left)
+    if (formData.schoolContact) {
+      ctx.font = 'bold 8px Arial'
+      ctx.textAlign = 'left'
+      ctx.fillText('Contact:', layout.padding, footerY)
+      
+      ctx.font = '8px Arial'
+      const contactLabelWidth = ctx.measureText('Contact: ').width
+      ctx.fillText(formData.schoolContact, layout.padding + contactLabelWidth, footerY)
+    }
+
+    // Draw signature area (bottom right, matches preview)
+    const signatureX = canvas.width - 80
+    const signatureY = footerY - 16
+    
+    if (fileUrls.sign) {
+      const signImg = new Image()
+      signImg.crossOrigin = 'anonymous'
+      await new Promise((resolve) => {
+        signImg.onload = resolve
+        signImg.src = fileUrls.sign!
+      })
+      
+      // Draw signature image (matches preview h-4 w-16)
+      ctx.drawImage(
+        signImg, 
+        signatureX, 
+        signatureY, 
+        64, 
+        16
+      )
+    }
+    
+    // Draw signature line (matches preview w-16)
+    ctx.strokeStyle = '#9ca3af'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(signatureX, footerY)
+    ctx.lineTo(signatureX + 64, footerY)
+    ctx.stroke()
+    
+    // Draw principal name (matches preview text-2xs)
+    ctx.font = '8px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(
+      formData.principalSign, 
+      signatureX + 32, 
+      footerY + 10
+    )
+
+    // Draw border around card (matches preview)
+    ctx.strokeStyle = '#d1d5db'
+    ctx.lineWidth = 1
+    ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1)
+
+    return canvas.toDataURL('image/png', 1.0)
+  }
+
+  // Download as image
+  const downloadAsImage = async () => {
+    try {
+      const imageData = await generateCardImage()
+      const link = document.createElement('a')
+      link.href = imageData
+      link.download = `id-card-${formData.name || 'student'}.png`
+      link.click()
+      
+      toast({
+        title: "Image downloaded",
+        description: "ID card image has been downloaded successfully.",
+      })
+    } catch (error) {
+      console.error('Error generating image:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate ID card image.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Download as PDF
+  const downloadAsPdf = async () => {
+    try {
+      if (!formData.name) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter student name",
+          variant: "destructive"
+        })
+        return
+      }
+
+      const imageData = await generateCardImage()
+      const pdfDoc = await PDFDocument.create()
+      
+      // Convert mm to points exactly (1mm = 2.834645669 points)
+      const mmToPoints = 2.834645669
+      const page = pdfDoc.addPage([
+        85.6 * mmToPoints, // width in points
+        53.98 * mmToPoints // height in points
+      ])
+
+      // Convert base64 to bytes properly
+      const imageBytes = imageData.split(',')[1]
+      const binaryString = atob(imageBytes)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      
+      // Embed the PNG image
+      const pngImage = await pdfDoc.embedPng(bytes)
+      
+      // Draw image to fill entire page exactly
+      page.drawImage(pngImage, {
+        x: 0,
+        y: 0,
+        width: page.getWidth(),
+        height: page.getHeight(),
+      })
+
+      // Save and download
+      const pdfBytes = await pdfDoc.save()
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `id-card-${formData.name}.pdf`
+      link.click()
+      
+      // Clean up
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+      
+      toast({
+        title: "PDF downloaded",
+        description: "ID card PDF generated at exact size (85.6mm × 53.98mm)",
+      })
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate ID card PDF.",
+        variant: "destructive"
+      })
+    }
   }
 
   const [customFields, setCustomFields] = useState([
@@ -353,56 +825,189 @@ export function IdCard() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl font-bold text-white">Card Preview</CardTitle>
                   <div className="flex gap-2">
-                    <Button className="bg-indigo-500 text-white hover:bg-indigo-600">
+                    <Button 
+                      onClick={downloadAsImage}
+                      className="bg-indigo-500 text-white hover:bg-indigo-600"
+                    >
                       <FileImage className="h-4 w-4 mr-2" />
                       Image
                     </Button>
-                    <Button className="bg-purple-500 text-white hover:bg-purple-600">
+                    <Button 
+                      onClick={downloadAsPdf}
+                      className="bg-purple-500 text-white hover:bg-purple-600"
+                    >
                       <Download className="h-4 w-4 mr-2" />
-                      pdf
+                      PDF
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {/* ID Card Preview */}
-                <div className="bg-blue-600 rounded-lg p-4 max-w-sm mx-auto">
+                <div 
+                  ref={cardRef}
+                  className="max-w-md mx-auto rounded-lg overflow-hidden shadow-xl border-2 border-gray-300"
+                  style={{ 
+                    backgroundColor: '#ffffff',
+                    aspectRatio: '85.6/53.98'
+                  }}
+                >
                   {/* Card Header */}
-                  <div className="bg-white rounded-t-lg p-3 text-center">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">S</span>
+                  <div 
+                    className="p-4 text-center relative"
+                    style={{ 
+                      backgroundColor: currentTemplate.primaryColor,
+                      height: '100px'
+                    }}
+                  >
+                    <div className="flex items-center justify-between h-full">
+                      {/* Logo on left */}
+                      <div className="flex-shrink-0">
+                        {fileUrls.logo ? (
+                          <div className="relative">
+                            <img 
+                              src={fileUrls.logo} 
+                              alt="School Logo" 
+                              className="w-16 h-16 rounded-full object-cover border-2 border-white"
+                            />
+                          </div>
+                        ) : (
+                          <div 
+                            className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-white"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                          >
+                            LOGO
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* School info in center */}
+                      <div className="flex-1 px-4">
+                        <h3 className="font-bold text-lg text-white leading-tight">
+                          {formData.schoolName || 'SCHOOL NAME'}
+                        </h3>
+                        <p className="text-sm text-white/90 mt-1">
+                          {formData.schoolSubTitle || 'School Subtitle'}
+                        </p>
+                      </div>
+                      
+                      <div className="w-16"></div> {/* Spacer for balance */}
                     </div>
-                    <h3 className="font-bold text-sm text-gray-800">SCHOOL NAME</h3>
-                    <p className="text-xs text-gray-600">School Subtitle</p>
                   </div>
                   
                   {/* Card Body */}
-                  <div className="bg-white p-4">
-                    <div className="flex gap-3">
-                      {/* Photo placeholder */}
-                      <div className="w-16 h-20 bg-blue-100 rounded border flex items-center justify-center">
-                        <User className="h-8 w-8 text-blue-400" />
+                  <div className="p-4 bg-white" style={{ minHeight: '380px' }}>
+                    <div className="flex gap-4">
+                      {/* Photo with decorative corners */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-24 h-32 bg-gray-100 border-2 border-gray-300 flex items-center justify-center relative overflow-hidden">
+                          {fileUrls.photo ? (
+                            <img 
+                              src={fileUrls.photo} 
+                              alt="Student" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-8 w-8 text-gray-400" />
+                          )}
+                          
+                          {/* Decorative corners */}
+                          <div 
+                            className="absolute top-0 left-0 w-3 h-3"
+                            style={{ 
+                              backgroundColor: currentTemplate.primaryColor,
+                              clipPath: 'polygon(0 0, 100% 0, 0 100%)'
+                            }}
+                          ></div>
+                          <div 
+                            className="absolute top-0 right-0 w-3 h-3"
+                            style={{ 
+                              backgroundColor: currentTemplate.primaryColor,
+                              clipPath: 'polygon(0 0, 100% 0, 100% 100%)'
+                            }}
+                          ></div>
+                          <div 
+                            className="absolute bottom-0 left-0 w-3 h-3"
+                            style={{ 
+                              backgroundColor: currentTemplate.primaryColor,
+                              clipPath: 'polygon(0 0, 0 100%, 100% 100%)'
+                            }}
+                          ></div>
+                          <div 
+                            className="absolute bottom-0 right-0 w-3 h-3"
+                            style={{ 
+                              backgroundColor: currentTemplate.primaryColor,
+                              clipPath: 'polygon(100% 0, 0 100%, 100% 100%)'
+                            }}
+                          ></div>
+                        </div>
                       </div>
                       
                       {/* Student Info */}
-                      <div className="flex-1 text-xs space-y-1">
-                        <div><strong>Name:</strong> Student Name</div>
-                        <div><strong>Father:</strong> Father Name</div>
-                        <div><strong>Class:</strong> Class</div>
-                        <div><strong>Roll No:</strong> Roll Number</div>
-                        <div><strong>DOB:</strong> Date of Birth</div>
-                        <div><strong>Session:</strong> 2023-24</div>
+                      <div className="flex-1 text-sm space-y-1" style={{ color: '#000000' }}>
+                        <div><strong>Name:</strong> {formData.name || 'Student Name'}</div>
+                        <div><strong>Father:</strong> {formData.father || 'Father Name'}</div>
+                        <div><strong>Mother:</strong> {formData.mother || 'Mother Name'}</div>
+                        <div><strong>Class:</strong> {formData.class || 'Class'}</div>
+                        <div><strong>Roll No:</strong> {formData.rollNo || 'Roll Number'}</div>
+                        <div><strong>DOB:</strong> {formData.dob || 'Date of Birth'}</div>
+                        <div><strong>Session:</strong> {formData.session || '2023-24'}</div>
+                        <div><strong>Admission No:</strong> {formData.admissionNo || 'Admission No'}</div>
                       </div>
                     </div>
                     
-                    <div className="mt-3 text-xs">
-                      <div><strong>Address:</strong> Student Address</div>
-                      <div className="mt-2 text-center">
-                        <div className="text-xs">Principal Signature</div>
-                        <div className="border-t border-gray-300 w-20 mx-auto mt-1"></div>
+                    <div className="mt-4 space-y-2 text-sm" style={{ color: '#000000' }}>
+                      <div><strong>Address:</strong> {formData.address || 'Student Address'}</div>
+                      
+                      {/* Custom Fields */}
+                      {customFields.map((field, index) => (
+                        field.key && field.value && (
+                          <div key={index}>
+                            <strong>{field.key}:</strong> {field.value}
+                          </div>
+                        )
+                      ))}
+                      
+                      {/* Signature and Contact */}
+                      <div className="flex justify-between items-end mt-6">
+                        <div className="text-xs">
+                          {formData.schoolContact && (
+                            <div>Contact: {formData.schoolContact}</div>
+                          )}
+                        </div>
+                        <div className="text-center">
+                          {fileUrls.sign ? (
+                            <img 
+                              src={fileUrls.sign} 
+                              alt="Signature" 
+                              className="h-6 w-20 object-contain mb-1"
+                            />
+                          ) : (
+                            <div className="h-6 w-20 mb-1"></div>
+                          )}
+                          <div className="text-xs border-t border-gray-400 pt-1 w-20">
+                            {formData.principalSign || 'Principal'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Template Info */}
+                <div className="mt-4 text-center">
+                  <p className="text-gray-400 text-sm">
+                    Current Template: <span className="text-white capitalize">{formData.template.replace('-', ' ')}</span>
+                  </p>
+                  <p className="text-gray-500 text-xs mt-1">
+                    Card Size: 85.6mm × 53.98mm (3.37" × 2.13")
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    PDF generated at exact card dimensions for direct printing
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    Ready for card printers or manual cutting
+                  </p>
                 </div>
               </CardContent>
             </Card>
