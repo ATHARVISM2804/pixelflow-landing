@@ -63,7 +63,7 @@ const Sidebar = () => {
       <Button
         variant="ghost"
         size="sm"
-        className="md:hidden fixed top-2 left-2 z-50 text-white bg-gray-900/80 backdrop-blur"
+        className="lg:hidden fixed top-3 left-3 z-50 text-white bg-gray-900/80 backdrop-blur rounded-md"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -71,12 +71,12 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed left-0 top-0 h-full w-64 sm:w-72 lg:w-64 bg-gray-900/50 backdrop-blur-xl border-r border-gray-800/50 z-40 transform transition-transform duration-300 ease-in-out
+        fixed left-0 top-0 h-screen w-64 sm:w-72 lg:w-[280px] bg-gray-900/50 backdrop-blur-xl border-r border-gray-800/50 z-40 transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0 md:static
+        lg:translate-x-0
       `}>
         {/* Logo */}
-        <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-800/50">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-800/50 flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="p-1.5 sm:p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg sm:rounded-xl shadow-lg">
               <CreditCard className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
@@ -86,8 +86,8 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation */}
-        <div className="px-2 sm:px-3 py-2 sm:py-4 h-[calc(100vh-80px)] flex flex-col">
-          <div className="space-y-1 sm:space-y-2 flex-1">
+        <div className="flex flex-col h-[calc(100vh-100px)] px-2 sm:px-3 py-2 sm:py-4">
+          <div className="flex-1 overflow-y-auto space-y-1 sm:space-y-2 scrollbar-hidden">
             {menuItems.map((item, index) => (
               <Link
                 key={index}
@@ -122,7 +122,7 @@ const Sidebar = () => {
           </div>
           
           {/* Logout button at bottom */}
-          <div className="mt-auto">
+          <div className="flex-shrink-0 pt-4 border-t border-gray-800/30">
             <button 
               onClick={handleLogout}
               className="w-full text-left p-2 sm:p-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
@@ -137,7 +137,7 @@ const Sidebar = () => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
