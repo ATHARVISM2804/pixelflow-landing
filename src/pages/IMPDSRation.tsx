@@ -15,6 +15,7 @@ import {
   Moon,
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
+import DashboardHeader from "@/components/DashboardHeader"
 
 export function IMPDSRation() {
   const [rationNumber, setRationNumber] = useState('')
@@ -24,24 +25,7 @@ export function IMPDSRation() {
       <Sidebar />
 
       <div className="flex flex-col">
-        <header className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400 flex-shrink-0" />
-            <span className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">
-              <span className="hidden sm:inline">Make IMPDS Ration Slip (Cards)</span>
-              <span className="sm:hidden">IMPDS Ration</span>
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <span className="text-xs sm:text-sm text-slate-300 hidden md:inline">Hey, atharv golait</span>
-            <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
-            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
-            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-            </div>
-          </div>
-        </header>
+        <DashboardHeader title="Make IMPDS Ration Slip (Cards)" icon={FileCheck} showNewServiceButton={false} />
 
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -91,3 +75,4 @@ export function IMPDSRation() {
 }
 
 export default IMPDSRation
+ 
