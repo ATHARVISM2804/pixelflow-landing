@@ -22,6 +22,9 @@ import Resume from "./pages/Resume";
 import PageMaker from "./pages/Pagemaker.tsx";
 import AddMoney from "./pages/AddMoney.tsx";
 import ProtectedRoute from './auth/ProtectedRoute.tsx'
+import FreeCards from "./pages/FreeCards";
+import StateCards from "./pages/StateCards";
+import CardMaker from "./pages/CardMaker";
 
 
 const queryClient = new QueryClient();
@@ -51,6 +54,9 @@ const App = () => (
             <Route path="/aepds-ration" element={<ProtectedRoute><AePDSRation /></ProtectedRoute>} />
             <Route path="/page-maker" element={<ProtectedRoute><PageMaker /></ProtectedRoute>} />
             <Route path="/add-money" element={<ProtectedRoute><AddMoney /></ProtectedRoute>} />
+            <Route path="/free-cards" element={<FreeCards />} />
+            <Route path="/free-cards/:stateCode" element={<StateCards />} />
+            <Route path="/card/:cardType/:stateCode" element={<CardMaker />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
