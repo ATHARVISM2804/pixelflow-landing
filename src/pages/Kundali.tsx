@@ -52,7 +52,7 @@ export function Kundali() {
 
       {/* Main Content */}
       <div className="flex flex-col">
-        <DashboardHeader title="Kundli" icon={Star} showNewServiceButton={false} userName="atharv golait" />
+        <DashboardHeader title="Kundli" icon={Star} showNewServiceButton={false} />
 
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -244,4 +244,3 @@ export function Kundali() {
 }
 
 export default Kundali
-   

@@ -49,4 +49,3 @@ import React, {
     }
     return context;
   };
-  

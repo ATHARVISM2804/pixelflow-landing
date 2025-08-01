@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Home, 
   CreditCard, 
@@ -18,10 +18,13 @@ import {
   HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { signOut } from 'firebase/auth';
+import { auth } from '../auth/firebase';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -40,6 +43,17 @@ const Sidebar = () => {
     { icon: MessageSquare, label: "Contact", path: "/contact" },
     { icon: HelpCircle, label: "FAQ", path: "/faq" },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('token');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Failed to log out. Please try again.');
+    }
+  };
 
   const isActiveRoute = (path: string) => location.pathname === path;
 
@@ -109,7 +123,10 @@ const Sidebar = () => {
           
           {/* Logout button at bottom */}
           <div className="mt-auto">
-            <button className="w-full text-left p-2 sm:p-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base">
+            <button 
+              onClick={handleLogout}
+              className="w-full text-left p-2 sm:p-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
+            >
               <LogOut className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Log out</span>
             </button>

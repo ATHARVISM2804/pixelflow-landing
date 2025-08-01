@@ -22,6 +22,7 @@ import {
   Moon,
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
+import DashboardHeader from "@/components/DashboardHeader"
 
 export function DrivingLicense() {
   const [formData, setFormData] = useState({
@@ -35,21 +36,7 @@ export function DrivingLicense() {
       <Sidebar />
 
       <div className="flex flex-col">
-        <header className="flex h-16 items-center justify-between px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="flex items-center gap-3">
-            <Car className="h-5 w-5 text-indigo-400" />
-            <span className="text-2xl font-bold text-white">Make Driving Licence Slip (Cards)</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-300">Hey, atharv golait</span>
-            <Moon className="h-5 w-5 text-slate-400" />
-            <Bell className="h-5 w-5 text-slate-400" />
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-white" />
-            </div>
-          </div>
-        </header>
+        <DashboardHeader title="Make Driving Licence Slip (Cards)" icon={Car} showNewServiceButton={false} />
 
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -122,4 +109,3 @@ export function DrivingLicense() {
 }
 
 export default DrivingLicense
-
