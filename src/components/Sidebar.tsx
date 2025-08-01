@@ -15,7 +15,9 @@ import {
   FileStack,
   DollarSign,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Shield,
+  Scissors
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from 'firebase/auth';
@@ -32,11 +34,18 @@ const Sidebar = () => {
     { icon: Edit3, label: "Editor", path: "/editor" },
     { icon: FileText, label: "Cards", path: "/cards" },
     { icon: FileStack, label: "Free Cards", path: "/free-cards" },
+    { icon: Shield, label: "Aadhaar", path: "/aadhar" },
     { icon: DollarSign, label: "Kundli", path: "/kundli" },
     { icon: DollarSign, label: "Id Card", path: "/id-card" },
     { icon: FileText, label: "Page Maker", path: "/page-maker" },
     { icon: FileText, label: "Resume Maker", path: "/resume" },
     { icon: DollarSign, label: "Add Money", path: "/add-money" },
+    {
+      icon: Scissors,
+      label: 'PDF Processor',
+      path: '/pdf-processor',
+      color: 'text-purple-400'
+    },
   ];
 
   const otherItems = [
