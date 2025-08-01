@@ -63,11 +63,11 @@ const freeCards = [
 
 export function Cards() {
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr] bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex flex-col">
+      <div className="lg:ml-[280px] flex flex-col min-h-screen">
         <DashboardHeader title="All Free Cards" icon={FileText} />
 
         <main className="flex-1 p-3 sm:p-6">
@@ -144,4 +144,4 @@ export function Cards() {
 }
 
 export default Cards
-                   
+

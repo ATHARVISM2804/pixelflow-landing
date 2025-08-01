@@ -104,11 +104,11 @@ export function IdCard() {
   )
 
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr] bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex flex-col">
+      <div className="lg:ml-[280px] flex flex-col min-h-screen">
         <DashboardHeader title="Identity Cards" icon={CreditCard} showNewServiceButton={false} />
 
         <main className="flex-1 p-6">
