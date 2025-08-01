@@ -27,6 +27,7 @@ import StateCards from "./pages/StateCards";
 import CardMaker from "./pages/CardMaker";
 import Aadhar from "./pages/Aadhar.tsx";
 import PdfProcessor from "./pages/PdfProcessor";
+// import Dummy from "./pages/Dummy.tsx";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/free-cards" element={<FreeCards />} />
             <Route path="/free-cards/:stateCode" element={<StateCards />} />
             <Route path="/card/:cardType/:stateCode" element={<CardMaker />} />
+            {/* <Route path="/dummy" element={<Dummy />} /> */}
             {/* <Route path="/aadhaar" element={<ProtectedRoute><Aadhar /></ProtectedRoute>} /> */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
