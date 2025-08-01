@@ -4,7 +4,6 @@ import Destinations from "@/components/travel/Destinations";
 import WhyChooseUs from "@/components/travel/WhyChooseUs";
 import Services from "@/components/travel/Services";
 import Stats from "@/components/travel/Stats";
-import Testimonials from "@/components/travel/Testimonials";
 import Footer from "@/components/travel/Footer";
 
 const Index = () => {
@@ -16,7 +15,6 @@ const Index = () => {
       <WhyChooseUs />
       <Services />
       <Stats />
-      {/* <Testimonials /> */}
       <Footer />
     </div>
   );
