@@ -27,6 +27,7 @@ import {
   CheckCircle
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
+import DashboardHeader from "@/components/DashboardHeader"
 
 export function AddMoney() {
   const [amount, setAmount] = useState('')
@@ -59,25 +60,11 @@ export function AddMoney() {
   }
 
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr] bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
 
-      <div className="flex flex-col">
-        <header className="flex h-16 items-center justify-between px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="flex items-center gap-3">
-            <DollarSign className="h-5 w-5 text-indigo-400" />
-            <span className="text-2xl font-bold text-white">Add Money</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-300">Hey, atharv golait</span>
-            <Moon className="h-5 w-5 text-slate-400" />
-            <Bell className="h-5 w-5 text-slate-400" />
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-white" />
-            </div>
-          </div>
-        </header>
+      <div className="lg:ml-[280px] flex flex-col min-h-screen">
+        <DashboardHeader title="Add Money" icon={DollarSign} showNewServiceButton={false} />
 
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -240,4 +227,4 @@ export function AddMoney() {
 }
 
 export default AddMoney
-
+      
