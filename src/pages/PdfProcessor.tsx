@@ -26,6 +26,7 @@ import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
 import * as pdfjsLib from 'pdfjs-dist'
+import { PDFDocument } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
 
 // Configure PDF.js on component load
@@ -134,55 +135,13 @@ export function PdfProcessor() {
       canvas.height = img.height
       ctx.drawImage(img, 0, 0)
 
-      // Get image data for analysis
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      
-      // Find card boundaries by detecting the blue header and card content
-      const cardBounds = detectAadhaarCardBoundaries(imageData, canvas.width, canvas.height)
-      
-      if (cardBounds.length < 2) {
-        // Fallback: Look for any content regions if specific detection fails
-        const contentBounds = findContentRegions(imageData, canvas.width, canvas.height)
-        
-        if (contentBounds.length >= 2) {
-          const front = contentBounds[0]
-          const back = contentBounds[1]
-          
-          return {
-            frontImage: extractCardRegion(canvas, front),
-            backImage: extractCardRegion(canvas, back),
-            originalPage: pageNumber
-          }
-        }
-        
-        // Final fallback to simple split
-        const halfWidth = canvas.width / 2
-        const frontCanvas = document.createElement('canvas')
-        const frontCtx = frontCanvas.getContext('2d')!
-        frontCanvas.width = halfWidth
-        frontCanvas.height = canvas.height
-        frontCtx.drawImage(canvas, 0, 0, halfWidth, canvas.height, 0, 0, halfWidth, canvas.height)
-        
-        const backCanvas = document.createElement('canvas')
-        const backCtx = backCanvas.getContext('2d')!
-        backCanvas.width = halfWidth
-        backCanvas.height = canvas.height
-        backCtx.drawImage(canvas, halfWidth, 0, halfWidth, canvas.height, 0, 0, halfWidth, canvas.height)
+      // Use PDF-lib based cropping for more precise extraction
+      const frontImage = await extractFrontCard(canvas)
+      const backImage = await extractBackCard(canvas)
 
-        return {
-          frontImage: frontCanvas.toDataURL('image/png'),
-          backImage: backCanvas.toDataURL('image/png'),
-          originalPage: pageNumber
-        }
-      }
-
-      // Extract cards based on detected boundaries
-      const front = cardBounds[0]
-      const back = cardBounds[1]
-      
       return {
-        frontImage: extractCardRegion(canvas, front),
-        backImage: extractCardRegion(canvas, back),
+        frontImage,
+        backImage,
         originalPage: pageNumber
       }
     } catch (error) {
@@ -191,246 +150,114 @@ export function PdfProcessor() {
     }
   }
 
-  // Extract a specific card region from canvas
-  const extractCardRegion = (sourceCanvas: HTMLCanvasElement, bounds: {x: number, y: number, width: number, height: number}) => {
-    const cardCanvas = document.createElement('canvas')
-    const cardCtx = cardCanvas.getContext('2d')!
+  // Extract front card (left side) using PDF-lib inspired cropping
+  const extractFrontCard = async (sourceCanvas: HTMLCanvasElement): Promise<string> => {
+    const { width, height } = sourceCanvas
     
-    cardCanvas.width = bounds.width
-    cardCanvas.height = bounds.height
+    // Crop from bottom portion where Aadhaar cards are located
+    // Adjusted to crop from bottom 60% of the page
+    const cropX = width / 11
+    const cropY = height * 0.725 // Start from 40% down (bottom 60%)
+    const cropWidth = (2 * width) / 5
+    const cropHeight = height / 5.4
+
+    const frontCanvas = document.createElement('canvas')
+    const frontCtx = frontCanvas.getContext('2d')!
     
-    // Draw the specific region
-    cardCtx.drawImage(
-      sourceCanvas, 
-      bounds.x, bounds.y, bounds.width, bounds.height,
-      0, 0, bounds.width, bounds.height
+    frontCanvas.width = cropWidth
+    frontCanvas.height = cropHeight
+    
+    // Draw the cropped region
+    frontCtx.drawImage(
+      sourceCanvas,
+      cropX, cropY, cropWidth, cropHeight,
+      0, 0, cropWidth, cropHeight
     )
     
-    return cardCanvas.toDataURL('image/png')
+    return frontCanvas.toDataURL('image/png')
   }
 
-  // Function to detect Aadhaar card boundaries by looking for the characteristic blue header
-  const detectAadhaarCardBoundaries = (imageData: ImageData, width: number, height: number) => {
-    const data = imageData.data
-    const cards: Array<{x: number, y: number, width: number, height: number}> = []
+  // Extract back card (right side) using PDF-lib inspired cropping  
+  const extractBackCard = async (sourceCanvas: HTMLCanvasElement): Promise<string> => {
+    const { width, height } = sourceCanvas
     
-    // Look for blue color regions (Aadhaar header is typically blue/teal)
-    const blueThreshold = {
-      r: { min: 0, max: 100 },
-      g: { min: 120, max: 200 },
-      b: { min: 150, max: 255 }
-    }
+    // Crop from bottom portion where Aadhaar cards are located
+    // Adjusted to crop from bottom 60% of the page
+    const cropX = width / 2
+    const cropY = height * 0.725 // Start from 40% down (bottom 60%)
+    const cropWidth = (3.7 * width) / 9
+    const cropHeight = height / 5.4
+
+    const backCanvas = document.createElement('canvas')
+    const backCtx = backCanvas.getContext('2d')!
     
-    // Scan for blue header regions
-    const blueRegions: Array<{x: number, y: number}> = []
+    backCanvas.width = cropWidth
+    backCanvas.height = cropHeight
     
-    for (let y = 0; y < height; y += 5) { // Sample every 5 pixels for performance
-      for (let x = 0; x < width; x += 5) {
-        const index = (y * width + x) * 4
-        const r = data[index]
-        const g = data[index + 1]
-        const b = data[index + 2]
-        
-        // Check if pixel matches blue header color
-        if (r >= blueThreshold.r.min && r <= blueThreshold.r.max &&
-            g >= blueThreshold.g.min && g <= blueThreshold.g.max &&
-            b >= blueThreshold.b.min && b <= blueThreshold.b.max) {
-          blueRegions.push({x, y})
-        }
-      }
-    }
+    // Draw the cropped region
+    backCtx.drawImage(
+      sourceCanvas,
+      cropX, cropY, cropWidth, cropHeight,
+      0, 0, cropWidth, cropHeight
+    )
     
-    if (blueRegions.length === 0) {
-      return [] // No blue regions found
-    }
+    return backCanvas.toDataURL('image/png')
+  }
+
+  // Alternative method: Process PDF directly with PDF-lib for even more precise cropping
+  const processPdfWithLibCropping = async (pdfBytes: ArrayBuffer): Promise<{ frontPdf: Uint8Array, backPdf: Uint8Array }> => {
+    // Create front card PDF (left side cropping)
+    const frontPdfDoc = await PDFDocument.load(pdfBytes)
+    const frontPages = frontPdfDoc.getPages()
     
-    // Group blue regions into card areas
-    const cardRegions = groupBlueRegionsIntoCards(blueRegions, width, height)
-    
-    // For each card region, find the full card boundaries
-    cardRegions.forEach(region => {
-      const cardBounds = findFullCardBounds(imageData, width, height, region)
-      if (cardBounds) {
-        cards.push(cardBounds)
-      }
+    frontPages.forEach((page) => {
+      const { width, height } = page.getSize()
+      // Front card cropping - adjusted to crop from bottom portion
+      // Y coordinate adjusted to start from lower portion of page
+      page.setCropBox(width/11, height * 0.4, 2*width/5, height/5.4)
     })
     
-    return cards
-  }
+    const frontPdfBytes = await frontPdfDoc.save()
 
-  // Group blue regions into separate card areas
-  const groupBlueRegionsIntoCards = (blueRegions: Array<{x: number, y: number}>, width: number, height: number) => {
-    const cardRegions: Array<{centerX: number, centerY: number}> = []
-    const leftSide = blueRegions.filter(p => p.x < width / 2)
-    const rightSide = blueRegions.filter(p => p.x >= width / 2)
+    // Create back card PDF (right side cropping)  
+    const backPdfDoc = await PDFDocument.load(pdfBytes)
+    const backPages = backPdfDoc.getPages()
     
-    if (leftSide.length > 0) {
-      const avgX = leftSide.reduce((sum, p) => sum + p.x, 0) / leftSide.length
-      const avgY = leftSide.reduce((sum, p) => sum + p.y, 0) / leftSide.length
-      cardRegions.push({centerX: avgX, centerY: avgY})
-    }
-    
-    if (rightSide.length > 0) {
-      const avgX = rightSide.reduce((sum, p) => sum + p.x, 0) / rightSide.length
-      const avgY = rightSide.reduce((sum, p) => sum + p.y, 0) / rightSide.length
-      cardRegions.push({centerX: avgX, centerY: avgY})
-    }
-    
-    return cardRegions
-  }
-
-  // Find the full card boundaries starting from a blue header region
-  const findFullCardBounds = (
-    imageData: ImageData, 
-    width: number, 
-    height: number, 
-    region: {centerX: number, centerY: number}
-  ) => {
-    const data = imageData.data
-    const whiteThreshold = 240 // Pixels brighter than this are considered background
-    
-    // Start from the blue region and expand to find card boundaries
-    let minX = region.centerX, maxX = region.centerX
-    let minY = region.centerY, maxY = region.centerY
-    
-    // Expand horizontally to find card width
-    // Look left
-    for (let x = region.centerX; x >= 0; x--) {
-      let hasContent = false
-      for (let y = Math.max(0, region.centerY - 100); y < Math.min(height, region.centerY + 300); y++) {
-        const index = (y * width + x) * 4
-        const gray = Math.round(0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2])
-        if (gray < whiteThreshold) {
-          hasContent = true
-          break
-        }
-      }
-      if (hasContent) {
-        minX = x
-      } else {
-        break
-      }
-    }
-    
-    // Look right
-    for (let x = region.centerX; x < width; x++) {
-      let hasContent = false
-      for (let y = Math.max(0, region.centerY - 100); y < Math.min(height, region.centerY + 300); y++) {
-        const index = (y * width + x) * 4
-        const gray = Math.round(0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2])
-        if (gray < whiteThreshold) {
-          hasContent = true
-          break
-        }
-      }
-      if (hasContent) {
-        maxX = x
-      } else {
-        break
-      }
-    }
-    
-    // Expand vertically to find card height
-    // Look up
-    for (let y = region.centerY; y >= 0; y--) {
-      let hasContent = false
-      for (let x = minX; x <= maxX; x++) {
-        const index = (y * width + x) * 4
-        const gray = Math.round(0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2])
-        if (gray < whiteThreshold) {
-          hasContent = true
-          break
-        }
-      }
-      if (hasContent) {
-        minY = y
-      } else {
-        break
-      }
-    }
-    
-    // Look down
-    for (let y = region.centerY; y < height; y++) {
-      let hasContent = false
-      for (let x = minX; x <= maxX; x++) {
-        const index = (y * width + x) * 4
-        const gray = Math.round(0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2])
-        if (gray < whiteThreshold) {
-          hasContent = true
-          break
-        }
-      }
-      if (hasContent) {
-        maxY = y
-      } else {
-        break
-      }
-    }
-    
-    // Add small padding and ensure minimum size
-    const padding = 10
-    const minWidth = 300
-    const minHeight = 200
-    
-    const cardWidth = Math.max(minWidth, maxX - minX + padding * 2)
-    const cardHeight = Math.max(minHeight, maxY - minY + padding * 2)
-    
-    return {
-      x: Math.max(0, minX - padding),
-      y: Math.max(0, minY - padding),
-      width: Math.min(width - (minX - padding), cardWidth),
-      height: Math.min(height - (minY - padding), cardHeight)
-    }
-  }
-
-  // Fallback function to find content regions
-  const findContentRegions = (imageData: ImageData, width: number, height: number) => {
-    const data = imageData.data
-    const regions: Array<{x: number, y: number, width: number, height: number}> = []
-    const whiteThreshold = 250
-    
-    // Divide page into left and right halves
-    const halfWidth = width / 2
-    const searchRegions = [
-      {startX: 0, endX: halfWidth, side: 'left'},
-      {startX: halfWidth, endX: width, side: 'right'}
-    ]
-    
-    searchRegions.forEach(region => {
-      let minX = region.endX, maxX = region.startX
-      let minY = height, maxY = 0
-      let hasContent = false
-      
-      // Find content bounds in this region
-      for (let y = 0; y < height; y += 2) {
-        for (let x = region.startX; x < region.endX; x += 2) {
-          const index = (y * width + x) * 4
-          const gray = Math.round(0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2])
-          
-          if (gray < whiteThreshold) {
-            hasContent = true
-            minX = Math.min(minX, x)
-            maxX = Math.max(maxX, x)
-            minY = Math.min(minY, y)
-            maxY = Math.max(maxY, y)
-          }
-        }
-      }
-      
-      if (hasContent && (maxX - minX) > 100 && (maxY - minY) > 100) {
-        regions.push({
-          x: Math.max(0, minX - 20),
-          y: Math.max(0, minY - 20),
-          width: Math.min(width, maxX - minX + 40),
-          height: Math.min(height, maxY - minY + 40)
-        })
-      }
+    backPages.forEach((page) => {
+      const { width, height } = page.getSize()
+      // Back card cropping - adjusted to crop from bottom portion
+      // Y coordinate adjusted to start from lower portion of page
+      page.setCropBox(width/2, height * 0.4, 3.7*width/9, height/5.4)
     })
     
-    return regions
+    const backPdfBytes = await backPdfDoc.save()
+
+    return { frontPdf: frontPdfBytes, backPdf: backPdfBytes }
   }
 
-  const processPdf = async () => {
+  // Convert cropped PDF to image
+  const convertCroppedPdfToImage = async (pdfBytes: Uint8Array): Promise<string> => {
+    const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise
+    const page = await pdf.getPage(1) // Get first page
+    
+    const viewport = page.getViewport({ scale: 2 })
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')!
+    
+    canvas.height = viewport.height
+    canvas.width = viewport.width
+
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport,
+    }
+
+    await page.render(renderContext).promise
+    return canvas.toDataURL('image/png')
+  }
+
+  // Enhanced processing function that uses PDF-lib for precise cropping
+  const processPdfEnhanced = async () => {
     if (!selectedPdf) {
       toast({
         title: "No PDF selected",
@@ -458,7 +285,6 @@ export function PdfProcessor() {
         setIsPasswordProtected(password ? true : false)
         setNeedsPassword(false)
         
-        // Clear any previous error states
         toast({
           title: "PDF loaded successfully",
           description: "Processing pages for Aadhaar cards...",
@@ -520,14 +346,34 @@ export function PdfProcessor() {
         const text = await extractTextFromPage(page)
         
         if (isAadhaarPage(text)) {
-          // Render page to image
-          const pageImage = await renderPageToCanvas(page)
-          previews.push(pageImage)
-          
-          // Extract Aadhaar cards from this page
-          const aadhaarData = await extractAadhaarFromPage(pageImage, pageNum)
-          if (aadhaarData) {
-            extractedCards.push(aadhaarData)
+          // Method 1: Use PDF-lib for precise cropping
+          try {
+            const { frontPdf, backPdf } = await processPdfWithLibCropping(arrayBuffer)
+            
+            // Convert cropped PDFs to images
+            const frontImage = await convertCroppedPdfToImage(frontPdf)
+            const backImage = await convertCroppedPdfToImage(backPdf)
+            
+            // Render page to image for preview
+            const pageImage = await renderPageToCanvas(page)
+            previews.push(pageImage)
+            
+            extractedCards.push({
+              frontImage,
+              backImage,
+              originalPage: pageNum
+            })
+          } catch (libError) {
+            console.warn('PDF-lib cropping failed, falling back to canvas method:', libError)
+            
+            // Method 2: Fallback to canvas-based extraction
+            const pageImage = await renderPageToCanvas(page)
+            previews.push(pageImage)
+            
+            const aadhaarData = await extractAadhaarFromPage(pageImage, pageNum)
+            if (aadhaarData) {
+              extractedCards.push(aadhaarData)
+            }
           }
         }
       }
@@ -564,10 +410,170 @@ export function PdfProcessor() {
           description: "This PDF is password-protected. Please enter the password.",
           variant: "destructive"
         })
-      } else if (error.message && (error.message.includes('CORS') || error.message.includes('worker'))) {
+      } else {
         toast({
-          title: "Loading Error",
-          description: "There was an issue loading the PDF processor. Please refresh the page and try again.",
+          title: "Processing failed",
+          description: "An error occurred while processing the PDF. Please check if the file is corrupted or try refreshing the page.",
+          variant: "destructive"
+        })
+      }
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // Main processing function - rename the enhanced function to this
+  const processPdf = async () => {
+    if (!selectedPdf) {
+      toast({
+        title: "No PDF selected",
+        description: "Please upload a PDF file first.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsProcessing(true)
+    
+    try {
+      const arrayBuffer = await selectedPdf.arrayBuffer()
+      
+      // Try to load the PDF with password if provided
+      const loadingTask = pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        password: password || undefined,
+        ...getDefaultPdfOptions()
+      })
+      
+      let pdf
+      try {
+        pdf = await loadingTask.promise
+        setIsPasswordProtected(password ? true : false)
+        setNeedsPassword(false)
+        
+        toast({
+          title: "PDF loaded successfully",
+          description: "Processing pages for Aadhaar cards...",
+        })
+      } catch (error: any) {
+        console.error('PDF loading error:', error)
+        
+        // Handle version mismatch specifically
+        if (error.message && error.message.includes('API version') && error.message.includes('Worker version')) {
+          toast({
+            title: "PDF Version Error",
+            description: "There's a version mismatch with the PDF processor. Please refresh the page and try again.",
+            variant: "destructive"
+          })
+          setIsProcessing(false)
+          return
+        }
+        
+        if (error.name === 'PasswordException') {
+          setIsPasswordProtected(true)
+          if (!password) {
+            setNeedsPassword(true)
+            toast({
+              title: "Password Required",
+              description: "This PDF is password-protected. Please enter the password.",
+              variant: "destructive"
+            })
+            setIsProcessing(false)
+            return
+          } else {
+            setNeedsPassword(true)
+            toast({
+              title: "Incorrect Password",
+              description: "The password you entered is incorrect. Please try again.",
+              variant: "destructive"
+            })
+            setIsProcessing(false)
+            return
+          }
+        } else if (error.message && error.message.includes('Setting up fake worker failed')) {
+          toast({
+            title: "PDF Worker Error",
+            description: "There was an issue with the PDF processing engine. Please refresh the page and try again.",
+            variant: "destructive"
+          })
+          setIsProcessing(false)
+          return
+        }
+        throw error
+      }
+      
+      const extractedCards: AadhaarCardData[] = []
+      const previews: string[] = []
+      
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum)
+        
+        // Extract text to check if it's an Aadhaar page
+        const text = await extractTextFromPage(page)
+        
+        if (isAadhaarPage(text)) {
+          // Method 1: Use PDF-lib for precise cropping
+          try {
+            const { frontPdf, backPdf } = await processPdfWithLibCropping(arrayBuffer)
+            
+            // Convert cropped PDFs to images
+            const frontImage = await convertCroppedPdfToImage(frontPdf)
+            const backImage = await convertCroppedPdfToImage(backPdf)
+            
+            // Render page to image for preview
+            const pageImage = await renderPageToCanvas(page)
+            previews.push(pageImage)
+            
+            extractedCards.push({
+              frontImage,
+              backImage,
+              originalPage: pageNum
+            })
+          } catch (libError) {
+            console.warn('PDF-lib cropping failed, falling back to canvas method:', libError)
+            
+            // Method 2: Fallback to canvas-based extraction
+            const pageImage = await renderPageToCanvas(page)
+            previews.push(pageImage)
+            
+            const aadhaarData = await extractAadhaarFromPage(pageImage, pageNum)
+            if (aadhaarData) {
+              extractedCards.push(aadhaarData)
+            }
+          }
+        }
+      }
+      
+      if (extractedCards.length === 0) {
+        toast({
+          title: "No Aadhaar cards found",
+          description: "The PDF doesn't appear to contain any Aadhaar cards.",
+          variant: "destructive"
+        })
+      } else {
+        setAadhaarCards(extractedCards)
+        setPreviewImages(previews)
+        toast({
+          title: "Aadhaar cards extracted successfully",
+          description: `Found ${extractedCards.length} Aadhaar card(s) in the PDF.`,
+        })
+      }
+    } catch (error: any) {
+      console.error('Error processing PDF:', error)
+      
+      // Handle version mismatch in outer catch as well
+      if (error.message && error.message.includes('API version') && error.message.includes('Worker version')) {
+        toast({
+          title: "PDF Engine Error",
+          description: "There's a compatibility issue with the PDF processor. Please refresh the page and try again.",
+          variant: "destructive"
+        })
+      } else if (error.name === 'PasswordException') {
+        setIsPasswordProtected(true)
+        setNeedsPassword(true)
+        toast({
+          title: "Password Required",
+          description: "This PDF is password-protected. Please enter the password.",
           variant: "destructive"
         })
       } else {
@@ -579,6 +585,184 @@ export function PdfProcessor() {
       }
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  // Download PDF function
+  const downloadPdf = async (pdfBytes: Uint8Array, filename: string) => {
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+    
+    toast({
+      title: "Download started",
+      description: `${filename} is being downloaded.`,
+    })
+  }
+
+  // Convert canvas to PDF
+  const canvasToPdf = async (canvas: HTMLCanvasElement, filename: string): Promise<Uint8Array> => {
+    const pdfDoc = await PDFDocument.create()
+    
+    // Convert canvas to PNG bytes - browser-compatible method
+    const pngImageBytes = canvas.toDataURL('image/png').split(',')[1]
+    
+    // Convert base64 to Uint8Array (browser-compatible)
+    const binaryString = atob(pngImageBytes)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    
+    const pngImage = await pdfDoc.embedPng(bytes)
+    
+    // Calculate dimensions to fit Aadhaar card size
+    const page = pdfDoc.addPage([AADHAAR_DIMENSIONS.width * 2.83, AADHAAR_DIMENSIONS.height * 2.83]) // Convert mm to points
+    const { width: pageWidth, height: pageHeight } = page.getSize()
+    
+    // Center the image on the page
+    const imageWidth = pageWidth * 0.9
+    const imageHeight = (pngImage.height / pngImage.width) * imageWidth
+    const x = (pageWidth - imageWidth) / 2
+    const y = (pageHeight - imageHeight) / 2
+    
+    page.drawImage(pngImage, {
+      x,
+      y,
+      width: imageWidth,
+      height: imageHeight,
+    })
+    
+    return await pdfDoc.save()
+  }
+
+  // Create combined PDF with both front and back cards
+  const createCombinedPdf = async (frontCanvas: HTMLCanvasElement, backCanvas: HTMLCanvasElement): Promise<Uint8Array> => {
+    const pdfDoc = await PDFDocument.create()
+    
+    // Convert canvases to PNG bytes - browser-compatible method
+    const frontPngBytes = frontCanvas.toDataURL('image/png').split(',')[1]
+    const backPngBytes = backCanvas.toDataURL('image/png').split(',')[1]
+    
+    // Convert base64 to Uint8Array (browser-compatible)
+    const frontBinaryString = atob(frontPngBytes)
+    const frontBytes = new Uint8Array(frontBinaryString.length)
+    for (let i = 0; i < frontBinaryString.length; i++) {
+      frontBytes[i] = frontBinaryString.charCodeAt(i)
+    }
+    
+    const backBinaryString = atob(backPngBytes)
+    const backBytes = new Uint8Array(backBinaryString.length)
+    for (let i = 0; i < backBinaryString.length; i++) {
+      backBytes[i] = backBinaryString.charCodeAt(i)
+    }
+    
+    const frontImage = await pdfDoc.embedPng(frontBytes)
+    const backImage = await pdfDoc.embedPng(backBytes)
+    
+    // Create page with both cards side by side
+    const cardWidth = AADHAAR_DIMENSIONS.width * 2.83 // Convert mm to points
+    const cardHeight = AADHAAR_DIMENSIONS.height * 2.83
+    const pageWidth = cardWidth * 2 + 60 // Space for two cards plus margin
+    const pageHeight = cardHeight + 60 // Space for one card height plus margin
+    
+    const page = pdfDoc.addPage([pageWidth, pageHeight])
+    
+    // Draw front card (left side)
+    const frontWidth = cardWidth * 0.9
+    const frontHeight = (frontImage.height / frontImage.width) * frontWidth
+    page.drawImage(frontImage, {
+      x: 20,
+      y: (pageHeight - frontHeight) / 2,
+      width: frontWidth,
+      height: frontHeight,
+    })
+    
+    // Draw back card (right side)
+    const backWidth = cardWidth * 0.9
+    const backHeight = (backImage.height / backImage.width) * backWidth
+    page.drawImage(backImage, {
+      x: cardWidth + 40,
+      y: (pageHeight - backHeight) / 2,
+      width: backWidth,
+      height: backHeight,
+    })
+    
+    return await pdfDoc.save()
+  }
+
+  // Helper function to convert data URL to canvas
+  const dataURLToCanvas = async (dataURL: string): Promise<HTMLCanvasElement> => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')!
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
+        resolve(canvas)
+      }
+      img.src = dataURL
+    })
+  }
+
+  // Download front card as PDF
+  const downloadFrontPdf = async (card: AadhaarCardData, index: number) => {
+    try {
+      // Create canvas from front image
+      const canvas = await dataURLToCanvas(card.frontImage)
+      
+      const pdfBytes = await canvasToPdf(canvas, `aadhaar_${index + 1}_front.pdf`)
+      await downloadPdf(pdfBytes, `aadhaar_${index + 1}_front.pdf`)
+    } catch (error) {
+      console.error('Error creating front PDF:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create front card PDF.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Download back card as PDF
+  const downloadBackPdf = async (card: AadhaarCardData, index: number) => {
+    try {
+      // Create canvas from back image
+      const canvas = await dataURLToCanvas(card.backImage)
+      
+      const pdfBytes = await canvasToPdf(canvas, `aadhaar_${index + 1}_back.pdf`)
+      await downloadPdf(pdfBytes, `aadhaar_${index + 1}_back.pdf`)
+    } catch (error) {
+      console.error('Error creating back PDF:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create back card PDF.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Download both cards on same page as PDF
+  const downloadCombinedPdf = async (card: AadhaarCardData, index: number) => {
+    try {
+      // Create canvases from both images
+      const frontCanvas = await dataURLToCanvas(card.frontImage)
+      const backCanvas = await dataURLToCanvas(card.backImage)
+      
+      const pdfBytes = await createCombinedPdf(frontCanvas, backCanvas)
+      await downloadPdf(pdfBytes, `aadhaar_${index + 1}_combined.pdf`)
+    } catch (error) {
+      console.error('Error creating combined PDF:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create combined PDF.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -903,7 +1087,15 @@ export function PdfProcessor() {
                                 size="sm"
                               >
                                 <Download className="h-4 w-4 mr-2" />
-                                Download Front
+                                PNG
+                              </Button>
+                              <Button 
+                                onClick={() => downloadFrontPdf(card, index)}
+                                className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+                                size="sm"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                PDF
                               </Button>
                             </div>
                           </div>
@@ -930,10 +1122,36 @@ export function PdfProcessor() {
                                 size="sm"
                               >
                                 <Download className="h-4 w-4 mr-2" />
-                                Download Back
+                                PNG
+                              </Button>
+                              <Button 
+                                onClick={() => downloadBackPdf(card, index)}
+                                className="flex-1 bg-green-600 text-white hover:bg-green-700"
+                                size="sm"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                PDF
                               </Button>
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Combined Download Section */}
+                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-purple-300 mb-1">Download Both Cards</h4>
+                            <p className="text-purple-200 text-sm">Download front and back cards together on one page</p>
+                          </div>
+                          <Button 
+                            onClick={() => downloadCombinedPdf(card, index)}
+                            className="bg-purple-500 text-white hover:bg-purple-600"
+                            size="sm"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Combined PDF
+                          </Button>
                         </div>
                       </div>
 
@@ -1023,10 +1241,14 @@ export function PdfProcessor() {
                   </div>
                   <div className="flex gap-3">
                     <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">5</span>
-                    <p>Download the front and back images in PNG format for printing</p>
+                    <p>Download the front and back images in PNG or PDF format for printing</p>
                   </div>
                   <div className="flex gap-3">
                     <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">6</span>
+                    <p>Use "Combined PDF" to download both cards on the same page</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">7</span>
                     <p>Print at standard Aadhaar card size: 85.6mm × 53.98mm (3.37" × 2.125")</p>
                   </div>
                 </div>
@@ -1051,9 +1273,10 @@ export function PdfProcessor() {
                   <h4 className="text-yellow-300 font-medium mb-2">Important Notes:</h4>
                   <ul className="text-yellow-200 text-sm space-y-1">
                     <li>• The extractor automatically detects Aadhaar cards in PDF pages</li>
-                    <li>• Cards are split assuming front and back are side-by-side in the PDF</li>
-                    <li>• For best results, ensure your PDF has clear, high-quality Aadhaar images</li>
-                    <li>• Downloaded images are ready for standard card printing</li>
+                    <li>• Cards are extracted from the bottom portion of the page using precise cropping</li>
+                    <li>• Download options include PNG images and PDF files with proper dimensions</li>
+                    <li>• Combined PDF places both cards side by side for easy printing</li>
+                    <li>• All downloaded files are ready for standard card printing</li>
                     <li>• Password is only used for PDF decryption and is not stored</li>
                   </ul>
                 </div>
@@ -1067,3 +1290,4 @@ export function PdfProcessor() {
 }
 
 export default PdfProcessor;
+
