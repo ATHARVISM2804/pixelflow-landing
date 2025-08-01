@@ -48,7 +48,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </Button>
         )}
         
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 lg:ml-0 ml-10">
           {Icon && <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400 flex-shrink-0" />}
           <span className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">
             <span className="hidden sm:inline">{title}</span>
