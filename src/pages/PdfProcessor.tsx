@@ -47,6 +47,7 @@ export function PdfProcessor() {
   const [password, setPassword] = useState('')
   const [needsPassword, setNeedsPassword] = useState(false)
   const [isPasswordProtected, setIsPasswordProtected] = useState(false)
+  const [copies, setCopies] = useState(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -625,31 +626,36 @@ export function PdfProcessor() {
     
     const pngImage = await pdfDoc.embedPng(bytes)
     
-    // Create A4 page
-    const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
-    
-    // Calculate dimensions to fit card on A4 while maintaining aspect ratio
+    // Calculate dimensions for a single card
     const maxWidth = A4_DIMENSIONS.width - (A4_DIMENSIONS.margin * 2)
-    const maxHeight = A4_DIMENSIONS.height - (A4_DIMENSIONS.margin * 2)
+    const maxHeight = (A4_DIMENSIONS.height - (A4_DIMENSIONS.margin * (copies + 1))) / copies
     
     const scaleRatio = Math.min(
       maxWidth / AADHAAR_DIMENSIONS.width,
       maxHeight / AADHAAR_DIMENSIONS.height
-    ) * 0.5 // Scale down to 50% of max size for better presentation
+    )
 
-    const imageWidth = AADHAAR_DIMENSIONS.width * scaleRatio
-    const imageHeight = AADHAAR_DIMENSIONS.height * scaleRatio
-    
-    // Position the image at the top center of the page
-    const x = (A4_DIMENSIONS.width - imageWidth) / 2
-    const y = A4_DIMENSIONS.height - imageHeight - A4_DIMENSIONS.margin // Position from top
-    
-    page.drawImage(pngImage, {
-      x,
-      y,
-      width: imageWidth,
-      height: imageHeight,
-    })
+    const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
+    const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
+
+    // Create pages based on number of copies needed
+    const cardsPerPage = 1
+    const totalPages = Math.ceil(copies / cardsPerPage)
+
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
+      
+      // Position card at the top with proper margin
+      const x = (A4_DIMENSIONS.width - cardWidth) / 2
+      const y = A4_DIMENSIONS.height - cardHeight - A4_DIMENSIONS.margin
+
+      page.drawImage(pngImage, {
+        x,
+        y,
+        width: cardWidth,
+        height: cardHeight,
+      })
+    }
     
     return await pdfDoc.save()
   }
@@ -669,12 +675,16 @@ export function PdfProcessor() {
     const frontImage = await pdfDoc.embedPng(frontBytes)
     const backImage = await pdfDoc.embedPng(backBytes)
     
-    // Create A4 page
-    const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
+    // Remove const from page declaration
+    let page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
     
-    // Calculate card size to fit two cards on A4
-    const maxWidth = (A4_DIMENSIONS.width - (A4_DIMENSIONS.margin * 3)) / 2 // divide space for 2 cards
-    const maxHeight = A4_DIMENSIONS.height - (A4_DIMENSIONS.margin * 2)
+    // Calculate card size to fit multiple copies on A4
+    const margin = A4_DIMENSIONS.margin
+    const columns = 2 // 2 columns (front and back)
+    const rows = Math.min(copies, 4) // Max 4 rows to allow 8 cards (4 rows × 2 columns)
+    
+    const maxWidth = (A4_DIMENSIONS.width - (margin * (columns + 1))) / columns
+    const maxHeight = (A4_DIMENSIONS.height - (margin * (rows + 1))) / rows
     
     const scaleRatio = Math.min(
       maxWidth / AADHAAR_DIMENSIONS.width,
@@ -683,27 +693,40 @@ export function PdfProcessor() {
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
     const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
-    
-    // Calculate positions to align cards at the top with margin between them
-    const y = A4_DIMENSIONS.height - cardHeight - A4_DIMENSIONS.margin // Position from top
-    const x1 = A4_DIMENSIONS.margin
-    const x2 = A4_DIMENSIONS.width - cardWidth - A4_DIMENSIONS.margin
-    
-    // Draw front card (left side)
-    page.drawImage(frontImage, {
-      x: x1,
-      y,
-      width: cardWidth,
-      height: cardHeight,
-    })
-    
-    // Draw back card (right side)
-    page.drawImage(backImage, {
-      x: x2,
-      y,
-      width: cardWidth,
-      height: cardHeight,
-    })
+
+    // Calculate number of pages needed
+    const cardsPerPage = rows * 2 // 2 cards per row (front and back)
+    const totalPages = Math.ceil(copies / rows)
+
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      if (pageNum > 0) {
+        page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
+      }
+
+      // Draw rows of card pairs
+      for (let row = 0; row < rows; row++) {
+        const copyIndex = pageNum * rows + row
+        if (copyIndex < copies) {
+          const y = A4_DIMENSIONS.height - ((row + 1) * cardHeight) - (margin * (row + 1))
+          
+          // Draw front card
+          page.drawImage(frontImage, {
+            x: margin,
+            y,
+            width: cardWidth,
+            height: cardHeight,
+          })
+          
+          // Draw back card
+          page.drawImage(backImage, {
+            x: A4_DIMENSIONS.width - cardWidth - margin,
+            y,
+            width: cardWidth,
+            height: cardHeight,
+          })
+        }
+      }
+    }
     
     return await pdfDoc.save()
   }
@@ -869,6 +892,25 @@ export function PdfProcessor() {
       variant: "destructive"
     })
   }
+
+  // Add this component before the download buttons
+  const CopySelector = () => (
+    <div className="bg-gray-700/30 rounded-lg p-4 mb-4">
+      <Label htmlFor="copies" className="text-white mb-2">Number of Copies per Page</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id="copies"
+          type="number"
+          min="1"
+          max="8"
+          value={copies}
+          onChange={(e) => setCopies(Math.min(8, Math.max(1, parseInt(e.target.value) || 1)))}
+          className="w-20 bg-gray-800/50 border-gray-700 text-white"
+        />
+        <span className="text-purple-200 text-sm">(Max 8 per page)</span>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -1151,21 +1193,36 @@ export function PdfProcessor() {
                       </div>
 
                       {/* Combined Download Section */}
-                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="font-medium text-purple-300 mb-1">Download Both Cards</h4>
                             <p className="text-purple-200 text-sm">Download front and back cards together on one page</p>
                           </div>
-                          <Button 
-                            onClick={() => downloadCombinedPdf(card, index)}
-                            className="bg-purple-500 text-white hover:bg-purple-600"
-                            size="sm"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Combined PDF
-                          </Button>
                         </div>
+                        
+                        {/* Add Copy Selector here */}
+                        <div className="flex items-center gap-2">
+                          <Label className="text-purple-200 whitespace-nowrap">Number of Copies:</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="8"
+                            value={copies}
+                            onChange={(e) => setCopies(Math.min(8, Math.max(1, parseInt(e.target.value) || 1)))}
+                            className="w-20 bg-gray-800/50 border-gray-700 text-white"
+                          />
+                          <span className="text-purple-200 text-sm">(Max 8 per page)</span>
+                        </div>
+
+                        <Button 
+                          onClick={() => downloadCombinedPdf(card, index)}
+                          className="w-full bg-purple-500 text-white hover:bg-purple-600"
+                          size="sm"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download {copies} {copies === 1 ? 'Copy' : 'Copies'} as PDF
+                        </Button>
                       </div>
 
                       {/* Print Info */}
