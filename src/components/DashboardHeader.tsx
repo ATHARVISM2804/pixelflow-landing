@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { useAuth } from '../auth/AuthContext.tsx';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   User,
@@ -8,6 +10,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
+import NotificationDropdown from './NotificationDropdown'
 
 
 interface DashboardHeaderProps {
@@ -26,6 +29,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onMobileMenuToggle
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   
   // Get display name or fallback to email or default
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
@@ -33,8 +38,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   // Get profile photo URL if available
   const photoURL = user?.photoURL;
 
+  // Mock unread notification count
+  const unreadNotificationCount = 3;
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
   return (
-    <header className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
+    <header className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50 relative z-40">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
         {/* Mobile Menu Toggle */}
         {onMobileMenuToggle && (
@@ -70,22 +82,55 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <span className="text-xs sm:text-sm text-slate-300 hidden md:inline">
             Hey, {displayName}
           </span>
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
-          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
-            {photoURL ? (
-              <img 
-                src={photoURL} 
-                alt={displayName}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to icon if image fails to load
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <User className={`h-3 w-3 sm:h-4 sm:w-4 text-white ${photoURL ? 'hidden' : ''}`} />
+          
+          {/* Notification Bell */}
+          <div className="relative z-50">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className="relative text-slate-400 hover:text-white p-1"
+            >
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+              {unreadNotificationCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center bg-red-500 text-white border-0"
+                >
+                  {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <NotificationDropdown 
+              isOpen={isNotificationOpen}
+              onClose={() => setIsNotificationOpen(false)}
+            />
           </div>
+          
+          {/* User Profile Avatar */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleProfileClick}
+            className="relative p-0 hover:bg-transparent"
+          >
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-indigo-400 hover:ring-offset-2 hover:ring-offset-gray-900 transition-all">
+              {photoURL ? (
+                <img 
+                  src={photoURL} 
+                  alt={displayName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to icon if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <User className={`h-3 w-3 sm:h-4 sm:w-4 text-white ${photoURL ? 'hidden' : ''}`} />
+            </div>
+          </Button>
         </div>
       </div>
     </header>
