@@ -56,6 +56,13 @@ export function PdfProcessor() {
     height: 53.98, // 2.125 inches
   }
 
+  // Add A4 dimensions (in points - PDF uses 72 points per inch)
+  const A4_DIMENSIONS = {
+    width: 595.28,  // 210mm in points
+    height: 841.89, // 297mm in points
+    margin: 40      // margin in points
+  }
+
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -159,7 +166,7 @@ export function PdfProcessor() {
     const cropX = width / 11
     const cropY = height * 0.725 // Start from 40% down (bottom 60%)
     const cropWidth = (2 * width) / 5
-    const cropHeight = height / 5.4
+    const cropHeight = height / 5
 
     const frontCanvas = document.createElement('canvas')
     const frontCtx = frontCanvas.getContext('2d')!
@@ -185,8 +192,8 @@ export function PdfProcessor() {
     // Adjusted to crop from bottom 60% of the page
     const cropX = width / 2
     const cropY = height * 0.725 // Start from 40% down (bottom 60%)
-    const cropWidth = (3.7 * width) / 9
-    const cropHeight = height / 5.4
+    const cropWidth = (3.9 * width) / 9
+    const cropHeight = height / 5
 
     const backCanvas = document.createElement('canvas')
     const backCtx = backCanvas.getContext('2d')!
@@ -608,10 +615,8 @@ export function PdfProcessor() {
   const canvasToPdf = async (canvas: HTMLCanvasElement, filename: string): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
     
-    // Convert canvas to PNG bytes - browser-compatible method
+    // Convert canvas to PNG bytes
     const pngImageBytes = canvas.toDataURL('image/png').split(',')[1]
-    
-    // Convert base64 to Uint8Array (browser-compatible)
     const binaryString = atob(pngImageBytes)
     const bytes = new Uint8Array(binaryString.length)
     for (let i = 0; i < binaryString.length; i++) {
@@ -620,15 +625,24 @@ export function PdfProcessor() {
     
     const pngImage = await pdfDoc.embedPng(bytes)
     
-    // Calculate dimensions to fit Aadhaar card size
-    const page = pdfDoc.addPage([AADHAAR_DIMENSIONS.width * 2.83, AADHAAR_DIMENSIONS.height * 2.83]) // Convert mm to points
-    const { width: pageWidth, height: pageHeight } = page.getSize()
+    // Create A4 page
+    const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
     
-    // Center the image on the page
-    const imageWidth = pageWidth * 0.9
-    const imageHeight = (pngImage.height / pngImage.width) * imageWidth
-    const x = (pageWidth - imageWidth) / 2
-    const y = (pageHeight - imageHeight) / 2
+    // Calculate dimensions to fit card on A4 while maintaining aspect ratio
+    const maxWidth = A4_DIMENSIONS.width - (A4_DIMENSIONS.margin * 2)
+    const maxHeight = A4_DIMENSIONS.height - (A4_DIMENSIONS.margin * 2)
+    
+    const scaleRatio = Math.min(
+      maxWidth / AADHAAR_DIMENSIONS.width,
+      maxHeight / AADHAAR_DIMENSIONS.height
+    ) * 0.5 // Scale down to 50% of max size for better presentation
+
+    const imageWidth = AADHAAR_DIMENSIONS.width * scaleRatio
+    const imageHeight = AADHAAR_DIMENSIONS.height * scaleRatio
+    
+    // Position the image at the top center of the page
+    const x = (A4_DIMENSIONS.width - imageWidth) / 2
+    const y = A4_DIMENSIONS.height - imageHeight - A4_DIMENSIONS.margin // Position from top
     
     page.drawImage(pngImage, {
       x,
@@ -640,56 +654,55 @@ export function PdfProcessor() {
     return await pdfDoc.save()
   }
 
-  // Create combined PDF with both front and back cards
+  // Update createCombinedPdf for top positioning of both cards
   const createCombinedPdf = async (frontCanvas: HTMLCanvasElement, backCanvas: HTMLCanvasElement): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
     
-    // Convert canvases to PNG bytes - browser-compatible method
+    // Convert canvases to PNG bytes
     const frontPngBytes = frontCanvas.toDataURL('image/png').split(',')[1]
     const backPngBytes = backCanvas.toDataURL('image/png').split(',')[1]
     
-    // Convert base64 to Uint8Array (browser-compatible)
-    const frontBinaryString = atob(frontPngBytes)
-    const frontBytes = new Uint8Array(frontBinaryString.length)
-    for (let i = 0; i < frontBinaryString.length; i++) {
-      frontBytes[i] = frontBinaryString.charCodeAt(i)
-    }
-    
-    const backBinaryString = atob(backPngBytes)
-    const backBytes = new Uint8Array(backBinaryString.length)
-    for (let i = 0; i < backBinaryString.length; i++) {
-      backBytes[i] = backBinaryString.charCodeAt(i)
-    }
+    // Convert base64 to Uint8Array for both images
+    const frontBytes = Uint8Array.from(atob(frontPngBytes), c => c.charCodeAt(0))
+    const backBytes = Uint8Array.from(atob(backPngBytes), c => c.charCodeAt(0))
     
     const frontImage = await pdfDoc.embedPng(frontBytes)
     const backImage = await pdfDoc.embedPng(backBytes)
     
-    // Create page with both cards side by side
-    const cardWidth = AADHAAR_DIMENSIONS.width * 2.83 // Convert mm to points
-    const cardHeight = AADHAAR_DIMENSIONS.height * 2.83
-    const pageWidth = cardWidth * 2 + 60 // Space for two cards plus margin
-    const pageHeight = cardHeight + 60 // Space for one card height plus margin
+    // Create A4 page
+    const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
     
-    const page = pdfDoc.addPage([pageWidth, pageHeight])
+    // Calculate card size to fit two cards on A4
+    const maxWidth = (A4_DIMENSIONS.width - (A4_DIMENSIONS.margin * 3)) / 2 // divide space for 2 cards
+    const maxHeight = A4_DIMENSIONS.height - (A4_DIMENSIONS.margin * 2)
+    
+    const scaleRatio = Math.min(
+      maxWidth / AADHAAR_DIMENSIONS.width,
+      maxHeight / AADHAAR_DIMENSIONS.height
+    )
+
+    const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
+    const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
+    
+    // Calculate positions to align cards at the top with margin between them
+    const y = A4_DIMENSIONS.height - cardHeight - A4_DIMENSIONS.margin // Position from top
+    const x1 = A4_DIMENSIONS.margin
+    const x2 = A4_DIMENSIONS.width - cardWidth - A4_DIMENSIONS.margin
     
     // Draw front card (left side)
-    const frontWidth = cardWidth * 0.9
-    const frontHeight = (frontImage.height / frontImage.width) * frontWidth
     page.drawImage(frontImage, {
-      x: 20,
-      y: (pageHeight - frontHeight) / 2,
-      width: frontWidth,
-      height: frontHeight,
+      x: x1,
+      y,
+      width: cardWidth,
+      height: cardHeight,
     })
     
     // Draw back card (right side)
-    const backWidth = cardWidth * 0.9
-    const backHeight = (backImage.height / backImage.width) * backWidth
     page.drawImage(backImage, {
-      x: cardWidth + 40,
-      y: (pageHeight - backHeight) / 2,
-      width: backWidth,
-      height: backHeight,
+      x: x2,
+      y,
+      width: cardWidth,
+      height: cardHeight,
     })
     
     return await pdfDoc.save()
