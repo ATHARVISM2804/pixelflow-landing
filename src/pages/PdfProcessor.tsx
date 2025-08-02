@@ -26,7 +26,7 @@ import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
 import * as pdfjsLib from 'pdfjs-dist'
-import { PDFDocument, rgb } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
 
 // Configure PDF.js on component load
@@ -36,6 +36,7 @@ interface AadhaarCardData {
   frontImage: string
   backImage: string
   originalPage: number
+  phoneNumber?: string // Add optional phone number
 }
 
 export function PdfProcessor() {
@@ -48,6 +49,7 @@ export function PdfProcessor() {
   const [needsPassword, setNeedsPassword] = useState(false)
   const [isPasswordProtected, setIsPasswordProtected] = useState(false)
   const [copies, setCopies] = useState(1)
+  const [phoneNumber, setPhoneNumber] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -191,9 +193,9 @@ export function PdfProcessor() {
     
     // Crop from bottom portion where Aadhaar cards are located
     // Adjusted to crop from bottom 60% of the page
-    const cropX = width / 2
+    const cropX = width / 1.97
     const cropY = height * 0.725 // Start from 40% down (bottom 60%)
-    const cropWidth = (3.9 * width) / 9
+    const cropWidth = (3.6 * width) / 9
     const cropHeight = height / 5
 
     const backCanvas = document.createElement('canvas')
@@ -617,7 +619,7 @@ export function PdfProcessor() {
     const pdfDoc = await PDFDocument.create()
     
     // Increase PNG quality
-    const pngImageBytes = canvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
+    const pngImageBytes = canvas.toDataURL('image/png', 1.0).split(',')[1]
     
     // Convert canvas to PNG bytes
     const binaryString = atob(pngImageBytes)
@@ -628,29 +630,27 @@ export function PdfProcessor() {
     
     const pngImage = await pdfDoc.embedPng(bytes)
     
-    // Calculate dimensions for a single card
-    const maxWidth = A4_DIMENSIONS.width - (A4_DIMENSIONS.margin * 2)
-    const maxHeight = (A4_DIMENSIONS.height - (A4_DIMENSIONS.margin * (copies + 1))) / copies
+    // Adjust dimensions for single card
+    const margin = 40
+    const availableWidth = A4_DIMENSIONS.width - (2 * margin)
+    const availableHeight = A4_DIMENSIONS.height - (2 * margin)
     
+    // Calculate scale ratio to fit card within margins while maintaining aspect ratio
     const scaleRatio = Math.min(
-      maxWidth / AADHAAR_DIMENSIONS.width,
-      maxHeight / AADHAAR_DIMENSIONS.height
-    ) * 1.2 // Added 20% scaling boost
+      availableWidth / AADHAAR_DIMENSIONS.width,
+      availableHeight / AADHAAR_DIMENSIONS.height
+    ) * 0.5 // Slightly reduce scale to ensure margins
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
     const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
 
-    // Create pages based on number of copies needed
-    const cardsPerPage = 1
-    const totalPages = Math.ceil(copies / cardsPerPage)
+    // Center card on page
+    const x = (A4_DIMENSIONS.width - cardWidth) / 2
+    const y = A4_DIMENSIONS.height - cardHeight - margin
 
-    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+    // Create single page for each copy
+    for (let i = 0; i < copies; i++) {
       const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
-      
-      // Position card at the top with proper margin
-      const x = (A4_DIMENSIONS.width - cardWidth) / 2
-      const y = A4_DIMENSIONS.height - cardHeight - A4_DIMENSIONS.margin
-
       page.drawImage(pngImage, {
         x,
         y,
@@ -665,6 +665,7 @@ export function PdfProcessor() {
   // Update createCombinedPdf for top positioning of both cards
   const createCombinedPdf = async (frontCanvas: HTMLCanvasElement, backCanvas: HTMLCanvasElement): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
     
     // Increase quality of PNG conversion
     const frontPngBytes = frontCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
@@ -677,56 +678,62 @@ export function PdfProcessor() {
     const frontImage = await pdfDoc.embedPng(frontBytes)
     const backImage = await pdfDoc.embedPng(backBytes)
     
-    // Remove const from page declaration
-    let page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
+    // Create first page and remove array of pages
+    const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
     
-    // Calculate card size to fit multiple copies on A4
-    const margin = A4_DIMENSIONS.margin
-    const columns = 2 // 2 columns (front and back)
-    const rows = Math.min(copies, 4) // Max 4 rows to allow 8 cards (4 rows × 2 columns)
+    const margin = 40
+    const spacing = 20
+    const columns = 2
+    const rows = Math.min(copies, 4)
     
-    const maxWidth = (A4_DIMENSIONS.width - (margin * (columns + 1))) / columns
-    const maxHeight = (A4_DIMENSIONS.height - (margin * (rows + 1))) / rows
+    // Calculate dimensions for centered layout
+    const availableWidth = A4_DIMENSIONS.width - (2 * margin) - spacing
+    const availableHeight = A4_DIMENSIONS.height - (2 * margin)
     
     const scaleRatio = Math.min(
-      maxWidth / AADHAAR_DIMENSIONS.width,
-      maxHeight / AADHAAR_DIMENSIONS.height
-    ) * 1.2 // Added 20% scaling boost
+      (availableWidth / 2) / AADHAAR_DIMENSIONS.width,
+      (availableHeight / rows) / AADHAAR_DIMENSIONS.height
+    )
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
     const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
 
-    // Calculate number of pages needed
-    const cardsPerPage = rows * 2 // 2 cards per row (front and back)
-    const totalPages = Math.ceil(copies / rows)
+    // Center cards horizontally
+    const startX = (A4_DIMENSIONS.width - ((cardWidth * 2) + spacing)) / 2
 
-    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
-      if (pageNum > 0) {
-        page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
-      }
+    // Draw cards on the single page
+    for (let row = 0; row < copies; row++) {
+      const y = A4_DIMENSIONS.height - ((row + 1) * cardHeight) - margin - (row * spacing)
+      
+      // Draw front card
+      page.drawImage(frontImage, {
+        x: startX,
+        y,
+        width: cardWidth,
+        height: cardHeight,
+      })
+      
+      // Draw back card with spacing
+      page.drawImage(backImage, {
+        x: startX + cardWidth + spacing,
+        y,
+        width: cardWidth,
+        height: cardHeight,
+      })
 
-      // Draw rows of card pairs
-      for (let row = 0; row < rows; row++) {
-        const copyIndex = pageNum * rows + row
-        if (copyIndex < copies) {
-          const y = A4_DIMENSIONS.height - ((row + 1) * cardHeight) - (margin * (row + 1))
-          
-          // Draw front card
-          page.drawImage(frontImage, {
-            x: margin,
-            y,
-            width: cardWidth,
-            height: cardHeight,
-          })
-          
-          // Draw back card
-          page.drawImage(backImage, {
-            x: A4_DIMENSIONS.width - cardWidth - margin,
-            y,
-            width: cardWidth,
-            height: cardHeight,
-          })
-        }
+      // Add phone number if provided
+      if (phoneNumber) {
+        const fontSize = 8
+        const text = `Ph: ${phoneNumber}`
+        const textWidth = font.widthOfTextAtSize(text, fontSize)
+        
+        page.drawText(text, {
+          x: startX + cardWidth - textWidth - 5,
+          y: y + 5,
+          size: fontSize,
+          font,
+          color: rgb(0, 0, 0),
+        })
       }
     }
     
@@ -910,6 +917,26 @@ export function PdfProcessor() {
           className="w-20 bg-gray-800/50 border-gray-700 text-white"
         />
         <span className="text-purple-200 text-sm">(Max 8 per page)</span>
+      </div>
+    </div>
+  )
+
+  // Add after the copies selector component
+  const PhoneNumberInput = () => (
+    <div className="bg-gray-700/30 rounded-lg p-4 mb-4">
+      <Label htmlFor="phone" className="text-white mb-2">Phone Number (Optional)</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id="phone"
+          type="tel"
+          pattern="[0-9]*"
+          maxLength={10}
+          placeholder="Enter phone number"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+          className="w-40 bg-gray-800/50 border-gray-700 text-white"
+        />
+        <span className="text-purple-200 text-sm">(Will be printed on card)</span>
       </div>
     </div>
   )
@@ -1362,4 +1389,3 @@ export function PdfProcessor() {
 }
 
 export default PdfProcessor;
-
