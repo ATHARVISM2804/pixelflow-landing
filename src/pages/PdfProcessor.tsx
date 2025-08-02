@@ -26,7 +26,7 @@ import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
 import * as pdfjsLib from 'pdfjs-dist'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, rgb } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
 
 // Configure PDF.js on component load
@@ -110,7 +110,7 @@ export function PdfProcessor() {
     return aadhaarKeywords.some(keyword => text.includes(keyword))
   }
 
-  const renderPageToCanvas = async (page: any, scale: number = 2): Promise<string> => {
+  const renderPageToCanvas = async (page: any, scale: number = 4): Promise<string> => { // Increased scale from 2 to 4
     const viewport = page.getViewport({ scale })
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')!
@@ -246,9 +246,9 @@ export function PdfProcessor() {
   // Convert cropped PDF to image
   const convertCroppedPdfToImage = async (pdfBytes: Uint8Array): Promise<string> => {
     const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise
-    const page = await pdf.getPage(1) // Get first page
+    const page = await pdf.getPage(1)
     
-    const viewport = page.getViewport({ scale: 2 })
+    const viewport = page.getViewport({ scale: 4 }) // Increased scale from 2 to 4
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')!
     
@@ -616,8 +616,10 @@ export function PdfProcessor() {
   const canvasToPdf = async (canvas: HTMLCanvasElement, filename: string): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
     
+    // Increase PNG quality
+    const pngImageBytes = canvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
+    
     // Convert canvas to PNG bytes
-    const pngImageBytes = canvas.toDataURL('image/png').split(',')[1]
     const binaryString = atob(pngImageBytes)
     const bytes = new Uint8Array(binaryString.length)
     for (let i = 0; i < binaryString.length; i++) {
@@ -633,7 +635,7 @@ export function PdfProcessor() {
     const scaleRatio = Math.min(
       maxWidth / AADHAAR_DIMENSIONS.width,
       maxHeight / AADHAAR_DIMENSIONS.height
-    )
+    ) * 1.2 // Added 20% scaling boost
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
     const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
@@ -664,9 +666,9 @@ export function PdfProcessor() {
   const createCombinedPdf = async (frontCanvas: HTMLCanvasElement, backCanvas: HTMLCanvasElement): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
     
-    // Convert canvases to PNG bytes
-    const frontPngBytes = frontCanvas.toDataURL('image/png').split(',')[1]
-    const backPngBytes = backCanvas.toDataURL('image/png').split(',')[1]
+    // Increase quality of PNG conversion
+    const frontPngBytes = frontCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
+    const backPngBytes = backCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
     
     // Convert base64 to Uint8Array for both images
     const frontBytes = Uint8Array.from(atob(frontPngBytes), c => c.charCodeAt(0))
@@ -689,7 +691,7 @@ export function PdfProcessor() {
     const scaleRatio = Math.min(
       maxWidth / AADHAAR_DIMENSIONS.width,
       maxHeight / AADHAAR_DIMENSIONS.height
-    )
+    ) * 1.2 // Added 20% scaling boost
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
     const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
