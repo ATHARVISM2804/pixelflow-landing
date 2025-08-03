@@ -721,15 +721,15 @@ export function PdfProcessor() {
         height: cardHeight,
       })
 
-      // Add phone number if provided
+      // Add phone number if provided - now on back card
       if (phoneNumber) {
-        const fontSize = 8
+        const fontSize = 6
         const text = `Ph: ${phoneNumber}`
         const textWidth = font.widthOfTextAtSize(text, fontSize)
         
         page.drawText(text, {
-          x: startX + cardWidth - textWidth - 5,
-          y: y + 5,
+          x: startX + cardWidth + spacing + (cardWidth - textWidth) / 15, // Center on back card
+          y: y + cardHeight / 2.7, // Center vertically on card
           size: fontSize,
           font,
           color: rgb(0, 0, 0),
@@ -936,7 +936,7 @@ export function PdfProcessor() {
           onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
           className="w-40 bg-gray-800/50 border-gray-700 text-white"
         />
-        <span className="text-purple-200 text-sm">(Will be printed on card)</span>
+        <span className="text-purple-200 text-sm">(Will be printed on back card)</span>
       </div>
     </div>
   )
@@ -1242,6 +1242,21 @@ export function PdfProcessor() {
                             className="w-20 bg-gray-800/50 border-gray-700 text-white"
                           />
                           <span className="text-purple-200 text-sm">(Max 8 per page)</span>
+                        </div>
+
+                        {/* Phone Number Input */}
+                        <div className="flex items-center gap-2">
+                          <Label className="text-purple-200 whitespace-nowrap">Phone Number:</Label>
+                          <Input
+                            type="tel"
+                            pattern="[0-9]*"
+                            maxLength={10}
+                            placeholder="Enter phone number (optional)"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                            className="w-40 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400"
+                          />
+                          <span className="text-purple-200 text-sm">(Will be printed on back card)</span>
                         </div>
 
                         <Button 
