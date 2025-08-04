@@ -678,13 +678,13 @@ export function PdfProcessor() {
     const frontImage = await pdfDoc.embedPng(frontBytes)
     const backImage = await pdfDoc.embedPng(backBytes)
     
-    // Create first page and remove array of pages
-    const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
+    // Remove this line - don't create an initial page
+    // const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
     
     const margin = 40
     const spacing = 20
     const columns = 2
-    const rows = Math.min(copies, 4)
+    const maxRowsPerPage = 4 // Fixed to 4 copies per page
     
     // Calculate dimensions for centered layout
     const availableWidth = A4_DIMENSIONS.width - (2 * margin) - spacing
@@ -692,7 +692,7 @@ export function PdfProcessor() {
     
     const scaleRatio = Math.min(
       (availableWidth / 2) / AADHAAR_DIMENSIONS.width,
-      (availableHeight / rows) / AADHAAR_DIMENSIONS.height
+      (availableHeight / maxRowsPerPage) / AADHAAR_DIMENSIONS.height
     )
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
@@ -701,39 +701,52 @@ export function PdfProcessor() {
     // Center cards horizontally
     const startX = (A4_DIMENSIONS.width - ((cardWidth * 2) + spacing)) / 2
 
-    // Draw cards on the single page
-    for (let row = 0; row < copies; row++) {
-      const y = A4_DIMENSIONS.height - ((row + 1) * cardHeight) - margin - (row * spacing)
-      
-      // Draw front card
-      page.drawImage(frontImage, {
-        x: startX,
-        y,
-        width: cardWidth,
-        height: cardHeight,
-      })
-      
-      // Draw back card with spacing
-      page.drawImage(backImage, {
-        x: startX + cardWidth + spacing,
-        y,
-        width: cardWidth,
-        height: cardHeight,
-      })
+    // Calculate total pages needed
+    const totalPages = Math.ceil(copies / maxRowsPerPage)
 
-      // Add phone number if provided - now on back card
-      if (phoneNumber) {
-        const fontSize = 6
-        const text = `Ph: ${phoneNumber}`
-        const textWidth = font.widthOfTextAtSize(text, fontSize)
+    // Create pages for all copies
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
+      
+      // Calculate how many rows to draw on this page
+      const startCopy = pageNum * maxRowsPerPage
+      const endCopy = Math.min(startCopy + maxRowsPerPage, copies)
+      const rowsOnThisPage = endCopy - startCopy
+
+      // Draw cards on this page
+      for (let row = 0; row < rowsOnThisPage; row++) {
+        const y = A4_DIMENSIONS.height - ((row + 1) * cardHeight) - margin - (row * spacing)
         
-        page.drawText(text, {
-          x: startX + cardWidth + spacing + (cardWidth - textWidth) / 15, // Center on back card
-          y: y + cardHeight / 2.7, // Center vertically on card
-          size: fontSize,
-          font,
-          color: rgb(0, 0, 0),
+        // Draw front card
+        page.drawImage(frontImage, {
+          x: startX,
+          y,
+          width: cardWidth,
+          height: cardHeight,
         })
+        
+        // Draw back card with spacing
+        page.drawImage(backImage, {
+          x: startX + cardWidth + spacing,
+          y,
+          width: cardWidth,
+          height: cardHeight,
+        })
+
+        // Add phone number if provided - ONLY on front card
+        if (phoneNumber) {
+          const fontSize = 6
+          const text = `Ph: ${phoneNumber}`
+          
+          // Add phone number on front card (below gender area, left side)
+          page.drawText(text, {
+            x: startX + 77.7,
+            y: y + cardHeight * 0.515,
+            size: fontSize,
+            font,
+            color: rgb(0, 0, 0),
+          })
+        }
       }
     }
     
@@ -911,12 +924,12 @@ export function PdfProcessor() {
           id="copies"
           type="number"
           min="1"
-          max="8"
+          max="4"
           value={copies}
-          onChange={(e) => setCopies(Math.min(8, Math.max(1, parseInt(e.target.value) || 1)))}
+          onChange={(e) => setCopies(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))}
           className="w-20 bg-gray-800/50 border-gray-700 text-white"
         />
-        <span className="text-purple-200 text-sm">(Max 8 per page)</span>
+        <span className="text-purple-200 text-sm">(Max 4 per page)</span>
       </div>
     </div>
   )
@@ -936,7 +949,7 @@ export function PdfProcessor() {
           onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
           className="w-40 bg-gray-800/50 border-gray-700 text-white"
         />
-        <span className="text-purple-200 text-sm">(Will be printed on back card)</span>
+        <span className="text-purple-200 text-sm">(Will be printed on front card)</span>
       </div>
     </div>
   )
@@ -1236,12 +1249,12 @@ export function PdfProcessor() {
                           <Input
                             type="number"
                             min="1"
-                            max="8"
+                            max="20"
                             value={copies}
-                            onChange={(e) => setCopies(Math.min(8, Math.max(1, parseInt(e.target.value) || 1)))}
+                            onChange={(e) => setCopies(Math.min(20, Math.max(1, parseInt(e.target.value) || 1)))}
                             className="w-20 bg-gray-800/50 border-gray-700 text-white"
                           />
-                          <span className="text-purple-200 text-sm">(Max 8 per page)</span>
+                          <span className="text-purple-200 text-sm">(Max 4 per page, 20 total)</span>
                         </div>
 
                         {/* Phone Number Input */}
@@ -1256,7 +1269,7 @@ export function PdfProcessor() {
                             onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                             className="w-40 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400"
                           />
-                          <span className="text-purple-200 text-sm">(Will be printed on back card)</span>
+                          <span className="text-purple-200 text-sm">(Will be printed on front card)</span>
                         </div>
 
                         <Button 
@@ -1404,3 +1417,4 @@ export function PdfProcessor() {
 }
 
 export default PdfProcessor;
+
