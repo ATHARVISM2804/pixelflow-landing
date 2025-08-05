@@ -28,6 +28,7 @@ import { useToast } from "@/components/ui/use-toast"
 import * as pdfjsLib from 'pdfjs-dist'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
+import overlayImage from '@/assets/overlay1.png'; // You'll need to add this image to your assets folder
 
 // Configure PDF.js on component load
 configurePdfJs()
@@ -168,7 +169,7 @@ export function PdfProcessor() {
     // Adjusted to crop from bottom 60% of the page
     const cropX = width / 11
     const cropY = height * 0.725 // Start from 40% down (bottom 60%)
-    const cropWidth = (2 * width) / 5
+    const cropWidth = (2 * width) / 5 // Keep the original card width
     const cropHeight = height / 5
 
     const frontCanvas = document.createElement('canvas')
@@ -183,6 +184,26 @@ export function PdfProcessor() {
       cropX, cropY, cropWidth, cropHeight,
       0, 0, cropWidth, cropHeight
     )
+    
+    // Add overlay to the front card
+    const overlay = new Image()
+    await new Promise((resolve) => {
+      overlay.onload = resolve
+      overlay.src = overlayImage
+    })
+    
+    // Calculate dimensions for centered, smaller overlay - only make the overlay smaller
+    const overlayScale = 0.4 // Make overlay 40% of the card size
+
+    const overlayWidth = cropWidth * 0.7
+    const overlayHeight = cropHeight * 0.35
+    
+    // Calculate position to center the overlay
+    const overlayX = 5*(cropWidth - overlayWidth) / 5
+    const overlayY = 6*(cropHeight - overlayHeight) / 8
+    
+    // Draw the overlay centered with reduced size
+    frontCtx.drawImage(overlay, overlayX, overlayY, overlayWidth, overlayHeight)
     
     return frontCanvas.toDataURL('image/png')
   }
@@ -667,6 +688,11 @@ export function PdfProcessor() {
     const pdfDoc = await PDFDocument.create()
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
     
+    // Load and embed the overlay image
+    const response = await fetch(overlayImage)
+    const overlayBytes = new Uint8Array(await response.arrayBuffer())
+    const overlayPng = await pdfDoc.embedPng(overlayBytes)
+    
     // Increase quality of PNG conversion
     const frontPngBytes = frontCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
     const backPngBytes = backCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
@@ -725,6 +751,15 @@ export function PdfProcessor() {
           height: cardHeight,
         })
         
+        // Draw overlay on front card
+        // page.drawImage(overlayPng, {
+        //   x: startX + cardWidth/4, // Position at 1/4 of the card width from left
+        //   y: y + cardHeight/4,     // Position at 1/4 of the card height from top
+        //   width: cardWidth/2,      // Width is half of the card width
+        //   height: cardHeight/2,    // Height is half of the card height
+        //   opacity: 0.8,
+        // })
+        
         // Draw back card with spacing
         page.drawImage(backImage, {
           x: startX + cardWidth + spacing,
@@ -736,12 +771,12 @@ export function PdfProcessor() {
         // Add phone number if provided - ONLY on front card
         if (phoneNumber) {
           const fontSize = 6
-          const text = `Ph: ${phoneNumber}`
+          const text = `Mob : ${phoneNumber}`
           
           // Add phone number on front card (below gender area, left side)
           page.drawText(text, {
             x: startX + 77.7,
-            y: y + cardHeight * 0.515,
+            y: y + cardHeight * 0.48,
             size: fontSize,
             font,
             color: rgb(0, 0, 0),
@@ -1319,12 +1354,13 @@ export function PdfProcessor() {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <h4 className="font-medium text-white text-center">Front Side</h4>
-                        <div className="bg-gray-800 rounded-lg p-4">
+                        <div className="bg-gray-800 rounded-lg p-4 relative">
                           <img 
                             src={aadhaarCards[selectedCardIndex].frontImage} 
                             alt="Aadhaar Front Preview"
                             className="w-full h-auto rounded-lg"
                           />
+                          {/* No need for overlay here as it's already embedded in the frontImage */}
                         </div>
                       </div>
                       <div className="space-y-3">
@@ -1417,4 +1453,5 @@ export function PdfProcessor() {
 }
 
 export default PdfProcessor;
+ 
 
