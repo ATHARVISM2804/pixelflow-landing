@@ -1412,7 +1412,7 @@ export function PdfProcessor() {
                   </div>
                   <div className="flex gap-3">
                     <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">7</span>
-                    <p>Print at standard Aadhaar card size: 85.6mm × 53.98mm (3.37" × 2.125")</p>
+                    <p>Print at standard Aadhaar card size: 85.6mm  × 53.98mm (3.37" × 2.125")</p>
                   </div>
                 </div>
                 
