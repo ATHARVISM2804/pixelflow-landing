@@ -30,6 +30,8 @@ import PdfProcessor from "./pages/PdfProcessor";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Profile from "./pages/Profile";
+import PdfTextExtractor from "./pages/Dummy.tsx";
+import AadhaarOverlayPDF from "./components/AadhaarOverlayPDF.tsx";
 // import Dummy from "./pages/Dummy.tsx";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/overlay" element={<AadhaarOverlayPDF />} />
+            <Route path="/text" element={<PdfTextExtractor />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/passport-photo" element={<ProtectedRoute><PassportPhoto /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />

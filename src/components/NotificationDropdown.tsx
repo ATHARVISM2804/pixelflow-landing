@@ -11,7 +11,6 @@ import {
   CheckCircle, 
   Clock,
   Trash2,
-  MarkAsUnread
 } from "lucide-react"
 
 interface Notification {
