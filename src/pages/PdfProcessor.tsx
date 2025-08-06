@@ -28,7 +28,7 @@ import { useToast } from "@/components/ui/use-toast"
 import * as pdfjsLib from 'pdfjs-dist'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
-import overlayImage from '@/assets/overlay1.png'; // You'll need to add this image to your assets folder
+import overlayImage from '@/assets/overlay3.png'; // You'll need to add this image to your assets folder
 
 // Configure PDF.js on component load
 configurePdfJs()
@@ -660,7 +660,7 @@ export function PdfProcessor() {
     const scaleRatio = Math.min(
       availableWidth / AADHAAR_DIMENSIONS.width,
       availableHeight / AADHAAR_DIMENSIONS.height
-    ) * 0.5 // Slightly reduce scale to ensure margins
+    ) * 0.98 // Slightly reduce scale to ensure margins
 
     const cardWidth = AADHAAR_DIMENSIONS.width * scaleRatio
     const cardHeight = AADHAAR_DIMENSIONS.height * scaleRatio
