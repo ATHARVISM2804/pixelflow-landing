@@ -195,11 +195,11 @@ export function PdfProcessor() {
     // Calculate dimensions for centered, smaller overlay - only make the overlay smaller
     const overlayScale = 0.4 // Make overlay 40% of the card size
 
-    const overlayWidth = cropWidth * 0.7
+    const overlayWidth = cropWidth * 0.72
     const overlayHeight = cropHeight * 0.35
     
     // Calculate position to center the overlay
-    const overlayX = 5*(cropWidth - overlayWidth) / 5
+    const overlayX = 5.12*(cropWidth - overlayWidth) / 5
     const overlayY = 6*(cropHeight - overlayHeight) / 8
     
     // Draw the overlay centered with reduced size
