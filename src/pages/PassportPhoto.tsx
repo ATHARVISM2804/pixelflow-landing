@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react'
+// import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import {
   Card,
   CardContent,
@@ -27,6 +29,16 @@ import {
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 
+const A4_DIMENSIONS = {
+  width: 210, // mm
+  height: 297, // mm
+}
+
+const ORIGINAL_PASSPORT = {
+  width: 35, // mm
+  height: 45, // mm
+}
+
 export function PassportPhoto() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
@@ -38,6 +50,7 @@ export function PassportPhoto() {
   })
   const [isMultiple, setIsMultiple] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -51,6 +64,50 @@ export function PassportPhoto() {
   const toggleMultiple = () => {
     setIsMultiple(!isMultiple)
     setSelectedFiles([])
+  }
+
+  const handleDownload = async () => {
+    if (!selectedFiles.length) return
+
+    try {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+
+      const margin = 10
+      const spacing = 2
+      const photosPerRow = Math.floor((A4_DIMENSIONS.width - 2 * margin + spacing) / (ORIGINAL_PASSPORT.width + spacing))
+      const photosPerCol = Math.floor((A4_DIMENSIONS.height - 2 * margin + spacing) / (ORIGINAL_PASSPORT.height + spacing))
+
+      for (let i = 0; i < formData.number; i++) {
+        const file = selectedFiles[i % selectedFiles.length]
+        const img = new Image()
+        img.src = URL.createObjectURL(file)
+        await new Promise((resolve) => { img.onload = resolve })
+
+        const row = Math.floor(i / photosPerRow)
+        const col = i % photosPerRow
+        const x = margin + (col * (ORIGINAL_PASSPORT.width + spacing))
+        const y = margin + (row * (ORIGINAL_PASSPORT.height + spacing))
+
+        // Draw border box
+        pdf.setDrawColor(200) // light gray border
+        pdf.rect(x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height)
+
+        // Place the photo inside the box
+        pdf.addImage(img, 'JPEG', x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height)
+
+        if ((i + 1) % (photosPerRow * photosPerCol) === 0 && i + 1 < formData.number) {
+          pdf.addPage()
+        }
+      }
+
+      pdf.save(`passport_photos_${formData.name || 'download'}.pdf`)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+    }
   }
 
   return (
@@ -208,17 +265,31 @@ export function PassportPhoto() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center overflow-hidden">
+                <div ref={previewRef} className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center overflow-hidden p-[10mm]">
                   {selectedFiles.length > 0 ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2 p-2 sm:p-4 max-h-full overflow-auto">
+                    <div 
+                      className="grid gap-[2mm] w-full h-full"
+                      style={{
+                        gridTemplateColumns: `repeat(auto-fit, ${ORIGINAL_PASSPORT.width}mm)`,
+                        gridAutoRows: `${ORIGINAL_PASSPORT.height}mm`,
+                        alignContent: 'start'
+                      }}
+                    >
                       {Array.from({ length: formData.number }).map((_, index) => (
-                        <div key={index} className="aspect-[3/4] bg-gray-200 rounded border overflow-hidden">
+                        <div 
+                          key={index} 
+                          className="bg-white rounded overflow-hidden flex items-center justify-center border border-gray-200"
+                          style={{
+                            width: `${ORIGINAL_PASSPORT.width}mm`,
+                            height: `${ORIGINAL_PASSPORT.height}mm`,
+                            backgroundColor: formData.backgroundColor
+                          }}
+                        >
                           {selectedFiles[index % selectedFiles.length] && (
                             <img 
                               src={URL.createObjectURL(selectedFiles[index % selectedFiles.length])}
                               alt={`Photo ${index + 1}`}
                               className="w-full h-full object-cover"
-                              style={{ backgroundColor: formData.backgroundColor }}
                             />
                           )}
                         </div>
@@ -228,7 +299,11 @@ export function PassportPhoto() {
                     <p className="text-gray-600 text-sm">Preview will appear here</p>
                   )}
                 </div>
-                <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm">
+                <Button 
+                  className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm"
+                  onClick={handleDownload}
+                  disabled={selectedFiles.length === 0}
+                >
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Download
                 </Button>
@@ -242,4 +317,3 @@ export function PassportPhoto() {
 }
 
 export default PassportPhoto
-
