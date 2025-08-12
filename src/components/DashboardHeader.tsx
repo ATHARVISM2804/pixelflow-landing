@@ -33,6 +33,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [balance] = useState(0); // You can replace with actual balance logic
   
   // Get display name or fallback to email or default
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
@@ -76,13 +77,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-        {showNewServiceButton && (
-          <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg font-medium shadow-lg transition-all text-xs sm:text-sm">
-            <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">New Service Request</span>
-            <span className="sm:hidden">New</span>
-          </Button>
-        )}
+        {/* Wallet Button with Balance */}
+        <Button
+          className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-3 sm:px-5 py-1 sm:py-2 rounded-lg font-medium shadow-lg transition-all text-xs sm:text-sm flex items-center gap-2"
+          onClick={handleWalletClick}
+        >
+          <Wallet className="h-5 w-5 sm:h-6 sm:w-6 mr-1" />
+          <span className="font-bold">₹{balance}</span>
+          <span className="hidden sm:inline">Wallet</span>
+        </Button>
         
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-xs sm:text-sm text-slate-300 hidden md:inline">
@@ -90,7 +93,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </span>
           
           {/* Notification Bell */}
-          <div className="relative z-50">
+          {/* <div className="relative z-50">
             <Button
               variant="ghost"
               size="sm"
@@ -112,19 +115,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               isOpen={isNotificationOpen}
               onClose={() => setIsNotificationOpen(false)}
             />
-          </div>
+          </div> */}
 
-          {/* Wallet Icon */}
-          <Button
-            variant="ghost"
-            // size="sm"
-            onClick={handleWalletClick}
-            className="relative text-slate-400 hover:text-white p-1"
-            aria-label="Wallet"
-          >
-            <Wallet className="text-2xl sm:h-8 sm:w-8" />
-          </Button>
-          
           {/* User Profile Avatar */}
           <Button
             variant="ghost"
