@@ -25,11 +25,15 @@ import DashboardHeader from "@/components/DashboardHeader"
 
 export function Editor() {
   const [brightness, setBrightness] = useState([100])
+  const [saturation, setSaturation] = useState([100])
   const [width, setWidth] = useState('')
   const [height, setHeight] = useState('')
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [history, setHistory] = useState<string[]>([])
+  const [redoStack, setRedoStack] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewImgRef = useRef<HTMLImageElement>(null) // Add ref for preview image
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -37,14 +41,65 @@ export function Editor() {
       setSelectedImage(file)
       const reader = new FileReader()
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
+        const img = e.target?.result as string
+        setImagePreview(img)
+        setHistory([img]) // reset history on new image
+        setRedoStack([])
       }
       reader.readAsDataURL(file)
     }
   }
 
+  // Whenever brightness or saturation changes, push to history
+  React.useEffect(() => {
+    if (imagePreview && history[history.length - 1] !== imagePreview) {
+      setHistory((prev) => [...prev, imagePreview])
+      setRedoStack([])
+    }
+    // eslint-disable-next-line
+  }, [imagePreview])
+
+  const handleUndo = () => {
+    if (history.length > 1) {
+      setRedoStack((prev) => [history[history.length - 1], ...prev])
+      setHistory((prev) => prev.slice(0, -1))
+      setImagePreview(history[history.length - 2])
+    }
+  }
+
+  const handleRedo = () => {
+    if (redoStack.length > 0) {
+      setHistory((prev) => [...prev, redoStack[0]])
+      setImagePreview(redoStack[0])
+      setRedoStack((prev) => prev.slice(1))
+    }
+  }
+
   const triggerFileUpload = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleDownloadImage = () => {
+    if (!imagePreview) return
+    const img = previewImgRef.current
+    if (!img) return
+
+    // Create a canvas with the same size as the image
+    const canvas = document.createElement('canvas')
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // Apply filters
+    ctx.filter = `brightness(${brightness[0]}%) saturate(${saturation[0]}%)`
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+    // Download the canvas as PNG
+    const link = document.createElement('a')
+    link.download = selectedImage?.name ? `edited_${selectedImage.name}` : 'edited_image.png'
+    link.href = canvas.toDataURL('image/png')
+    link.click()
   }
 
   return (
@@ -68,20 +123,8 @@ export function Editor() {
                   <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
                     Brightness
                   </Button>
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
+                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
                     Saturation
-                  </Button>
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm col-span-2 sm:col-span-1">
-                    Inversion
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
-                    Grayscale
-                  </Button>
-                  <Button variant="outline" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 text-xs sm:text-sm">
-                    Quality
                   </Button>
                 </div>
 
@@ -101,24 +144,48 @@ export function Editor() {
                   />
                 </div>
 
-                {/* Action Buttons */}
-                <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                  <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <RotateCw className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50">
-                    <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
+                {/* Saturation Slider */}
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-gray-300 text-xs sm:text-sm">Saturation</label>
+                    <span className="text-gray-300 text-xs sm:text-sm">{saturation[0]}%</span>
+                  </div>
+                  <Slider
+                    value={saturation}
+                    onValueChange={setSaturation}
+                    max={200}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
                 </div>
 
+                {/* Action Buttons */}
+                {/* <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
+                    onClick={handleUndo}
+                    disabled={history.length <= 1}
+                  >
+                    <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
+                    Undo
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
+                    onClick={handleRedo}
+                    disabled={redoStack.length === 0}
+                  >
+                    <RotateCw className="h-3 w-3 sm:h-4 sm:w-4" />
+                    Redo
+                  </Button>
+                </div> */}
+
                 {/* Width & Height Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <label className="text-gray-300 text-xs sm:text-sm">Width</label>
                     <Input
@@ -137,7 +204,7 @@ export function Editor() {
                       className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 text-sm"
                     />
                   </div>
-                </div>
+                </div> */}
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -167,7 +234,11 @@ export function Editor() {
               <CardHeader className="pb-2 sm:pb-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <CardTitle className="text-lg sm:text-xl font-bold text-white">Image</CardTitle>
-                  <Button className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm w-full sm:w-auto">
+                  <Button
+                    className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm w-full sm:w-auto"
+                    onClick={handleDownloadImage}
+                    disabled={!imagePreview}
+                  >
                     <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     Download
                   </Button>
@@ -179,11 +250,14 @@ export function Editor() {
               <CardContent>
                 <div className="aspect-[4/3] bg-white rounded-lg p-3 sm:p-6 flex items-center justify-center">
                   {imagePreview ? (
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
+                    <img
+                      ref={previewImgRef}
+                      src={imagePreview}
+                      alt="Preview"
                       className="max-w-full max-h-full object-contain"
-                      style={{ filter: `brightness(${brightness[0]}%)` }}
+                      style={{
+                        filter: `brightness(${brightness[0]}%) saturate(${saturation[0]}%)`
+                      }}
                     />
                   ) : (
                     <div className="w-full max-w-sm space-y-6">
