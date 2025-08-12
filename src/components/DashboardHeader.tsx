@@ -9,6 +9,7 @@ import {
   Bell,
   Menu,
   X,
+  Wallet,
 } from "lucide-react"
 import NotificationDropdown from './NotificationDropdown'
 
@@ -44,6 +45,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const handleProfileClick = () => {
     navigate('/profile');
+  };
+
+  const handleWalletClick = () => {
+    navigate('/add-money');
   };
 
   return (
@@ -108,6 +113,17 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               onClose={() => setIsNotificationOpen(false)}
             />
           </div>
+
+          {/* Wallet Icon */}
+          <Button
+            variant="ghost"
+            // size="sm"
+            onClick={handleWalletClick}
+            className="relative text-slate-400 hover:text-white p-1"
+            aria-label="Wallet"
+          >
+            <Wallet className="text-2xl sm:h-8 sm:w-8" />
+          </Button>
           
           {/* User Profile Avatar */}
           <Button
