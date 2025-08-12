@@ -100,7 +100,7 @@ export function Kundali() {
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
                           {days.map((day) => (
-                            <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                            <SelectItem key={day} value={day.toString()} className="text-white">{day}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -113,7 +113,7 @@ export function Kundali() {
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
                           {months.map((month) => (
-                            <SelectItem key={month} value={month.toString()}>{month}</SelectItem>
+                            <SelectItem key={month} value={month.toString()} className="text-white">{month}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -126,7 +126,7 @@ export function Kundali() {
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
                           {years.map((year) => (
-                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                            <SelectItem key={year} value={year.toString()} className="text-white">{year}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -146,7 +146,7 @@ export function Kundali() {
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
                           {hours.map((hour) => (
-                            <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                            <SelectItem key={hour} value={hour.toString()} className="text-white">{hour}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -159,7 +159,7 @@ export function Kundali() {
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
                           {minutes.map((min) => (
-                            <SelectItem key={min} value={min.toString()}>{min}</SelectItem>
+                            <SelectItem key={min} value={min.toString()} className="text-white">{min}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -172,7 +172,7 @@ export function Kundali() {
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
                           {seconds.map((sec) => (
-                            <SelectItem key={sec} value={sec.toString()}>{sec}</SelectItem>
+                            <SelectItem key={sec} value={sec.toString()} className="text-white">{sec}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -188,8 +188,8 @@ export function Kundali() {
                       <SelectValue placeholder="English" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="hindi">Hindi</SelectItem>
+                      <SelectItem value="english" className="text-white">English</SelectItem>
+                      <SelectItem value="hindi" className="text-white">Hindi</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -202,11 +202,11 @@ export function Kundali() {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="mumbai">Mumbai</SelectItem>
-                      <SelectItem value="delhi">Delhi</SelectItem>
-                      <SelectItem value="bangalore">Bangalore</SelectItem>
-                      <SelectItem value="chennai">Chennai</SelectItem>
-                      <SelectItem value="kolkata">Kolkata</SelectItem>
+                      <SelectItem value="mumbai" className="text-white">Mumbai</SelectItem>
+                      <SelectItem value="delhi" className="text-white">Delhi</SelectItem>
+                      <SelectItem value="bangalore" className="text-white">Bangalore</SelectItem>
+                      <SelectItem value="chennai" className="text-white">Chennai</SelectItem>
+                      <SelectItem value="kolkata" className="text-white">Kolkata</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
