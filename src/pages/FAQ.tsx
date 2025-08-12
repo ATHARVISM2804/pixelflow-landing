@@ -183,8 +183,8 @@ export function FAQ() {
           {/* Contact Support Section */}
           <Card className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 mt-8">
             <CardContent className="p-6 text-center">
-              <h3 className="text-white text-lg font-semibold mb-2">Still have questions?</h3>
-              <p className="text-gray-300 text-sm mb-4">
+              <h3 className="text-black text-lg font-semibold mb-2">Still have questions?</h3>
+              <p className="text-gray-700 text-sm mb-4">
                 Can't find the answer you're looking for? Our support team is here to help.
               </p>
               <Button 
