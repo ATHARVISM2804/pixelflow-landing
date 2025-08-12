@@ -26,6 +26,7 @@ import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
 import { PDFDocument, rgb } from 'pdf-lib'
+import html2canvas from 'html2canvas'
 
 export function IdCard() {
   const [formData, setFormData] = useState({
@@ -444,15 +445,19 @@ export function IdCard() {
     return canvas.toDataURL('image/png', 1.0)
   }
 
-  // Download as image
+  // Download as image (matches preview)
   const downloadAsImage = async () => {
     try {
-      const imageData = await generateCardImage()
+      if (!cardRef.current) return
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2
+      })
+      const imageData = canvas.toDataURL('image/png', 1.0)
       const link = document.createElement('a')
       link.href = imageData
       link.download = `id-card-${formData.name || 'student'}.png`
       link.click()
-      
       toast({
         title: "Image downloaded",
         description: "ID card image has been downloaded successfully.",
@@ -467,7 +472,7 @@ export function IdCard() {
     }
   }
 
-  // Download as PDF
+  // Download as PDF (matches preview)
   const downloadAsPdf = async () => {
     try {
       if (!formData.name) {
@@ -478,37 +483,33 @@ export function IdCard() {
         })
         return
       }
-
-      const imageData = await generateCardImage()
+      if (!cardRef.current) return
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2
+      })
+      const imageData = canvas.toDataURL('image/png', 1.0)
       const pdfDoc = await PDFDocument.create()
-      
-      // Convert mm to points exactly (1mm = 2.834645669 points)
+      // Convert mm to points (1mm = 2.834645669 points)
       const mmToPoints = 2.834645669
       const page = pdfDoc.addPage([
         85.6 * mmToPoints, // width in points
         53.98 * mmToPoints // height in points
       ])
-
-      // Convert base64 to bytes properly
+      // Convert base64 to bytes
       const imageBytes = imageData.split(',')[1]
       const binaryString = atob(imageBytes)
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i)
       }
-      
-      // Embed the PNG image
       const pngImage = await pdfDoc.embedPng(bytes)
-      
-      // Draw image to fill entire page exactly
       page.drawImage(pngImage, {
         x: 0,
         y: 0,
         width: page.getWidth(),
         height: page.getHeight(),
       })
-
-      // Save and download
       const pdfBytes = await pdfDoc.save()
       const blob = new Blob([pdfBytes], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
@@ -516,10 +517,7 @@ export function IdCard() {
       link.href = url
       link.download = `id-card-${formData.name}.pdf`
       link.click()
-      
-      // Clean up
       setTimeout(() => URL.revokeObjectURL(url), 100)
-      
       toast({
         title: "PDF downloaded",
         description: "ID card PDF generated at exact size (85.6mm × 53.98mm)",

@@ -80,9 +80,9 @@ export function Kundali() {
                         <SelectValue placeholder="Male" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem className='text-white' value="male">Male</SelectItem>
+                        <SelectItem className='text-white' value="female">Female</SelectItem>
+                        <SelectItem className='text-white' value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
