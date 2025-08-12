@@ -154,9 +154,9 @@ export function PageMaker() {
                       <SelectValue placeholder="A4" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="A4">A4</SelectItem>
-                      <SelectItem value="A3">A3</SelectItem>
-                      <SelectItem value="Letter">Letter</SelectItem>
+                      <SelectItem className='text-white' value="A4">A4</SelectItem>
+                      <SelectItem className='text-white' value="A3">A3</SelectItem>
+                      <SelectItem className='text-white' value="Letter">Letter</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -176,8 +176,8 @@ export function PageMaker() {
                       <SelectValue placeholder="Yes" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="Yes">Yes</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
+                      <SelectItem value="Yes" className='text-white'>Yes</SelectItem>
+                      <SelectItem value="No" className='text-white'>No</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
