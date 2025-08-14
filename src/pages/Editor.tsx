@@ -22,6 +22,9 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import { cardApi } from '@/services/cardApi';
+import { toast } from '@/components/ui/use-toast';
+import axios from "axios";
 
 export function Editor() {
   const [brightness, setBrightness] = useState([100])
@@ -79,28 +82,98 @@ export function Editor() {
     fileInputRef.current?.click()
   }
 
-  const handleDownloadImage = () => {
-    if (!imagePreview) return
-    const img = previewImgRef.current
-    if (!img) return
+  // Add uid state
+  const uid = "user123"; // Replace with actual user auth ID
+  
+  // Add transaction creation function
+  const createCardTransaction = async () => {
+    try {
+      await cardApi.createEditedImage({
+        uid,
+        cardName: selectedImage?.name || 'Edited_Image',
+        metadata: {
+          brightness: brightness[0],
+          saturation: saturation[0]
+        }
+      });
+      
+      toast({
+        title: "Transaction created",
+        description: "Successfully charged for image editing",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Transaction failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
-    // Create a canvas with the same size as the image
-    const canvas = document.createElement('canvas')
-    canvas.width = img.naturalWidth
-    canvas.height = img.naturalHeight
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+  // Update handleDownloadImage to include transaction
+  const handleDownloadImage = async () => {
+    if (!imagePreview) return;
+    
+    try {
+      // Create transaction first
+      await createCardTransaction();
+      
+      const img = previewImgRef.current
+      if (!img) return
 
-    // Apply filters
-    ctx.filter = `brightness(${brightness[0]}%) saturate(${saturation[0]}%)`
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      // Create a canvas with the same size as the image
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
 
-    // Download the canvas as PNG
-    const link = document.createElement('a')
-    link.download = selectedImage?.name ? `edited_${selectedImage.name}` : 'edited_image.png'
-    link.href = canvas.toDataURL('image/png')
-    link.click()
+      // Apply filters
+      ctx.filter = `brightness(${brightness[0]}%) saturate(${saturation[0]}%)`
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+      // Download the canvas as PNG
+      const link = document.createElement('a')
+      link.download = selectedImage?.name ? `edited_${selectedImage.name}` : 'edited_image.png'
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download image and create transaction.",
+        variant: "destructive"
+      });
+    }
   }
+
+  // Add this function for API transaction and download (adapted for Editor)
+  const handleSubmit = async (card: any, index: number) => {
+    try {
+      const transaction = {
+        uid: 'Ashish Ranjan',
+        cardName: 'Edited Image',
+        amount: 1,
+        type: 'CARD_CREATION',
+        date: new Date().toISOString(),
+        metadata: { brightness: brightness[0], saturation: saturation[0], imageName: selectedImage?.name }
+      };
+      // Call your backend API
+      await axios.post("http://localhost:5000/api/transactions/card", transaction);
+      toast({
+        title: "Transaction Success",
+        description: "Transaction and download started.",
+      });
+      // Proceed with download after successful transaction
+      handleDownloadImage();
+    } catch (err: any) {
+      toast({
+        title: "API Error",
+        description: err?.response?.data?.message || err.message || "Failed to create transaction.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -236,7 +309,7 @@ export function Editor() {
                   <CardTitle className="text-lg sm:text-xl font-bold text-white">Image</CardTitle>
                   <Button
                     className="bg-indigo-500 text-white hover:bg-indigo-600 text-xs sm:text-sm w-full sm:w-auto"
-                    onClick={handleDownloadImage}
+                    onClick={() => handleSubmit(null, 0)}
                     disabled={!imagePreview}
                   >
                     <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />

@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+// import { useTransactions } from '@/hooks/useTransactions';
 import {
   Card,
   CardContent,
@@ -19,7 +20,6 @@ import {
   Bell,
   FileStack,
   DollarSign,
-  Users,
   Home,
   Activity,
   TrendingUp,
@@ -29,8 +29,172 @@ import {
 import { Button } from "@/components/ui/button"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import axios from "axios";
+
+interface Transaction {
+  _id: string;
+  uid: string;
+  cardName: string;
+  amount: number;
+  type: string;
+  date: string;
+}
 
 export function Dashboard() {
+  // Assuming you have the user's UID from authentication
+  const uid = "user123"; // Replace with actual user ID from your auth system
+  // const { transactions, loading, error, createCard } = useTransactions(uid);
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
+  const [data, setData] = useState();
+
+  const [stats, setStats] = useState({
+    balance: 0,
+    cards: 0,
+    transactionCount: 0,
+    payments: 0
+  });
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/transactions/");
+        setTransactions(response.data);
+        
+        // Update stats
+        const totalBalance = response.data.reduce((acc: number, curr: Transaction) => acc + curr.amount, 0);
+        const cardTransactions = response.data.filter((t: Transaction) => t.type === 'CARD_CREATION');
+        
+        setStats({
+          balance: totalBalance,
+          cards: cardTransactions.length,
+          transactionCount: response.data.length,
+          payments: 0 // Update this based on your needs
+        });
+        
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  // useEffect(() => {
+  //   if (transactions.length > 0) {
+  //     const totalBalance = transactions.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  //     const cardTransactions = transactions.filter((t: any) => t.type === 'CARD_CREATION');
+  //     const rechargeTransactions = transactions.filter((t: any) => t.type === 'RECHARGE');
+
+  //     setStats({
+  //       balance: totalBalance,
+  //       cards: cardTransactions.length,
+  //       transactionCount: transactions.length,
+  //       payments: rechargeTransactions.length
+  //     });
+  //   }
+  // }, [transactions]);
+
+  // const handleCreateCard = async () => {
+  //   try {
+  //     setIsCreatingCard(true);
+  //     const cardName = `Card_${Date.now()}`; // You can replace this with a form input
+  //     await createCard({ 
+  //       cardName, 
+  //       amount: 2,
+  //       cardType: 'ID_CARD' // Add the required cardType
+  //     });
+  //     // Optionally show success message
+  //   } catch (err) {
+  //     console.error('Error creating card:', err);
+  //     // Optionally show error message
+  //   } finally {
+  //     setIsCreatingCard(false);
+  //   }
+  // };
+
+  // Update the stats array in the render
+  const statsData = [{
+    label: 'Balance',
+    value: `$${stats.balance}`,
+    icon: DollarSign,
+    color: 'from-indigo-500 to-indigo-600'
+  },
+  {
+    label: 'Cards',
+    value: stats.cards.toString(),
+    icon: CreditCard,
+    color: 'from-violet-500 to-purple-600'
+  },
+  {
+    label: 'Transactions',
+    value: stats.transactionCount.toString(),
+    icon: Activity,
+    color: 'from-blue-500 to-cyan-600'
+  },
+  {
+    label: 'Payments',
+    value: stats.payments.toString(),
+    icon: TrendingUp,
+    color: 'from-pink-500 to-rose-600'
+  }];
+
+  const totalPages = Math.ceil(transactions.length / pageSize);
+  const paginatedTransactions = transactions.slice((page - 1) * pageSize, page * pageSize);
+
+  const handlePrev = () => setPage((p) => Math.max(1, p - 1));
+  const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
+
+  const renderTransactionHistory = () => (
+    <TableBody>
+      {loading ? (
+        <TableRow>
+          <TableCell colSpan={7} className="text-center py-8">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            </div>
+          </TableCell>
+        </TableRow>
+      ) : paginatedTransactions.length === 0 ? (
+        <TableRow>
+          <TableCell colSpan={7} className="text-center py-8 sm:py-12">
+            <div className="text-slate-400">
+              <Activity className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 opacity-50" />
+              <p className="text-base sm:text-lg font-medium">No Data Found</p>
+              <p className="text-xs sm:text-sm mt-1">Your transactions will appear here</p>
+            </div>
+          </TableCell>
+        </TableRow>
+      ) : (
+        paginatedTransactions.map((transaction) => (
+          <TableRow key={transaction._id} className="border-gray-800/50 hover:bg-gray-800/20">
+            <TableCell className="text-slate-300 hidden sm:table-cell">
+              {transaction.uid ? `${transaction.uid.slice(0, 8)}...` : ""}
+            </TableCell>
+            <TableCell className="text-slate-300">{transaction.cardName}</TableCell>
+            <TableCell className="text-slate-300 hidden md:table-cell">
+              {transaction.type === "RECHARGE" ? `$${transaction.amount}` : "-"}
+            </TableCell>
+            <TableCell className="text-slate-300 hidden md:table-cell">
+              {transaction.type === "CARD_CREATION" ? `$${transaction.amount}` : "-"}
+            </TableCell>
+            <TableCell className="text-slate-300">${transaction.amount}</TableCell>
+            <TableCell className="text-slate-300 hidden lg:table-cell">
+              {transaction.date ? new Date(transaction.date).toLocaleDateString() : ""}
+            </TableCell>
+          </TableRow>
+        ))
+      )}
+    </TableBody>
+  );
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -40,32 +204,19 @@ export function Dashboard() {
         <DashboardHeader title="Dashboard" icon={Home} />
 
         <main className="flex-1 p-3 sm:p-6 space-y-4 sm:space-y-6">
+          {/* <div className="flex justify-end">
+            <Button 
+              // onClick={handleCreateCard}
+              disabled={isCreatingCard}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {isCreatingCard ? 'Creating...' : 'Create New Card'}
+            </Button>
+          </div> */}
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {[{
-              label: 'Balance',
-              value: '0',
-              icon: DollarSign,
-              color: 'from-indigo-500 to-indigo-600'
-            },
-            {
-              label: 'Cards',
-              value: '0',
-              icon: CreditCard,
-              color: 'from-violet-500 to-purple-600'
-            },
-            {
-              label: 'Transactions',
-              value: '0',
-              icon: Activity,
-              color: 'from-blue-500 to-cyan-600'
-            },
-            {
-              label: 'Payments',
-              value: '0',
-              icon: TrendingUp,
-              color: 'from-pink-500 to-rose-600'
-            }].map((stat, index) => (
+            {statsData.map((stat, index) => (
               <Card key={index} className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10">
                 <CardContent className="p-3 sm:p-6">
                   <div className="flex items-center justify-between">
@@ -83,6 +234,7 @@ export function Dashboard() {
           </div>
 
           {/* Cards History */}
+          {/* 
           <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
             <CardHeader className="pb-2 sm:pb-4">
               <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
@@ -130,6 +282,7 @@ export function Dashboard() {
               </div>
             </CardContent>
           </Card>
+          */}
 
           {/* Transaction History */}
           <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
@@ -144,7 +297,7 @@ export function Dashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-gray-800/50 hover:bg-gray-800/20">
-                      <TableHead className="text-slate-300 text-xs sm:text-sm">Ref ID</TableHead>
+                      {/* <TableHead className="text-slate-300 text-xs sm:text-sm">Ref ID</TableHead> */}
                       <TableHead className="text-slate-300 text-xs sm:text-sm hidden sm:table-cell">User ID</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm">Description</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Credit</TableHead>
@@ -153,25 +306,29 @@ export function Dashboard() {
                       <TableHead className="text-slate-300 text-xs sm:text-sm hidden lg:table-cell">Date</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 sm:py-12">
-                        <div className="text-slate-400">
-                          <Activity className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 opacity-50" />
-                          <p className="text-base sm:text-lg font-medium">No Data Found</p>
-                          <p className="text-xs sm:text-sm mt-1">Your transactions will appear here</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
+                  {renderTransactionHistory()}
                 </Table>
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-4 text-xs sm:text-sm text-slate-400 gap-2">
-                  <span>Showing 1 to 5 of 0 entries</span>
+                  <span>
+                    Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, transactions.length)} of {transactions.length} entries
+                  </span>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs"
+                      onClick={handlePrev}
+                      disabled={page === 1}
+                    >
                       ← Prev
                     </Button>
-                    <Button variant="outline" size="sm" className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs"
+                      onClick={handleNext}
+                      disabled={page === totalPages || transactions.length === 0}
+                    >
                       Next →
                     </Button>
                   </div>
