@@ -62,7 +62,7 @@ export function Dashboard() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/transactions/");
+        const response = await axios.get("https://idcardbackend-cgrg.onrender.com/api/transactions/");
         setTransactions(response.data);
         
         // Update stats
