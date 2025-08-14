@@ -27,6 +27,9 @@ import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
 import { PDFDocument, rgb } from 'pdf-lib'
 import html2canvas from 'html2canvas'
+import { cardApi } from '@/services/cardApi';
+import axios from "axios";
+
 
 export function IdCard() {
   const [formData, setFormData] = useState({
@@ -128,21 +131,19 @@ export function IdCard() {
     // Layout constants (scaled to match preview proportions)
     const layout = {
       padding: 12,
-      headerHeight: 56, // Matches preview h-14 (56px)
+      headerHeight: 56,
       photo: {
+        x: 16,
+        y: 70,
         width: 80,
-        height: 96,
-        x: 12,
-        y: 68
+        height: 110
       },
       text: {
-        x: 104, // photo.x + photo.width + gap
-        y: 78,
-        lineHeight: 14,
-        labelWidth: 50
-      },
-      footerHeight: 30
-    }
+        x: 110,
+        y: 80,
+        lineHeight: 18
+      }
+    };
 
     // Fill background
     ctx.fillStyle = '#ffffff'
@@ -472,9 +473,41 @@ export function IdCard() {
     }
   }
 
-  // Download as PDF (matches preview)
+  // Add transaction creation function
+  // const uid = "user123"; // Replace with actual user auth ID
+
+  // const createCardTransaction = async () => {
+  //   try {
+  //     await cardApi.createIdCard({
+  //       uid,
+  //       cardName: formData.name || 'ID_Card',
+  //       metadata: {
+  //         template: formData.template,
+  //         school: formData.schoolName
+  //       }
+  //     });
+      
+  //     toast({
+  //       title: "Transaction created",
+  //       description: "Successfully charged for ID card creation",
+  //     });
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Transaction failed",
+  //       description: error.message,
+  //       variant: "destructive"
+  //     });
+  //   }
+  // };
+
+  // Update downloadAsPdf to include transaction
+  
+  
   const downloadAsPdf = async () => {
     try {
+      // Create transaction first
+      // await createCardTransaction();
+      
       if (!formData.name) {
         toast({
           title: "Missing Information",
@@ -511,7 +544,7 @@ export function IdCard() {
         height: page.getHeight(),
       })
       const pdfBytes = await pdfDoc.save()
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+      const blob = new Blob([pdfBytes.buffer], { type: 'application/pdf' }); // Use .buffer for Blob
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -572,6 +605,40 @@ export function IdCard() {
       </div>
     </div>
   )
+
+  // Add AadhaarCardData type for type safety
+  type AadhaarCardData = {
+    originalPage: number;
+    // Add other fields if needed
+  };
+
+  // Add handleSubmit function for API call and download
+  const handleSubmit = async (card: AadhaarCardData, index: number) => {
+    try {
+      const transaction = {
+        uid: 'Ashish Ranjan',
+        cardName: 'ID Card',
+        amount: 2,
+        type: 'CARD_CREATION',
+        date: new Date().toISOString(),
+        metadata: { page: card.originalPage }
+      };
+      // Call your backend API
+      await axios.post("http://localhost:5000/api/transactions/card", transaction);
+      toast({
+        title: "Transaction Success",
+        description: "Transaction and download started.",
+      });
+      // Proceed with download after successful transaction
+      await downloadAsImage();
+    } catch (err: any) {
+      toast({
+        title: "API Error",
+        description: err?.response?.data?.message || err.message || "Failed to create transaction.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -824,7 +891,7 @@ export function IdCard() {
                   <CardTitle className="text-xl font-bold text-white">Card Preview</CardTitle>
                   <div className="flex gap-2">
                     <Button 
-                      onClick={downloadAsImage}
+                      onClick={() => handleSubmit({ originalPage: 1 }, 0)}
                       className="bg-indigo-500 text-white hover:bg-indigo-600"
                     >
                       <FileImage className="h-4 w-4 mr-2" />

@@ -28,6 +28,8 @@ import {
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import axios from "axios";
+import { useToast } from "@/components/ui/use-toast"
 
 const A4_DIMENSIONS = {
   width: 210, // mm
@@ -51,6 +53,7 @@ export function PassportPhoto() {
   const [isMultiple, setIsMultiple] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast();
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -109,6 +112,34 @@ export function PassportPhoto() {
       console.error('Error generating PDF:', error)
     }
   }
+
+  // API call at the time of download
+  const handleSubmit = async (file: File, index: number) => {
+    try {
+      const transaction = {
+        uid: 'Ashish Ranjan',
+        cardName: 'Passport Photo',
+        amount: 2 * formData.number,
+        type: '',
+        date: new Date().toISOString(),
+        metadata: { fileName: file.name }
+      };
+      // Call your backend API
+      await axios.post("http://localhost:5000/api/transactions/card", transaction);
+      toast({
+        title: "Transaction Success",
+        description: "Transaction and download started.",
+      });
+      // Proceed with download after successful transaction
+      handleDownload();
+    } catch (err: any) {
+      toast({
+        title: "API Error",
+        description: err?.response?.data?.message || err.message || "Failed to create transaction.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -301,7 +332,7 @@ export function PassportPhoto() {
                 </div>
                 <Button 
                   className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm"
-                  onClick={handleDownload}
+                  onClick={() => selectedFiles.length > 0 && handleSubmit(selectedFiles[0], 0)}
                   disabled={selectedFiles.length === 0}
                 >
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
@@ -316,4 +347,5 @@ export function PassportPhoto() {
   )
 }
 
-export default PassportPhoto
+export default PassportPhoto;
+
