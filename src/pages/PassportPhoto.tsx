@@ -120,12 +120,12 @@ export function PassportPhoto() {
         uid: 'Ashish Ranjan',
         cardName: 'Passport Photo',
         amount: 2 * formData.number,
-        type: '',
+        type: 'CARD_CREATION',
         date: new Date().toISOString(),
         metadata: { fileName: file.name }
       };
       // Call your backend API
-      await axios.post("http://localhost:5000/api/transactions/card", transaction);
+      await axios.post("https://idcardbackend-cgrg.onrender.com/api/transactions/card", transaction);
       toast({
         title: "Transaction Success",
         description: "Transaction and download started.",
