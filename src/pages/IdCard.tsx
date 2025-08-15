@@ -27,8 +27,10 @@ import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
 import { PDFDocument, rgb } from 'pdf-lib'
 import html2canvas from 'html2canvas'
-import { cardApi } from '@/services/cardApi';
 import axios from "axios";
+import { auth } from '../auth/firebase'
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 
 
 export function IdCard() {
@@ -616,7 +618,7 @@ export function IdCard() {
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
     try {
       const transaction = {
-        uid: 'Ashish Ranjan',
+        uid: auth.currentUser?.uid,
         cardName: 'ID Card',
         amount: 2,
         type: 'CARD_CREATION',
@@ -624,7 +626,7 @@ export function IdCard() {
         metadata: { page: card.originalPage }
       };
       // Call your backend API
-      await axios.post("https://idcardbackend-cgrg.onrender.com/api/transactions/card", transaction);
+      await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
       toast({
         title: "Transaction Success",
         description: "Transaction and download started.",

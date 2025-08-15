@@ -29,9 +29,9 @@ import * as pdfjsLib from 'pdfjs-dist'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
 import overlayImage from '@/assets/overlay3.png'; // You'll need to add this image to your assets folder
-import { cardApi } from '@/services/cardApi';
 import axios from "axios";
-
+import { auth } from "../auth/firebase.ts"
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 // Configure PDF.js on component load
 configurePdfJs()
 
@@ -70,11 +70,14 @@ export function PdfProcessor() {
     margin: 40      // margin in points
   }
 
+  const uid = auth.currentUser?.uid;
+  console.log("User ID:", uid); 
+
   // Add this function near other handlers
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
     try {
       const transaction = {
-        uid: 'Ashish Ranjan',
+        uid: uid,
         cardName: 'Aadhaar Card',
         amount: 2,
         type: 'CARD_CREATION',
@@ -82,7 +85,7 @@ export function PdfProcessor() {
         metadata: { page: card.originalPage }
       };
       // Call your backend API
-      const response = await axios.post("http://localhost:5000/api/transactions/card", transaction);
+      const response = await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
       toast({
         title: "Transaction Success",
         description: "Transaction and download started.",
