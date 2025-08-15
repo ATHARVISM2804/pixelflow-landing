@@ -30,6 +30,9 @@ import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import axios from "axios";
 import { useToast } from "@/components/ui/use-toast"
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+// import { useAuth } from '../auth/AuthContext.tsx';
+import { auth } from "../auth/firebase"
 
 const A4_DIMENSIONS = {
   width: 210, // mm
@@ -54,6 +57,7 @@ export function PassportPhoto() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast();
+  // const { user } = useAuth();
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -113,11 +117,13 @@ export function PassportPhoto() {
     }
   }
 
+
+
   // API call at the time of download
   const handleSubmit = async (file: File, index: number) => {
     try {
       const transaction = {
-        uid: 'Ashish Ranjan',
+        uid: auth.currentUser?.uid,
         cardName: 'Passport Photo',
         amount: 2 * formData.number,
         type: 'CARD_CREATION',
@@ -125,7 +131,7 @@ export function PassportPhoto() {
         metadata: { fileName: file.name }
       };
       // Call your backend API
-      await axios.post("https://idcardbackend-cgrg.onrender.com/api/transactions/card", transaction);
+      await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
       toast({
         title: "Transaction Success",
         description: "Transaction and download started.",

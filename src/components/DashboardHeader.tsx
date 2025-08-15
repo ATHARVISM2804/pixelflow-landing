@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from '../auth/AuthContext.tsx';
+import { useAuth } from '../auth/AuthContext.tsx';  
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -33,7 +33,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const [balance] = useState(0); // You can replace with actual balance logic
+  const [balance] = useState(100); // You can replace with actual balance logic
   
   // Get display name or fallback to email or default
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';

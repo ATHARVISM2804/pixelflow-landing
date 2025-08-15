@@ -18,13 +18,15 @@ import {
   Edit3
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { cardApi } from '@/services/cardApi';
 import { toast } from '@/components/ui/use-toast';
 import axios from "axios";
+import { auth } from "../auth/firebase"
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function Editor() {
   const [brightness, setBrightness] = useState([100])
@@ -151,7 +153,7 @@ export function Editor() {
   const handleSubmit = async (card: any, index: number) => {
     try {
       const transaction = {
-        uid: 'Ashish Ranjan',
+        uid: auth.currentUser?.uid,
         cardName: 'Edited Image',
         amount: 1,
         type: 'CARD_CREATION',
@@ -159,7 +161,7 @@ export function Editor() {
         metadata: { brightness: brightness[0], saturation: saturation[0], imageName: selectedImage?.name }
       };
       // Call your backend API
-      await axios.post("https://idcardbackend-cgrg.onrender.com/api/transactions/card", transaction);
+      await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
       toast({
         title: "Transaction Success",
         description: "Transaction and download started.",

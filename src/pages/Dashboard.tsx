@@ -30,6 +30,10 @@ import { Button } from "@/components/ui/button"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import axios from "axios";
+import { auth } from "../auth/firebase.ts";
+import { useAuth } from '../auth/AuthContext.tsx';
+
+// import { User } from 'firebase/auth'
 
 interface Transaction {
   _id: string;
@@ -40,9 +44,14 @@ interface Transaction {
   date: string;
 }
 
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function Dashboard() {
   // Assuming you have the user's UID from authentication
-  const uid = "user123"; // Replace with actual user ID from your auth system
+  // console.log(auth.currentUser?.uid);
+  const uid = auth.currentUser?.uid;
+  console.log("User ID:", uid);
   // const { transactions, loading, error, createCard } = useTransactions(uid);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
   const [data, setData] = useState();
@@ -54,28 +63,33 @@ export function Dashboard() {
     payments: 0
   });
 
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
+  // Remove the stats calculation useEffect and instead use a function to calculate stats
+  function calculateStats(transactions: Transaction[]) {
+    const totalBalance = transactions.reduce((acc, curr) => acc + curr.amount, 0);
+    const cardTransactions = transactions.filter((t) => t.type === 'CARD_CREATION');
+    const rechargeTransactions = transactions.filter((t) => t.type === 'RECHARGE');
+    return {
+      balance: totalBalance,
+      cards: cardTransactions.length,
+      transactionCount: transactions.length,
+      payments: rechargeTransactions.length
+    };
+  }
+
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get("https://idcardbackend-cgrg.onrender.com/api/transactions/");
+        const response = await axios.get(`${BACKEND_URL}/api/transactions/user/${uid}`);
         setTransactions(response.data);
-        
-        // Update stats
-        const totalBalance = response.data.reduce((acc: number, curr: Transaction) => acc + curr.amount, 0);
-        const cardTransactions = response.data.filter((t: Transaction) => t.type === 'CARD_CREATION');
-        
-        setStats({
-          balance: totalBalance,
-          cards: cardTransactions.length,
-          transactionCount: response.data.length,
-          payments: 0 // Update this based on your needs
-        });
-        
+
+        // Calculate stats and set
+        setStats(calculateStats(response.data));
       } catch (error) {
         console.error('Error fetching transactions:', error);
       } finally {
@@ -85,21 +99,6 @@ export function Dashboard() {
 
     fetchTransactions();
   }, []);
-
-  // useEffect(() => {
-  //   if (transactions.length > 0) {
-  //     const totalBalance = transactions.reduce((acc: number, curr: any) => acc + curr.amount, 0);
-  //     const cardTransactions = transactions.filter((t: any) => t.type === 'CARD_CREATION');
-  //     const rechargeTransactions = transactions.filter((t: any) => t.type === 'RECHARGE');
-
-  //     setStats({
-  //       balance: totalBalance,
-  //       cards: cardTransactions.length,
-  //       transactionCount: transactions.length,
-  //       payments: rechargeTransactions.length
-  //     });
-  //   }
-  // }, [transactions]);
 
   // const handleCreateCard = async () => {
   //   try {
@@ -119,10 +118,11 @@ export function Dashboard() {
   //   }
   // };
 
+
   // Update the stats array in the render
   const statsData = [{
-    label: 'Balance',
-    value: `$${stats.balance}`,
+    label: 'Total Spent',
+    value: `₹${stats.balance}`,
     icon: DollarSign,
     color: 'from-indigo-500 to-indigo-600'
   },
@@ -175,16 +175,17 @@ export function Dashboard() {
         paginatedTransactions.map((transaction) => (
           <TableRow key={transaction._id} className="border-gray-800/50 hover:bg-gray-800/20">
             <TableCell className="text-slate-300 hidden sm:table-cell">
-              {transaction.uid ? `${transaction.uid.slice(0, 8)}...` : ""}
+              {/* {transaction.uid ? `${transaction.uid.slice(0, 8)}...` : ""} */}
+              { user?.displayName || user?.email?.split('@')[0] || 'User' }
             </TableCell>
             <TableCell className="text-slate-300">{transaction.cardName}</TableCell>
             <TableCell className="text-slate-300 hidden md:table-cell">
-              {transaction.type === "RECHARGE" ? `$${transaction.amount}` : "-"}
+              {transaction.type === "RECHARGE" ? `₹${transaction.amount}` : "-"}
             </TableCell>
             <TableCell className="text-slate-300 hidden md:table-cell">
-              {transaction.type === "CARD_CREATION" ? `$${transaction.amount}` : "-"}
+              {transaction.type === "CARD_CREATION" ? `₹${transaction.amount}` : "-"}
             </TableCell>
-            <TableCell className="text-slate-300">${transaction.amount}</TableCell>
+            <TableCell className="text-slate-300">₹{transaction.amount}</TableCell>
             <TableCell className="text-slate-300 hidden lg:table-cell">
               {transaction.date ? new Date(transaction.date).toLocaleDateString() : ""}
             </TableCell>
@@ -298,7 +299,7 @@ export function Dashboard() {
                   <TableHeader>
                     <TableRow className="border-gray-800/50 hover:bg-gray-800/20">
                       {/* <TableHead className="text-slate-300 text-xs sm:text-sm">Ref ID</TableHead> */}
-                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden sm:table-cell">User ID</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden sm:table-cell">Name</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm">Description</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Credit</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Debit</TableHead>
@@ -390,4 +391,4 @@ export function Dashboard() {
 }
 
 export default Dashboard;
-
+  
