@@ -16,7 +16,7 @@ const cardTypes = {
   ayushman: { name: "Advance Ayushman Card", icon: "🏥", fields: ["beneficiaryId", "name", "familyId"] },
   ration: { name: "Ration Card", icon: "🌾", fields: ["rationNumber", "headOfFamily", "familyMembers"] },
   voter: { name: "Voter ID Card", icon: "🗳️", fields: ["epicNumber", "name", "constituency"] },
-  pan: { name: "PAN Card", icon: "💼", fields: ["panNumber", "name", "fatherName"] },
+  // pan: { name: "PAN Card", icon: "💼", fields: ["panNumber", "name", "fatherName"] },
   driving: { name: "Driving License", icon: "🚗", fields: ["licenseNumber", "name", "dateOfBirth"] }
 }
 

@@ -33,6 +33,7 @@ import Profile from "./pages/Profile";
 import PdfTextExtractor from "./pages/Dummy.tsx";
 import AadhaarOverlayPDF from "./components/AadhaarOverlayPDF.tsx";
 import PanCard from "./pages/PanCard.tsx";
+import Voter from "./pages/Voter.tsx";
 // import Dummy from "./pages/Dummy.tsx";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/kundli" element={<ProtectedRoute><Kundali /></ProtectedRoute>} />
             <Route path="/editor" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
             <Route path="/aadhaar" element={<ProtectedRoute><PdfProcessor /></ProtectedRoute>} />
+            <Route path="/voter" element={<ProtectedRoute><Voter /></ProtectedRoute>} />
             <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
             <Route path="/voter-slip" element={<ProtectedRoute><VoterSlip /></ProtectedRoute>} />
             <Route path="/impds-ration" element={<ProtectedRoute><IMPDSRation /></ProtectedRoute>} />
