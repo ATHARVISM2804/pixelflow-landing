@@ -32,6 +32,7 @@ import FAQ from "./pages/FAQ";
 import Profile from "./pages/Profile";
 import PdfTextExtractor from "./pages/Dummy.tsx";
 import AadhaarOverlayPDF from "./components/AadhaarOverlayPDF.tsx";
+import PanCard from "./pages/PanCard.tsx";
 // import Dummy from "./pages/Dummy.tsx";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/pan" element={<PanCard />} />
             {/* <Route path="/dummy" element={<Dummy />} /> */}
             {/* <Route path="/aadhaar" element={<ProtectedRoute><Aadhar /></ProtectedRoute>} /> */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
