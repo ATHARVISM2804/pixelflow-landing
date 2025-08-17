@@ -70,31 +70,35 @@ export function StateCards() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {defaultCards.map((card) => (
-              <Link key={card.id} to={`/card/${card.id}/${stateCode}`}>
-                <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
-                  <CardContent className="p-4 sm:p-6 text-center space-y-4">
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg`}>
-                      <span className="text-2xl sm:text-3xl">{card.icon}</span>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">
-                        {card.name}
-                      </h3>
-                      
-                      <p className="text-gray-400 text-xs sm:text-sm">
-                        {card.description}
-                      </p>
-                    </div>
-                    
-                    <div className="inline-block px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
-                      <span className="text-green-400 text-xs font-medium">Free</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            {defaultCards.map((card) => {
+              // Route override for Aadhaar and PAN
+              let to = `/card/${card.id}/${stateCode}`;
+              if (card.id === "aadhar") to = "/aadhaar";
+              if (card.id === "pan") to = "/pan";
+              if (card.id === "voter") to = "/voter";
+              return (
+                <Link key={card.id} to={to}>
+                  <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
+                    <CardContent className="p-4 sm:p-6 text-center space-y-4">
+                      <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg`}>
+                        <span className="text-2xl sm:text-3xl">{card.icon}</span>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                          {card.name}
+                        </h3>
+                        <p className="text-gray-400 text-xs sm:text-sm">
+                          {card.description}
+                        </p>
+                      </div>
+                      <div className="inline-block px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                        <span className="text-green-400 text-xs font-medium">Free</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </main>
       </div>

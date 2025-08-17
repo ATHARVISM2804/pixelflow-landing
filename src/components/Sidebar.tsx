@@ -34,7 +34,7 @@ const Sidebar = () => {
     { icon: Edit3, label: "Editor", path: "/editor" },
     { icon: FileText, label: "Free Cards", path: "/cards" },
     { icon: FileStack, label: "Cards", path: "/free-cards" },
-    { icon: Shield, label: "Aadhaar", path: "/aadhaar" },
+    // { icon: Shield, label: "Aadhaar", path: "/aadhaar" },
     { icon: DollarSign, label: "Kundli", path: "/kundli" },
     { icon: DollarSign, label: "Id Card", path: "/id-card" },
     { icon: FileText, label: "Page Maker", path: "/page-maker" },
