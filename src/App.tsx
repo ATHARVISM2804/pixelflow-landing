@@ -35,6 +35,7 @@ import AadhaarOverlayPDF from "./components/AadhaarOverlayPDF.tsx";
 import PanCard from "./pages/PanCard.tsx";
 import Voter from "./pages/Voter.tsx";
 import DidCard from "./pages/DidCard.tsx";
+import Uan from "./pages/Uan.tsx";
 // import Dummy from "./pages/Dummy.tsx";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/overlay" element={<AadhaarOverlayPDF />} />
             <Route path="/text" element={<PdfTextExtractor />} />
             <Route path="/did" element={<ProtectedRoute><DidCard /></ProtectedRoute>} />
+            <Route path="/uan" element={<ProtectedRoute><Uan /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/passport-photo" element={<ProtectedRoute><PassportPhoto /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
