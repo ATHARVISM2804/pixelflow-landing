@@ -272,10 +272,6 @@ export function PassportPhoto() {
                       className="mt-1 h-10 bg-gray-800/50 border-gray-700/50" 
                     />
                   </div>
-
-                  <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg text-sm">
-                    Submit
-                  </Button>
                 </div>
               </CardContent>
             </Card>
