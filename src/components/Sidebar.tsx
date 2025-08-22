@@ -35,6 +35,7 @@ const Sidebar = () => {
     { icon: FileText, label: "Free Cards", path: "/cards" },
     { icon: FileStack, label: "Cards", path: "/free-cards" },
     { icon: Shield, label: "DID", path: "/did" },
+    { icon: Shield, label: "UAN", path: "/uan" },
     { icon: DollarSign, label: "Kundli", path: "/kundli" },
     { icon: DollarSign, label: "Id Card", path: "/id-card" },
     { icon: FileText, label: "Page Maker", path: "/page-maker" },

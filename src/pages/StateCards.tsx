@@ -76,6 +76,8 @@ export function StateCards() {
               if (card.id === "aadhar") to = "/aadhaar";
               if (card.id === "pan") to = "/pan";
               if (card.id === "voter") to = "/voter";
+              if (card.id === "aapar") to = "/apaar";
+              if (card.id === "ayushman") to = "/abha";
               return (
                 <Link key={card.id} to={to}>
                   <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
