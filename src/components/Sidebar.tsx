@@ -40,12 +40,6 @@ const Sidebar = () => {
     { icon: FileText, label: "Page Maker", path: "/page-maker" },
     { icon: FileText, label: "Resume Maker", path: "/resume" },
     { icon: DollarSign, label: "Add Money", path: "/add-money" },
-    // {
-    //   icon: Scissors,
-    //   label: 'PDF Processor',
-    //   path: '/pdf-processor',
-    //   color: 'text-purple-400'
-    // },
   ];
 
   const otherItems = [
