@@ -28,15 +28,15 @@ import { auth } from "../auth/firebase"
 import { PDFDocument } from 'pdf-lib'
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-interface DidCardData {
+interface UanCardData {
   image: string
   originalPage: number
 }
 
-export function DidCard() {
+export function Uan() {
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [didCards, setDidCards] = useState<DidCardData[]>([])
+  const [uanCards, setUanCards] = useState<UanCardData[]>([])
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
   const [password, setPassword] = useState('')
   const [needsPassword, setNeedsPassword] = useState(false)
@@ -58,7 +58,7 @@ export function DidCard() {
         return
       }
       setSelectedPdf(file)
-      setDidCards([])
+      setUanCards([])
       setSelectedCardIndex(null)
       setPassword('')
       setNeedsPassword(false)
@@ -87,8 +87,8 @@ export function DidCard() {
     return canvas.toDataURL('image/png')
   }
 
-  // Cropping logic for DID card (adjust as needed for your layout)
-  const extractDidFrontBackFromFullPage = async (pageImage: string): Promise<{ front: string, back: string }> => {
+  // Cropping logic for UAN card (adjust as needed for your layout)
+  const extractUanFrontBackFromFullPage = async (pageImage: string): Promise<{ front: string, back: string }> => {
     const img = new Image();
     await new Promise((resolve) => {
       img.onload = resolve;
@@ -101,14 +101,12 @@ export function DidCard() {
     const ctx = canvas.getContext('2d')!;
     ctx.drawImage(img, 0, 0);
 
-    // Example cropping values for your sample DID card layout:
+    // Example cropping values for your sample UAN card layout:
     // Adjust cutY, cutX, cardWidth, cardHeight as needed for your PDF
     // For the attached sample, cards are stacked vertically.
-    const cardHeight = Math.round(canvas.height / 5);
-    const cardWidth = Math.round(canvas.width / 2.3);
-    const cutX = Math.round(canvas.width * 0.08);
-    const cutY = Math.round(canvas.width * 0.08);
-    const cutYBack = Math.round(canvas.height /3.15);
+    const cardHeight = Math.round(canvas.height / 2.2);
+    const cardWidth = Math.round(canvas.width * 0.95);
+    const cutX = Math.round(canvas.width * 0.025);
 
     // Front card (top)
     const frontCanvas = document.createElement('canvas');
@@ -116,7 +114,7 @@ export function DidCard() {
     frontCanvas.height = cardHeight;
     frontCanvas.getContext('2d')!.drawImage(
       canvas,
-      cutX, cutY, cardWidth, cardHeight,
+      cutX, 0, cardWidth, cardHeight,
       0, 0, cardWidth, cardHeight
     );
 
@@ -126,7 +124,7 @@ export function DidCard() {
     backCanvas.height = cardHeight;
     backCanvas.getContext('2d')!.drawImage(
       canvas,
-      cutX, cutYBack, cardWidth, cardHeight,
+      cutX, cardHeight, cardWidth, cardHeight,
       0, 0, cardWidth, cardHeight
     );
 
@@ -162,7 +160,7 @@ export function DidCard() {
         setNeedsPassword(false)
         toast({
           title: "PDF loaded successfully",
-          description: "Extracting DID card regions from all pages...",
+          description: "Extracting UAN card regions from all pages...",
         })
       } catch (error: any) {
         if (error.name === 'PasswordException') {
@@ -179,14 +177,14 @@ export function DidCard() {
         throw error
       }
 
-      const extractedCards: DidCardData[] = []
+      const extractedCards: UanCardData[] = []
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum)
         const pageImage = await renderPageToCanvas(page)
 
         // Always extract front and back from every page
-        const { front, back } = await extractDidFrontBackFromFullPage(pageImage)
+        const { front, back } = await extractUanFrontBackFromFullPage(pageImage)
 
         extractedCards.push({
           image: front,
@@ -200,14 +198,14 @@ export function DidCard() {
 
       if (extractedCards.length === 0) {
         toast({
-          title: "No DID cards found",
+          title: "No UAN cards found",
           description: "No card regions extracted from the PDF.",
           variant: "destructive"
         })
       } else {
-        setDidCards(extractedCards)
+        setUanCards(extractedCards)
         toast({
-          title: "DID cards extracted successfully",
+          title: "UAN cards extracted successfully",
           description: `Extracted ${extractedCards.length} card images from the PDF.`,
         })
       }
@@ -305,14 +303,13 @@ export function DidCard() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `did_${index + 1}_combined.pdf`
+      link.download = `uan_${index + 1}_combined.pdf`
       link.click()
       setTimeout(() => URL.revokeObjectURL(url), 100)
       toast({
         title: "PDF downloaded",
-        description: "Combined DID card PDF downloaded.",
+        description: "Combined UAN card PDF downloaded.",
       })
-      handleSubmit(didCards[0], 0)
     } catch (error) {
       toast({
         title: "Error",
@@ -322,11 +319,11 @@ export function DidCard() {
     }
   }
 
-  const handleSubmit = async (card: DidCardData, index: number) => {
+  const handleSubmit = async (card: UanCardData, index: number) => {
     try {
       const transaction = {
         uid: uid,
-        cardName: 'DID Card',
+        cardName: 'UAN Card',
         amount: 2,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),
@@ -337,7 +334,7 @@ export function DidCard() {
         title: "Transaction Success",
         description: "Transaction and download started.",
       });
-      downloadImage(card.image, `did_${index + 1}.png`)
+      downloadImage(card.image, `uan_${index + 1}.png`)
     } catch (err: any) {
       toast({
         title: "API Error",
@@ -351,7 +348,7 @@ export function DidCard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
-        <DashboardHeader title="DID Card Extractor" icon={CreditCard} showNewServiceButton={false} />
+        <DashboardHeader title="UAN Card Extractor" icon={CreditCard} showNewServiceButton={false} />
         <main className="flex-1 p-3 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Upload Section */}
@@ -359,7 +356,7 @@ export function DidCard() {
               <CardHeader>
                 <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
                   <Upload className="h-5 w-5 text-blue-500" />
-                  Upload DID PDF
+                  Upload UAN PDF
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -383,8 +380,8 @@ export function DidCard() {
                     <div className="space-y-3">
                       <Upload className="h-16 w-16 mx-auto text-gray-500" />
                       <div>
-                        <p className="text-white font-medium">Drop your DID PDF here or click to browse</p>
-                        <p className="text-gray-400 text-sm">Supports PDF files with DID cards up to 50MB</p>
+                        <p className="text-white font-medium">Drop your UAN PDF here or click to browse</p>
+                        <p className="text-gray-400 text-sm">Supports PDF files with UAN cards up to 50MB</p>
                       </div>
                       <Button
                         onClick={triggerFileUpload}
@@ -411,7 +408,7 @@ export function DidCard() {
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
                     <CreditCard className="h-5 w-5 text-green-500" />
-                    Extract DID Cards
+                    Extract UAN Cards
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -473,7 +470,7 @@ export function DidCard() {
                       ) : (
                         <>
                           <Scissors className="h-4 w-4 mr-2" />
-                          Extract DID Cards
+                          Extract UAN Cards
                         </>
                       )}
                     </Button>
@@ -483,12 +480,12 @@ export function DidCard() {
             )}
 
             {/* Results Section */}
-            {didCards.length > 1 && (
+            {uanCards.length > 1 && (
               <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
                     <CreditCard className="h-5 w-5 text-purple-500" />
-                    DID Card Previews
+                    UAN Card Previews
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -496,10 +493,10 @@ export function DidCard() {
                   <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
                     <h3 className="text-lg font-semibold text-white mb-2">Front Card</h3>
                     <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-                      <img src={didCards[0].image} alt="DID Front" className="max-w-full max-h-full object-contain" />
+                      <img src={uanCards[0].image} alt="UAN Front" className="max-w-full max-h-full object-contain" />
                     </div>
                     <Button
-                      onClick={() => downloadImage(didCards[0].image, `did_front.png`)}
+                      onClick={() => downloadImage(uanCards[0].image, `uan_front.png`)}
                       className="bg-indigo-500 text-white hover:bg-indigo-600"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -510,10 +507,10 @@ export function DidCard() {
                   <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
                     <h3 className="text-lg font-semibold text-white mb-2">Back Card</h3>
                     <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-                      <img src={didCards[1].image} alt="DID Back" className="max-w-full max-h-full object-contain" />
+                      <img src={uanCards[1].image} alt="UAN Back" className="max-w-full max-h-full object-contain" />
                     </div>
                     <Button
-                      onClick={() => downloadImage(didCards[1].image, `did_back.png`)}
+                      onClick={() => downloadImage(uanCards[1].image, `uan_back.png`)}
                       className="bg-purple-500 text-white hover:bg-purple-600"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -526,12 +523,12 @@ export function DidCard() {
                     <div className="aspect-[2.1/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
                       {/* Show both images side by side as preview */}
                       <div className="flex gap-4">
-                        <img src={didCards[0].image} alt="DID Front" className="max-w-[45%] max-h-full object-contain rounded" />
-                        <img src={didCards[1].image} alt="DID Back" className="max-w-[45%] max-h-full object-contain rounded" />
+                        <img src={uanCards[0].image} alt="UAN Front" className="max-w-[45%] max-h-full object-contain rounded" />
+                        <img src={uanCards[1].image} alt="UAN Back" className="max-w-[45%] max-h-full object-contain rounded" />
                       </div>
                     </div>
                     <Button
-                      onClick={() => downloadCombinedPdf(didCards[0].image, didCards[1].image, 0)}
+                      onClick={() => downloadCombinedPdf(uanCards[0].image, uanCards[1].image, 0)}
                       className="bg-green-500 text-white hover:bg-green-600"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -549,7 +546,7 @@ export function DidCard() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
                       <ZoomIn className="h-5 w-5 text-yellow-500" />
-                      Card Preview - DID {selectedCardIndex + 1}
+                      Card Preview - UAN {selectedCardIndex + 1}
                     </CardTitle>
                     <Button
                       onClick={() => setSelectedCardIndex(null)}
@@ -565,8 +562,8 @@ export function DidCard() {
                   <div className="space-y-6">
                     <div className="bg-gray-800 rounded-lg p-4 relative">
                       <img
-                        src={didCards[selectedCardIndex].image}
-                        alt="DID Preview"
+                        src={uanCards[selectedCardIndex].image}
+                        alt="UAN Preview"
                         className="w-full h-auto rounded-lg"
                       />
                     </div>
@@ -578,17 +575,17 @@ export function DidCard() {
             {/* Instructions */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-white">How to Use DID Card Extractor</CardTitle>
+                <CardTitle className="text-lg font-bold text-white">How to Use UAN Card Extractor</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 text-gray-300 text-sm">
                   <div className="flex gap-3">
                     <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                    <p>Upload your PDF file containing DID cards using the upload area above</p>
+                    <p>Upload your PDF file containing UAN cards using the upload area above</p>
                   </div>
                   <div className="flex gap-3">
                     <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-                    <p>Click "Extract DID Cards" to automatically detect and extract cards from the PDF</p>
+                    <p>Click "Extract UAN Cards" to automatically detect and extract cards from the PDF</p>
                   </div>
                   <div className="flex gap-3">
                     <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
@@ -616,4 +613,4 @@ export function DidCard() {
   )
 }
 
-export default DidCard;
+export default Uan;
