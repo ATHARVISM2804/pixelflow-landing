@@ -104,17 +104,20 @@ export function Uan() {
     // Example cropping values for your sample UAN card layout:
     // Adjust cutY, cutX, cardWidth, cardHeight as needed for your PDF
     // For the attached sample, cards are stacked vertically.
-    const cardHeight = Math.round(canvas.height / 2.2);
-    const cardWidth = Math.round(canvas.width * 0.95);
-    const cutX = Math.round(canvas.width * 0.025);
+    const cardHeight = Math.round(canvas.height / 5.6);
+    const cardWidth = Math.round(canvas.width * 0.385);
+    const cutX = Math.round(canvas.width * 0.19);
+    const cutY = Math.round(canvas.height * 0.075);
+    const cutYback = Math.round(canvas.height * 0.26);
 
     // Front card (top)
     const frontCanvas = document.createElement('canvas');
     frontCanvas.width = cardWidth;
     frontCanvas.height = cardHeight;
+    
     frontCanvas.getContext('2d')!.drawImage(
       canvas,
-      cutX, 0, cardWidth, cardHeight,
+      cutX, cutY, cardWidth, cardHeight,
       0, 0, cardWidth, cardHeight
     );
 
@@ -124,7 +127,7 @@ export function Uan() {
     backCanvas.height = cardHeight;
     backCanvas.getContext('2d')!.drawImage(
       canvas,
-      cutX, cardHeight, cardWidth, cardHeight,
+      cutX, cutYback, cardWidth, cardHeight,
       0, 0, cardWidth, cardHeight
     );
 
@@ -310,6 +313,7 @@ export function Uan() {
         title: "PDF downloaded",
         description: "Combined UAN card PDF downloaded.",
       })
+      handleSubmit(uanCards[index], index);
     } catch (error) {
       toast({
         title: "Error",
