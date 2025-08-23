@@ -261,7 +261,7 @@ export function PassportPhoto() {
                         <SelectItem value="a4-half">A4-Half page (15 photos)</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                  </div> 
 
                   <div>
                     <Label className="text-white text-xs sm:text-sm">Background Color</Label>
