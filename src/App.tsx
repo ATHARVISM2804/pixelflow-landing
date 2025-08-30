@@ -38,7 +38,7 @@ import DidCard from "./pages/DidCard.tsx";
 import Uan from "./pages/Uan.tsx";
 import Apaar from "./pages/Apaar.tsx";
 import Aayushmaan from "./pages/Aayushmaan.tsx";
-import VaccinationCard from "./pages/vaccine.tsx";
+import VaccinationCard from "./pages/Vaccine.tsx";
 // import Dummy from "./pages/Dummy.tsx";
 
 const queryClient = new QueryClient();
