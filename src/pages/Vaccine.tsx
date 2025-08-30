@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
 import NationalEmblem from './National-Emblem.png'
+import narendramodi from './NarendraModi.png'
 
 interface VaccinationData {
     certificateId: string;
@@ -267,35 +268,35 @@ export function Vaccine() {
                                     </div>
 
                                     <div className="translate-y-8">
-                                    <p className="absolute top-[63px] right-[80px] text-base font-bold text-black">
-                                        Certificate ID: {cardData.certificateId}
-                                    </p>
+                                        <p className="absolute top-[63px] right-[80px] text-base font-bold text-black">
+                                            Certificate ID: {cardData.certificateId}
+                                        </p>
 
-                                    <p className="absolute top-[58px] left-[40px] text-red-500 text-2xl font-bold underline">Benificiary Details</p>
+                                        <p className="absolute top-[58px] left-[40px] text-red-500 text-2xl font-bold underline">Benificiary Details</p>
 
-                                    {/* Details Section */}
-                                    <div className="absolute top-[90px] left-[40px] space-y-1 text-sm text-black">
-                                        <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                                            <span className="font-bold">{labels.beneficiaryName}</span>
-                                            <span>{cardData.name} ({cardData.age})</span>
-                                            <span className="font-bold">{labels.gender}</span>
-                                            <span>{cardData.gender}</span>
-                                            <span className="font-bold">{labels.idVerified}</span>
-                                            <span>{cardData.idVerified}</span>
-                                            <span className="font-bold">{labels.uniqueHealthId}</span>
-                                            <span>{cardData.uniqueHealthId || ""}</span>
-                                            <span className="font-bold">{labels.referenceId}</span>
-                                            <span>{cardData.referenceId}</span>
-                                            <span className="font-bold">{labels.vaccinationName}</span>
-                                            <span>{cardData.vaccine}</span>
-                                            <span className="font-bold">{labels.dose1}</span>
-                                            <span>{cardData.dose1} (Batch {cardData.batch1})</span>
-                                            <span className="font-bold">{labels.dose2}</span>
-                                            <span>{cardData.dose2} (Batch {cardData.batch2})</span>
-                                            <span className="font-bold">{labels.precaution}</span>
-                                            <span></span>
+                                        {/* Details Section */}
+                                        <div className="absolute top-[90px] left-[40px] space-y-1 text-sm text-black">
+                                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                                                <span className="font-bold">{labels.beneficiaryName}</span>
+                                                <span>{cardData.name} ({cardData.age})</span>
+                                                <span className="font-bold">{labels.gender}</span>
+                                                <span>{cardData.gender}</span>
+                                                <span className="font-bold">{labels.idVerified}</span>
+                                                <span>{cardData.idVerified}</span>
+                                                <span className="font-bold">{labels.uniqueHealthId}</span>
+                                                <span>{cardData.uniqueHealthId || ""}</span>
+                                                <span className="font-bold">{labels.referenceId}</span>
+                                                <span>{cardData.referenceId}</span>
+                                                <span className="font-bold">{labels.vaccinationName}</span>
+                                                <span>{cardData.vaccine}</span>
+                                                <span className="font-bold">{labels.dose1}</span>
+                                                <span>{cardData.dose1} (Batch {cardData.batch1})</span>
+                                                <span className="font-bold">{labels.dose2}</span>
+                                                <span>{cardData.dose2} (Batch {cardData.batch2})</span>
+                                                <span className="font-bold">{labels.precaution}</span>
+                                                <span></span>
+                                            </div>
                                         </div>
-                                    </div>
                                     </div>
                                 </div>
 
@@ -305,12 +306,50 @@ export function Vaccine() {
                                     className="relative w-[650px] h-[400px] bg-cover bg-white bg-no-repeat shadow-lg border rounded-xl p-6"
                                     style={{ backgroundImage: "url('/card-back-template.png')" }}
                                 >
-                                    <p className="absolute top-[40px] left-[40px] text-sm text-black">
-                                        <b>{labels.vaccinatedBy}:</b> {cardData.vaccinator}
-                                    </p>
-                                    <p className="absolute top-[65px] left-[40px] text-sm max-w-[450px] text-black">
-                                        <b>{labels.vaccinationAt}:</b> {cardData.location}
-                                    </p>
+                                    {/* Top left: Vaccinated by / at */}
+                                    <div className="absolute top-6 left-6 text-[17px] leading-tight">
+                                        <div className="flex gap-2 items-center">
+                                            <span className="font-bold">{labels.vaccinatedBy}:</span>
+                                            <span>{cardData.vaccinator}</span>
+                                        </div>
+                                        <div className="flex gap-2 items-center mt-1">
+                                            <span className="font-bold">{labels.vaccinationAt}:</span>
+                                            <span>{cardData.location}</span>
+                                        </div>
+                                    </div>
+                                    {/* Top right: Name and location */}
+                                    {/* <div className="absolute top-6 right-6 text-right text-[17px] leading-tight">
+                                    <div className="font-bold">{cardData.name}</div>
+                                    <div>{cardData.location}</div>
+                                  </div> */}
+                                    {/* Center left: Motivational quote (positioned as in image) */}
+                                    <div className="absolute left-[35px] top-[100px] w-[340px]">
+                                            <p className="font-bold text-[28px] leading-tight text-black mb-2">
+                                                “ਦਵਾਈ ਵੀ ਅਤੇ ਕੜਾਈ ਵੀ |”
+                                            </p>
+                                        <div className="transform translate-x-[50%] translate-y-[-5%]">
+                                            <p className="font-bold text-[22px] leading-tight text-black mb-2">
+                                                Together, India<br />will defeat<br />
+                                                <span className="text-black font-extrabold text-[26px]">COVID-19</span>
+                                            </p>
+                                            <p className="text-[18px] text-black font-medium mt-2">- ਪ੍ਰਧਾਨ ਮੰਤਰੀ</p>
+                                        </div>
+                                    </div>
+                                    {/* Modi image at bottom left (keep size and position unchanged) */}
+                                    <img
+                                        src={narendramodi}
+                                        alt="Narendra Modi"
+                                        className="absolute left-6 bottom-[65px] w-[220px] h-[220px] object-contain z-10"
+                                        style={{ pointerEvents: "none" }}
+                                    />
+                                    {/* Bottom left: Disclaimer */}
+                                    <div className="absolute left-6 bottom-6 w-[340px] text-[11px] text-gray-700">
+                                        The information on the card is a copy provided by the beneficiary, based on publicly available data, and is for reference/personal use only, not a valid document.
+                                    </div>
+                                    {/* Bottom right: Scan QR Code text (no QR for now) */}
+                                    <div className="absolute right-6 bottom-6 text-[13px] text-black font-semibold">
+                                        Scan QR Code on https://verify.cowin.gov.in
+                                    </div>
                                 </div>
                             </div>
                         )}
