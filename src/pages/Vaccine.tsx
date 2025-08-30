@@ -17,6 +17,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
+import NationalEmblem from './National-Emblem.png'
 
 interface VaccinationData {
     certificateId: string;
@@ -250,6 +251,14 @@ export function Vaccine() {
                                     className="relative w-[650px] h-[400px] bg-cover bg-white bg-no-repeat shadow-lg border rounded-xl p-6"
                                     style={{ backgroundImage: "url('/card-front-template.png')" }}
                                 >
+                                    {/* National Emblem overlay */}
+                                    <img
+                                        src={NationalEmblem}
+                                        // src={NationalEmblem}
+                                        alt="National Emblem"
+                                        className="absolute top-3 left-6 w-[80px] h-[100px] object-contain z-10"
+                                        style={{ pointerEvents: "none" }}
+                                    />
 
                                     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-full text-center">
                                         <p className="font-bold text-2xl">Ministry of Health & Family Welfare</p>
@@ -284,7 +293,7 @@ export function Vaccine() {
                                             <span className="font-bold">{labels.dose2}</span>
                                             <span>{cardData.dose2} (Batch {cardData.batch2})</span>
                                             <span className="font-bold">{labels.precaution}</span>
-                                            <span>Not Taken</span>
+                                            <span></span>
                                         </div>
                                     </div>
                                     </div>
@@ -329,4 +338,3 @@ export function Vaccine() {
 }
 
 export default Vaccine;
-                               
