@@ -278,7 +278,7 @@ export function Profile() {
 
                   {/* Additional Information */}
                   <div>
-                    <h3 className="text-white font-semibold mb-4">Additional Information</h3>
+                    {/* <h3 className="text-white font-semibold mb-4">Additional Information</h3> */}
                     <div className="space-y-4">
                       <div>
                         <Label className="text-white text-sm">Address</Label>
