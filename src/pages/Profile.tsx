@@ -321,7 +321,7 @@ export function Profile() {
                   </div>
 
                   {/* Account Settings */}
-                  <div>
+                  {/* <div>
                     <h3 className="text-white font-semibold mb-4">Account Settings</h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
@@ -352,7 +352,7 @@ export function Profile() {
                         </Badge>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             </div>

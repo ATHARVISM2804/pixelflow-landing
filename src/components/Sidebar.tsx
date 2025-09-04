@@ -106,7 +106,7 @@ const Sidebar = () => {
                 onClick={() => setIsOpen(false)}
               >
                 <item.icon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate font-bold text-white">{item.label}</span>
               </Link>
             ))}
             
