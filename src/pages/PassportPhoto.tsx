@@ -105,6 +105,28 @@ export function PassportPhoto() {
 
         // Place the photo inside the box
         pdf.addImage(img, 'JPEG', x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height)
+        
+        // Add text if name or date is provided
+        if (formData.name || formData.date) {
+          // Set text color and font size
+          pdf.setTextColor(225, 225, 225) // Black text
+          pdf.setFontSize(7) // Small font size appropriate for passport photos
+          
+          // Add name at the bottom left of the photo if provided
+          if (formData.name) {
+            pdf.text(formData.name, x + 2, y + ORIGINAL_PASSPORT.height - 2, { 
+              align: 'left'
+            })
+          }
+          
+          // Add date at the bottom right if provided
+          if (formData.date) {
+            const dateText = new Date(formData.date).toLocaleDateString()
+            pdf.text(dateText, x + ORIGINAL_PASSPORT.width - 2, y + ORIGINAL_PASSPORT.height - 2, { 
+              align: 'right' 
+            })
+          }
+        }
 
         if ((i + 1) % (photosPerRow * photosPerCol) === 0 && i + 1 < formData.number) {
           pdf.addPage()
@@ -256,7 +278,7 @@ export function PassportPhoto() {
                       <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
                         <SelectValue placeholder="A4-Full page (30 photos)" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectContent className="bg-gray-800 text-white border-gray-700">
                         <SelectItem value="a4-full">A4-Full page (30 photos)</SelectItem>
                         <SelectItem value="a4-half">A4-Half page (15 photos)</SelectItem>
                       </SelectContent>
@@ -311,7 +333,7 @@ export function PassportPhoto() {
                       {Array.from({ length: formData.number }).map((_, index) => (
                         <div 
                           key={index} 
-                          className="bg-white rounded overflow-hidden flex items-center justify-center border border-gray-200"
+                          className="bg-white rounded overflow-hidden flex items-center justify-center border border-gray-200 relative"
                           style={{
                             width: `${ORIGINAL_PASSPORT.width}mm`,
                             height: `${ORIGINAL_PASSPORT.height}mm`,
@@ -319,11 +341,27 @@ export function PassportPhoto() {
                           }}
                         >
                           {selectedFiles[index % selectedFiles.length] && (
-                            <img 
-                              src={URL.createObjectURL(selectedFiles[index % selectedFiles.length])}
-                              alt={`Photo ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
+                            <>
+                              <img 
+                                src={URL.createObjectURL(selectedFiles[index % selectedFiles.length])}
+                                alt={`Photo ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              
+                              {/* Display name and date on the preview */}
+                              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-20 py-0.5 px-1 flex justify-between items-center">
+                                {formData.name && (
+                                  <span className="text-white text-[5px] truncate max-w-[70%]">{formData.name}</span>
+                                )}
+                                {/* Add a spacer if both name and date exist */}
+                                {formData.name && formData.date && <span className="mx-1" />}
+                                {formData.date && (
+                                  <span className="text-white text-[5px]">
+                                    {new Date(formData.date).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                            </>
                           )}
                         </div>
                       ))}
