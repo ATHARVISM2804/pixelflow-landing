@@ -16,7 +16,8 @@ import {
   RotateCcw,
   ZoomIn,
   Lock,
-  Key
+  Key,
+  Printer
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -1050,6 +1051,33 @@ export function PdfProcessor() {
   //   }
   // };
 
+  // Print PDF directly (open in new tab and trigger print)
+  const handlePrint = async (card: AadhaarCardData, index: number) => {
+    if (!window.confirm("Are you sure you want to print this Aadhaar card?")) return;
+    try {
+      // Create canvases from both images
+      const frontCanvas = await dataURLToCanvas(card.frontImage)
+      const backCanvas = await dataURLToCanvas(card.backImage)
+      const pdfBytes = await createCombinedPdf(frontCanvas, backCanvas)
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+      const pdfUrl = URL.createObjectURL(blob)
+      const printWindow = window.open(pdfUrl)
+      if (printWindow) {
+        printWindow.onload = function () {
+          printWindow.focus()
+          printWindow.print()
+        }
+      }
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF for print.",
+        variant: "destructive"
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -1375,6 +1403,15 @@ export function PdfProcessor() {
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Download {copies} {copies === 1 ? 'Copy' : 'Copies'} as PDF
+                        </Button>
+                        {/* Print Button */}
+                        <Button
+                          onClick={() => handlePrint(card, index)}
+                          className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
+                          size="sm"
+                        >
+                          <Printer className="h-4 w-4 mr-2" />
+                          Print {copies} {copies === 1 ? 'Copy' : 'Copies'}
                         </Button>
                       </div>
 
