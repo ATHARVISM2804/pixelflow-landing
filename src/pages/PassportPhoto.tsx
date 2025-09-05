@@ -76,6 +76,9 @@ export function PassportPhoto() {
   const handleDownload = async () => {
     if (!selectedFiles.length) return
 
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download the passport photo PDF?")) return;
+
     try {
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -172,6 +175,9 @@ export function PassportPhoto() {
   // Print PDF instead of download
   const handlePrint = async () => {
     if (!selectedFiles.length) return
+
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to print the passport photo PDF?")) return;
 
     try {
       const pdf = new jsPDF({

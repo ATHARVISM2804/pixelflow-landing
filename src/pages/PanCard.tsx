@@ -337,6 +337,8 @@ export function PanCard() {
   }
 
   const downloadCombinedPdf = async (front: string, back: string, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download the combined PAN card PDF?")) return;
     try {
       const pdfBytes = await createCombinedPdf(front, back)
       const blob = new Blob([pdfBytes], { type: 'application/pdf' })
@@ -360,6 +362,8 @@ export function PanCard() {
   }
 
   const handleSubmit = async (card: PanCardData, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download this PAN card?")) return;
     try {
       const transaction = {
         uid: uid,
