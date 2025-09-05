@@ -23,7 +23,12 @@ const cardTypes = {
 const stateNames = {
   mh: "Maharashtra", hp: "Himachal Pradesh", pb: "Punjab", gj: "Gujarat", rj: "Rajasthan",
   up: "Uttar Pradesh", br: "Bihar", wb: "West Bengal", tn: "Tamil Nadu", ka: "Karnataka",
-  // ...add all state mappings as needed
+  kl: "Kerala", ap: "Andhra Pradesh", ts: "Telangana", or: "Odisha", jh: "Jharkhand",
+  as: "Assam", hr: "Haryana", mp: "Madhya Pradesh", cg: "Chhattisgarh", uk: "Uttarakhand",
+  ga: "Goa", mn: "Manipur", ml: "Meghalaya", tr: "Tripura", mz: "Mizoram",
+  nl: "Nagaland", ar: "Arunachal Pradesh", sk: "Sikkim", dl: "Delhi", jk: "Jammu & Kashmir",
+  la: "Ladakh", ch: "Chandigarh", py: "Puducherry", an: "Andaman & Nicobar",
+  dn: "Dadra & Nagar Haveli", dd: "Daman & Diu", ld: "Lakshadweep"
 }
 
 export function CardMaker() {
