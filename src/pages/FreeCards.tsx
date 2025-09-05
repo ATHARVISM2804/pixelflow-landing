@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { FileStack } from "lucide-react"
 import { Link } from "react-router-dom"
@@ -47,6 +47,14 @@ const indianStates = [
 
 
 export function FreeCards() {
+  const [search, setSearch] = useState('')
+
+  const filteredStates = indianStates.filter(
+    state =>
+      state.name.toLowerCase().includes(search.toLowerCase()) ||
+      state.code.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -55,12 +63,20 @@ export function FreeCards() {
         <DashboardHeader title="Free Cards - Select State" icon={FileStack} />
 
         <main className="flex-1 p-3 sm:p-6">
-          <div className="mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <p className="text-white   text-lg font-bold ">Select your state to access government card services</p>
+            {/* State Search Input */}
+            <input
+              type="text"
+              placeholder="Search state..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="mt-4 w-full max-w-xs bg-gray-800/50 border border-gray-700/50 text-white rounded px-3 py-2 placeholder:text-gray-400"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-            {indianStates.map((state) => (
+            {filteredStates.map((state) => (
               <Link key={state.code} to={`/free-cards/${state.code.toLowerCase()}`}>
                 <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group h-full">
                   <CardContent className="p-4 sm:p-6 text-center space-y-4 h-full flex flex-col justify-between">

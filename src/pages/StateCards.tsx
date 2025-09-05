@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, ArrowLeft } from "lucide-react"
@@ -33,6 +33,7 @@ const stateNames = {
 export function StateCards() {
   const { stateCode } = useParams<{ stateCode: string }>()
   const stateName = stateNames[stateCode?.toLowerCase() as keyof typeof stateNames]
+  const [search, setSearch] = useState('')
 
   if (!stateName) {
     return (
@@ -53,6 +54,12 @@ export function StateCards() {
     )
   }
 
+  // Filter cards by search input (name or description)
+  const filteredCards = defaultCards.filter(card =>
+    card.name.toLowerCase().includes(search.toLowerCase()) ||
+    card.description.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -68,11 +75,20 @@ export function StateCards() {
                 Back to States
               </Button>
             </Link>
-            <p className="text-white   text-lg font-bold">Available free cards for {stateName}</p>
+            <div className='flex items-center justify-between'>
+              <p className="text-white   text-lg font-bold">Available free cards for {stateName}</p>
+              {/* Card Search Input */}
+              <input
+                type="text"
+                placeholder="Search card..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="mt-4 w-full max-w-xs bg-gray-800/50 border border-gray-700/50 text-white rounded px-3 py-2 placeholder:text-gray-400"
+              />
+            </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {defaultCards.map((card) => {
+            {filteredCards.map((card) => {
               // Route override for Aadhaar and PAN
               let to = `/card/${card.id}/${stateCode}`;
               if (card.id === "aadhar") to = "/aadhaar";
