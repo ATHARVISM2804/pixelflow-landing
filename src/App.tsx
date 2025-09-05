@@ -22,10 +22,10 @@ import Resume from "./pages/Resume";
 import PageMaker from "./pages/Pagemaker.tsx";
 import AddMoney from "./pages/AddMoney.tsx";
 import ProtectedRoute from './auth/ProtectedRoute.tsx'
+import ProfileCheckRoute from './auth/ProfileCheckRoute.tsx'
 import FreeCards from "./pages/FreeCards";
 import StateCards from "./pages/StateCards";
 import CardMaker from "./pages/CardMaker";
-import Aadhar from "./pages/Aadhar.tsx";
 import PdfProcessor from "./pages/PdfProcessor";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
@@ -39,7 +39,7 @@ import Uan from "./pages/Uan.tsx";
 import Apaar from "./pages/Apaar.tsx";
 import Aayushmaan from "./pages/Aayushmaan.tsx";
 import VaccinationCard from "./pages/Vaccine.tsx";
-// import Dummy from "./pages/Dummy.tsx";
+import CompleteSignup from "./components/CompleteSignup.tsx";
 
 const queryClient = new QueryClient();
 
@@ -55,37 +55,39 @@ const App = () => (
             <Route path="/overlay" element={<AadhaarOverlayPDF />} />
             <Route path="/vaccination" element={<VaccinationCard />} />
             <Route path="/text" element={<PdfTextExtractor />} />
-            <Route path="/did" element={<ProtectedRoute><DidCard /></ProtectedRoute>} />
-            <Route path="/abha" element={<ProtectedRoute><Aayushmaan /></ProtectedRoute>} />
-            <Route path="/uan" element={<ProtectedRoute><Uan /></ProtectedRoute>} />
+            <Route path="/complete-profile" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
+
+            {/* Protected Routes without Profile Completion Requirement */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/apaar" element={<ProtectedRoute><Apaar /></ProtectedRoute>} />
-            <Route path="/passport-photo" element={<ProtectedRoute><PassportPhoto /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/cards" element={<ProtectedRoute><Cards /></ProtectedRoute>} />
-            <Route path="/id-card" element={<ProtectedRoute><IdCard /></ProtectedRoute>} />
-            <Route path="/kundli" element={<ProtectedRoute><Kundali /></ProtectedRoute>} />
-            <Route path="/editor" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
-            <Route path="/aadhaar" element={<ProtectedRoute><PdfProcessor /></ProtectedRoute>} />
-            <Route path="/voter" element={<ProtectedRoute><Voter /></ProtectedRoute>} />
-            <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
-            <Route path="/voter-slip" element={<ProtectedRoute><VoterSlip /></ProtectedRoute>} />
-            <Route path="/impds-ration" element={<ProtectedRoute><IMPDSRation /></ProtectedRoute>} />
-            <Route path="/driving-license" element={<ProtectedRoute><DrivingLicense /></ProtectedRoute>} />
-            <Route path="/aepds-ration" element={<ProtectedRoute><AePDSRation /></ProtectedRoute>} />
-            <Route path="/page-maker" element={<ProtectedRoute><PageMaker /></ProtectedRoute>} />
-            <Route path="/add-money" element={<ProtectedRoute><AddMoney /></ProtectedRoute>} />
             <Route path="/free-cards" element={<FreeCards />} />
             <Route path="/free-cards/:stateCode" element={<StateCards />} />
-            <Route path="/card/:cardType/:stateCode" element={<CardMaker />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+            {/* Protected Routes with Profile Completion Required */}
+            <Route path="/did" element={<ProfileCheckRoute><DidCard /></ProfileCheckRoute>} />
+            <Route path="/abha" element={<ProfileCheckRoute><Aayushmaan /></ProfileCheckRoute>} />
+            <Route path="/uan" element={<ProfileCheckRoute><Uan /></ProfileCheckRoute>} />
+            <Route path="/apaar" element={<ProfileCheckRoute><Apaar /></ProfileCheckRoute>} />
+            <Route path="/passport-photo" element={<ProfileCheckRoute><PassportPhoto /></ProfileCheckRoute>} />
+            <Route path="/cards" element={<ProfileCheckRoute><Cards /></ProfileCheckRoute>} />
+            <Route path="/id-card" element={<ProfileCheckRoute><IdCard /></ProfileCheckRoute>} />
+            <Route path="/kundli" element={<ProfileCheckRoute><Kundali /></ProfileCheckRoute>} />
+            <Route path="/editor" element={<ProfileCheckRoute><Editor /></ProfileCheckRoute>} />
+            <Route path="/aadhaar" element={<ProfileCheckRoute><PdfProcessor /></ProfileCheckRoute>} />
+            <Route path="/voter" element={<ProfileCheckRoute><Voter /></ProfileCheckRoute>} />
+            <Route path="/resume" element={<ProfileCheckRoute><Resume /></ProfileCheckRoute>} />
+            <Route path="/voter-slip" element={<ProfileCheckRoute><VoterSlip /></ProfileCheckRoute>} />
+            <Route path="/impds-ration" element={<ProfileCheckRoute><IMPDSRation /></ProfileCheckRoute>} />
+            <Route path="/driving-license" element={<ProfileCheckRoute><DrivingLicense /></ProfileCheckRoute>} />
+            <Route path="/aepds-ration" element={<ProfileCheckRoute><AePDSRation /></ProfileCheckRoute>} />
+            <Route path="/page-maker" element={<ProfileCheckRoute><PageMaker /></ProfileCheckRoute>} />
+            <Route path="/add-money" element={<ProfileCheckRoute><AddMoney /></ProfileCheckRoute>} />
+            <Route path="/card/:cardType/:stateCode" element={<ProfileCheckRoute><CardMaker /></ProfileCheckRoute>} />
             <Route path="/pan" element={<PanCard />} />
-            {/* <Route path="/dummy" element={<Dummy />} /> */}
-            {/* <Route path="/aadhaar" element={<ProtectedRoute><Aadhar /></ProtectedRoute>} /> */}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
