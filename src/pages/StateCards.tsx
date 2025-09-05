@@ -30,6 +30,20 @@ const stateNames = {
   dn: "Dadra & Nagar Haveli", dd: "Daman & Diu", ld: "Lakshadweep"
 }
 
+// Use Google image links for logos
+const cardLogos: Record<string, string> = {
+  aadhar: "https://e7.pngegg.com/pngimages/279/962/png-clipart-aadhaar-uidai-identity-document-permanent-account-number-india-india-text-logo.png",
+  aapar: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgxYY0cc_5ki8XH4g7EEvkoslYZneckQVmzNMWc5GhD_xNpMByr3NVHMsvmDO9E25JmTMy_q_txtMblK6FFd5jtZejqtoGBKm8Xn1rI11XcNcfGs8MaVco0q1RpfwJpY5tXb7oQH5N4cc0TDfVF960s2hGZ76hkdceAvdCZ_dhhlPrmpoIvltY4TmPB0fHE/s544/APAAR%20IDs%20Creation%20Link,%20Apply%20Process.png",
+  abc: "https://play-lh.googleusercontent.com/Yem4hjyVQv-1kZdr92bKhNP0m3-zmP1YTgZ-gmwbqJs0TI5-we8j-RJ3rho5BykWeWA",
+  ayushman: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwVc6JGxgAbpcWRQxUr9TImLUPmqe4C34b4Q&s",
+  ration: "https://pbs.twimg.com/media/E2A7Qv0UcAENXgr.jpg",
+  voter: "https://i.cdn.newsbytesapp.com/images/l28820230821125444.jpeg",
+  pan: "https://w7.pngwing.com/pngs/157/146/png-transparent-pan-card.png",
+  driving: "https://cdni.iconscout.com/illustration/premium/thumb/driving-license-illustration-svg-png-download-4397188.png",
+  did: "https://www.did-card.co.uk/wp-content/uploads/sites/42/2020/10/Footer-Logo3-200x149.png",
+  uan: "https://www.jagranimages.com/images/newimg/26062024/26_06_2024-uan_card_23746246.webp"
+}
+
 export function StateCards() {
   const { stateCode } = useParams<{ stateCode: string }>()
   const stateName = stateNames[stateCode?.toLowerCase() as keyof typeof stateNames]
@@ -103,7 +117,15 @@ export function StateCards() {
                   <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
                     <CardContent className="p-4 sm:p-6 text-center space-y-4">
                       <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg`}>
-                        <span className="text-2xl sm:text-3xl">{card.icon}</span>
+                        {cardLogos[card.id] ? (
+                          <img
+                            src={cardLogos[card.id]}
+                            alt={`${card.name} logo`}
+                            className="w-10 h-10 sm:w-14 sm:h-14 object-contain"
+                          />
+                        ) : (
+                          <span className="text-2xl sm:text-3xl">{card.icon}</span>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">

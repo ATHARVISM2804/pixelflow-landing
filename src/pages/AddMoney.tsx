@@ -33,9 +33,21 @@ export function AddMoney() {
   const [amount, setAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
   const [customAmount, setCustomAmount] = useState('')
+  const [selectedPlan, setSelectedPlan] = useState('')
 
   const predefinedAmounts = [50, 100, 200, 500, 1000, 2000]
-  
+
+  // Add plan options as per screenshot
+  const planOptions = [
+    { value: '22-10', label: '₹ 22 Plan – 10 Cards', amount: 22 },
+    { value: '55-25', label: '₹ 55 Plan – 25 Cards', amount: 55 },
+    { value: '110-50', label: '₹ 110 Plan – 50 Cards', amount: 110 },
+    { value: '220-100', label: '₹ 220 Plan – 100 Cards', amount: 220 },
+    { value: '385-175', label: '₹ 385 Plan – 175 Cards', amount: 385 },
+    { value: '550-250', label: '₹ 550 Plan – 250 Cards', amount: 550 },
+    { value: '1100-500', label: '₹ 1100 Plan – 500 Cards', amount: 1100 },
+  ]
+
   const paymentMethods = [
     { id: 'upi', name: 'UPI', icon: '📱' },
     { id: 'card', name: 'Credit/Debit Card', icon: '💳' },
@@ -93,8 +105,35 @@ export function AddMoney() {
                 <p className="text-gray-400 text-sm">Choose an amount and payment method to add money to your wallet</p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Predefined Amounts */}
+                {/* Plan Selection */}
                 <div>
+                  <Label className="text-white">Select Plan <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={selectedPlan}
+                    onValueChange={val => {
+                      setSelectedPlan(val)
+                      const plan = planOptions.find(p => p.value === val)
+                      if (plan) {
+                        setAmount(plan.amount.toString())
+                        setCustomAmount('')
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
+                      <SelectValue placeholder="Select Plan" className="text-white" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                      {planOptions.map(plan => (
+                        <SelectItem key={plan.value} value={plan.value} className="text-white">
+                          {plan.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Predefined Amounts */}
+                {/* <div>
                   <Label className="text-white">Select Amount</Label>
                   <div className="grid grid-cols-3 gap-3 mt-2">
                     {predefinedAmounts.map((amt) => (
@@ -112,10 +151,10 @@ export function AddMoney() {
                       </Button>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Custom Amount */}
-                <div>
+                {/* <div>
                   <Label className="text-white">Or Enter Custom Amount</Label>
                   <Input
                     type="number"
@@ -124,7 +163,7 @@ export function AddMoney() {
                     onChange={(e) => handleCustomAmountChange(e.target.value)}
                     className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
                   />
-                </div>
+                </div> */}
 
                 {/* Payment Methods */}
                 <div>
@@ -173,7 +212,7 @@ export function AddMoney() {
 
                 <Button 
                   className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
-                  disabled={!amount || !paymentMethod}
+                  disabled={(!amount && !selectedPlan) || !paymentMethod}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Proceed to Payment
@@ -227,4 +266,3 @@ export function AddMoney() {
 }
 
 export default AddMoney
-      
