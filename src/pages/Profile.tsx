@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,11 +22,18 @@ import {
   Activity
 } from "lucide-react"
 import { useAuth } from '../auth/AuthContext'
+import { cardApi } from '../services/cardApi'
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import React from 'react'
+import axios from "axios";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export function Profile() {
   const { user } = useAuth()
+  const [cardsCreated, setCardsCreated] = useState<number>(0)
+  const [transactionCount, setTransactionCount] = useState<number>(0)
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState({
     displayName: user?.displayName || '',
@@ -81,6 +88,23 @@ export function Profile() {
     setImagePreview(user?.photoURL || null)
     setIsEditing(false)
   }
+
+  // fetch user's transactions using cardApi
+  React.useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user?.uid) return
+        const transactions = await cardApi.getCardsByUser(user.uid) // returns only CARD_CREATION txs
+        setCardsCreated(transactions.length)
+        // If you want total transactions (all types) modify cardApi or call another endpoint.
+        setTransactionCount(transactions.length)
+      } catch (err) {
+        console.error('Failed to load transactions for profile stats', err)
+      }
+    }
+
+    fetchTransactions()
+  }, [user])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -161,14 +185,14 @@ export function Profile() {
                       <CreditCard className="h-4 w-4 text-blue-400" />
                       <span className="text-gray-300 text-sm">Cards Created</span>
                     </div>
-                    <span className="text-white font-semibold">24</span>
+                    <span className="text-white font-semibold">{cardsCreated}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Activity className="h-4 w-4 text-green-400" />
                       <span className="text-gray-300 text-sm">Total Transactions</span>
                     </div>
-                    <span className="text-white font-semibold">156</span>
+                    <span className="text-white font-semibold">{transactionCount}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
