@@ -14,7 +14,9 @@ const defaultCards = [
   { id: "ration", name: "Ration Card", description: "Food security card", icon: "🌾", color: "from-orange-500 to-orange-600" },
   { id: "voter", name: "Voter ID Card", description: "Electoral identity card", icon: "🗳️", color: "from-indigo-500 to-indigo-600" },
   { id: "pan", name: "PAN Card", description: "Permanent Account Number", icon: "💼", color: "from-teal-500 to-teal-600" },
-  { id: "driving", name: "Driving License", description: "Vehicle driving permit", icon: "🚗", color: "from-yellow-500 to-yellow-600" }
+  { id: "driving", name: "Driving License", description: "Vehicle driving permit", icon: "🚗", color: "from-yellow-500 to-yellow-600" },
+  { id: "did", name: "Disabled Identification (DID) Card", description: "Card for persons with disabilities", icon: "♿", color: "from-pink-500 to-pink-600" },
+  { id: "uan", name: "UAN Card", description: "Universal Account Number Card", icon: "🔢", color: "from-cyan-500 to-cyan-600" }
 ]
 
 const stateNames = {
@@ -78,6 +80,8 @@ export function StateCards() {
               if (card.id === "voter") to = "/voter";
               if (card.id === "aapar") to = "/apaar";
               if (card.id === "ayushman") to = "/abha";
+              if (card.id === "did") to = "/did";
+              if (card.id === "uan") to = "/uan";
               return (
                 <Link key={card.id} to={to}>
                   <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
