@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,23 +26,30 @@ import { cardApi } from '../services/cardApi'
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import React from 'react'
-import axios from "axios";
+import axios from "axios"
+// Firestore imports
+import { doc, getDoc, setDoc } from "firebase/firestore"
+import { db } from '../auth/firebase'
+import { useToast } from '@/hooks/use-toast'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export function Profile() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [cardsCreated, setCardsCreated] = useState<number>(0)
   const [transactionCount, setTransactionCount] = useState<number>(0)
   const [isEditing, setIsEditing] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [profileData, setProfileData] = useState({
     displayName: user?.displayName || '',
     email: user?.email || '',
-    phone: '+91 9876543210',
-    address: 'Mumbai, Maharashtra, India',
-    dateOfBirth: '1990-01-01',
-    bio: 'Professional ID card creator and document specialist.',
-    occupation: 'Graphic Designer'
+    phone: '',
+    address: '',
+    dateOfBirth: '',
+    bio: '',
+    occupation: '',
+    profileComplete: false
   })
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(user?.photoURL || null)
@@ -68,43 +75,132 @@ export function Profile() {
     setProfileData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
-    // Here you would typically save to backend
-    console.log('Saving profile data:', profileData)
-    setIsEditing(false)
+  const handleSave = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Check if profile would be complete after this save
+      const isComplete = !!(
+        profileData.phone && 
+        profileData.address && 
+        profileData.dateOfBirth
+      );
+      
+      // Save to Firestore
+      const userProfileRef = doc(db, "userProfiles", user.uid);
+      await setDoc(userProfileRef, {
+        ...profileData,
+        // Update phoneNumber field to match what CompleteSignup component uses
+        phoneNumber: profileData.phone,
+        // Update the profileComplete flag based on required fields
+        profileComplete: isComplete,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      
+      // Update local state to match
+      setProfileData(prev => ({
+        ...prev,
+        profileComplete: isComplete
+      }));
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved successfully.",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleCancel = () => {
-    // Reset to original data
-    setProfileData({
-      displayName: user?.displayName || '',
-      email: user?.email || '',
-      phone: '+91 9876543210',
-      address: 'Mumbai, Maharashtra, India',
-      dateOfBirth: '1990-01-01',
-      bio: 'Professional ID card creator and document specialist.',
-      occupation: 'Graphic Designer'
-    })
+    // Fetch the latest profile data from Firestore
+    fetchUserProfile()
     setImagePreview(user?.photoURL || null)
     setIsEditing(false)
   }
 
+  // Function to fetch user profile from Firestore
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const userProfileRef = doc(db, "userProfiles", user.uid);
+      const profileSnap = await getDoc(userProfileRef);
+      
+      if (profileSnap.exists()) {
+        // Get the user profile data
+        const userData = profileSnap.data();
+        
+        // Update the profile data state with fetched data
+        setProfileData({
+          displayName: user.displayName || userData.displayName || '',
+          email: user.email || userData.email || '',
+          phone: userData.phoneNumber || '', // This matches the field name in CompleteSignup
+          address: userData.address || '',
+          dateOfBirth: userData.dateOfBirth || '',
+          bio: userData.bio || 'No bio provided',
+          occupation: userData.occupation || 'User',
+          profileComplete: userData.profileComplete || false
+        });
+      } else {
+        // Profile doesn't exist, use defaults
+        setProfileData({
+          displayName: user.displayName || '',
+          email: user.email || '',
+          phone: '',
+          address: '',
+          dateOfBirth: '',
+          bio: 'No bio provided',
+          occupation: 'User',
+          profileComplete: false
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load your profile information.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch user profile data when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+  
   // fetch user's transactions using cardApi
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        if (!user?.uid) return
-        const transactions = await cardApi.getCardsByUser(user.uid) // returns only CARD_CREATION txs
-        setCardsCreated(transactions.length)
+        if (!user?.uid) return;
+        const transactions = await cardApi.getCardsByUser(user.uid); // returns only CARD_CREATION txs
+        setCardsCreated(transactions.length);
         // If you want total transactions (all types) modify cardApi or call another endpoint.
-        setTransactionCount(transactions.length)
+        setTransactionCount(transactions.length);
       } catch (err) {
-        console.error('Failed to load transactions for profile stats', err)
+        console.error('Failed to load transactions for profile stats', err);
       }
-    }
+    };
 
-    fetchTransactions()
-  }, [user])
+    fetchTransactions();
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -161,15 +257,36 @@ export function Profile() {
                   </div>
                   <div className="flex items-center gap-3 text-gray-300">
                     <Phone className="h-4 w-4 text-green-400" />
-                    <span className="text-sm">{profileData.phone}</span>
+                    <span className="text-sm">{profileData.phone || 'Not provided'}</span>
                   </div>
                   <div className="flex items-center gap-3 text-gray-300">
                     <MapPin className="h-4 w-4 text-orange-400" />
-                    <span className="text-sm">{profileData.address}</span>
+                    <span className="text-sm">{profileData.address || 'Not provided'}</span>
                   </div>
                   <div className="flex items-center gap-3 text-gray-300">
                     <Calendar className="h-4 w-4 text-purple-400" />
-                    <span className="text-sm">Joined December 2023</span>
+                    <span className="text-sm">{profileData.dateOfBirth ? `DOB: ${new Date(profileData.dateOfBirth).toLocaleDateString()}` : 'DOB: Not provided'}</span>
+                  </div>
+                  <div className="mt-2">
+                    {profileData.profileComplete ? (
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                        Profile Complete
+                      </Badge>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 inline-block mb-2">
+                          Profile Incomplete
+                        </Badge>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border-indigo-500/30"
+                          onClick={() => window.location.href = '/complete-profile'}
+                        >
+                          Complete Your Profile
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -213,7 +330,9 @@ export function Profile() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-white text-xl">Profile Information</CardTitle>
-                    {!isEditing ? (
+                    {isLoading ? (
+                      <div className="text-gray-400 text-sm">Loading...</div>
+                    ) : !isEditing ? (
                       <Button
                         onClick={() => setIsEditing(true)}
                         className="bg-indigo-500 hover:bg-indigo-600 text-white"
@@ -226,14 +345,16 @@ export function Profile() {
                         <Button
                           onClick={handleSave}
                           className="bg-green-500 hover:bg-green-600 text-white"
+                          disabled={isLoading}
                         >
                           <Save className="h-4 w-4 mr-2" />
-                          Save
+                          {isLoading ? "Saving..." : "Save"}
                         </Button>
                         <Button
                           onClick={handleCancel}
                           variant="outline"
                           className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50"
+                          disabled={isLoading}
                         >
                           <X className="h-4 w-4 mr-2" />
                           Cancel
@@ -294,7 +415,7 @@ export function Profile() {
                             type="date"
                           />
                         ) : (
-                          <p className="mt-1 text-gray-300 p-2">{new Date(profileData.dateOfBirth).toLocaleDateString()}</p>
+                          <p className="mt-1 text-gray-300 p-2">{profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString() : 'Not provided'}</p>
                         )}
                       </div>
                     </div>

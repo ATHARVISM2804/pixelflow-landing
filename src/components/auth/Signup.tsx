@@ -43,7 +43,7 @@ const Signup = () => {
       localStorage.setItem('token', token);
   
       console.log("Signup successful!");
-      navigate("/dashboard");
+      navigate("/complete-profile");
     } catch (error) {
       console.error("Signup failed:", error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -58,7 +58,7 @@ const Signup = () => {
         const token = await result.user.getIdToken();
         localStorage.setItem('token', token);
         console.log("Signup successful!");
-        navigate('/dashboard');
+        navigate('/complete-profile');
       })
       .catch((error) => {
         console.error("Signup failed:", error);
