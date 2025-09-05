@@ -169,6 +169,68 @@ export function PassportPhoto() {
     }
   };
 
+  // Print PDF instead of download
+  const handlePrint = async () => {
+    if (!selectedFiles.length) return
+
+    try {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+
+      const margin = 10
+      const spacing = 2
+      const photosPerRow = Math.floor((A4_DIMENSIONS.width - 2 * margin + spacing) / (ORIGINAL_PASSPORT.width + spacing))
+      const photosPerCol = Math.floor((A4_DIMENSIONS.height - 2 * margin + spacing) / (ORIGINAL_PASSPORT.height + spacing))
+
+      for (let i = 0; i < formData.number; i++) {
+        const file = selectedFiles[i % selectedFiles.length]
+        const img = new Image()
+        img.src = URL.createObjectURL(file)
+        await new Promise((resolve) => { img.onload = resolve })
+
+        const row = Math.floor(i / photosPerRow)
+        const col = i % photosPerRow
+        const x = margin + (col * (ORIGINAL_PASSPORT.width + spacing))
+        const y = margin + (row * (ORIGINAL_PASSPORT.height + spacing))
+
+        pdf.setDrawColor(200)
+        pdf.rect(x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height)
+        pdf.addImage(img, 'JPEG', x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height)
+
+        if (formData.name || formData.date) {
+          pdf.setTextColor(225, 225, 225)
+          pdf.setFontSize(7)
+          if (formData.name) {
+            pdf.text(formData.name, x + 2, y + ORIGINAL_PASSPORT.height - 2, { align: 'left' })
+          }
+          if (formData.date) {
+            const dateText = new Date(formData.date).toLocaleDateString()
+            pdf.text(dateText, x + ORIGINAL_PASSPORT.width - 2, y + ORIGINAL_PASSPORT.height - 2, { align: 'right' })
+          }
+        }
+
+        if ((i + 1) % (photosPerRow * photosPerCol) === 0 && i + 1 < formData.number) {
+          pdf.addPage()
+        }
+      }
+
+      // Open PDF in new tab and trigger print
+      const pdfUrl = pdf.output('bloburl')
+      const printWindow = window.open(pdfUrl)
+      if (printWindow) {
+        printWindow.onload = function () {
+          printWindow.focus()
+          printWindow.print()
+        }
+      }
+    } catch (error) {
+      console.error('Error generating PDF for print:', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -285,7 +347,7 @@ export function PassportPhoto() {
                     </Select>
                   </div> 
 
-                  <div>
+                  {/* <div>
                     <Label className="text-white text-xs sm:text-sm">Background Color</Label>
                     <Input 
                       type="color" 
@@ -293,7 +355,7 @@ export function PassportPhoto() {
                       onChange={(e) => setFormData({...formData, backgroundColor: e.target.value})}
                       className="mt-1 h-10 bg-gray-800/50 border-gray-700/50" 
                     />
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>
@@ -377,6 +439,15 @@ export function PassportPhoto() {
                 >
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Download
+                </Button>
+                {/* Print Button */}
+                <Button
+                  className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white text-sm"
+                  onClick={handlePrint}
+                  disabled={selectedFiles.length === 0}
+                  type="button"
+                >
+                  Print
                 </Button>
               </CardContent>
             </Card>
