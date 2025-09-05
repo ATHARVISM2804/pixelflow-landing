@@ -40,7 +40,12 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
     const { toast } = useToast();
     const { user } = useAuth();
 
+    // Store the previous page URL
+    const [prevPage, setPrevPage] = useState<string | null>(null);
+
     useEffect(() => {
+        // Save the previous page on mount
+        setPrevPage(document.referrer || window.history.state?.usr?.from || null);
         // If user is already logged in, pre-fill email
         if (user) {
             setFormData(prev => ({
@@ -128,6 +133,8 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
             // Redirect or callback
             if (onSkip) {
                 onSkip();
+            } else if (prevPage) {
+                window.location.href = prevPage;
             } else {
                 navigate('/dashboard');
             }
@@ -156,7 +163,7 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
         <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-6 text-center">Complete Your Profile</h2>
             <p className="text-sm text-gray-500 mb-6 text-center">
-                Please provide additional information to enhance your experience.
+                Please provide additional information to continue.
             </p>
 
             {error && <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
