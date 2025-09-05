@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/transactions';
+// Use Vite env in the browser; fall back to localhost with the transactions path.
+const API_HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const API_URL = `${API_HOST.replace(/\/$/, '')}/api/transactions`;
 const CARD_CHARGES = {
     AADHAAR: 2,
     ID_CARD: 2,
