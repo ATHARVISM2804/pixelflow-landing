@@ -75,6 +75,8 @@ export function PdfProcessor() {
 
   // Add this function near other handlers
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download this Aadhaar card?")) return;
     try {
       const transaction = {
         uid: uid,

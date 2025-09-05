@@ -209,6 +209,8 @@ export function Apaar() {
   }
 
   const handleSubmit = async (card: ApaarCardData, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download this APAAR card?")) return;
     try {
       const transaction = {
         uid: uid,

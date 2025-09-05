@@ -299,6 +299,8 @@ export function DidCard() {
   }
 
   const downloadCombinedPdf = async (front: string, back: string, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download the combined DID card PDF?")) return;
     try {
       const pdfBytes = await createCombinedPdf(front, back)
       const blob = new Blob([pdfBytes], { type: 'application/pdf' })
@@ -323,6 +325,8 @@ export function DidCard() {
   }
 
   const handleSubmit = async (card: DidCardData, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download this DID card?")) return;
     try {
       const transaction = {
         uid: uid,

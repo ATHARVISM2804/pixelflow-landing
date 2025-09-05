@@ -450,6 +450,8 @@ export function IdCard() {
 
   // Download as image (matches preview)
   const downloadAsImage = async () => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download the ID card image?")) return;
     try {
       if (!cardRef.current) return
       const canvas = await html2canvas(cardRef.current, {
@@ -506,6 +508,8 @@ export function IdCard() {
   
   
   const downloadAsPdf = async () => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download the ID card PDF?")) return;
     try {
       // Create transaction first
       // await createCardTransaction();
@@ -616,6 +620,8 @@ export function IdCard() {
 
   // Add handleSubmit function for API call and download
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
+    // Confirmation popup
+    if (!window.confirm("Are you sure you want to download this ID card?")) return;
     try {
       const transaction = {
         uid: auth.currentUser?.uid,
