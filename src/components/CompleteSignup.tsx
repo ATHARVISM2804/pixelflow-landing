@@ -160,98 +160,147 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
     };
 
     return (
-        <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6 text-center">Complete Your Profile</h2>
-            <p className="text-sm text-gray-500 mb-6 text-center">
-                Please provide additional information to continue.
-            </p>
-
-            {error && <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
-
-            <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                    <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            disabled={!!user?.email}
-                            className="mt-1"
-                        />
-                    </div>
-
-                    <div>
-                        <Label htmlFor="phoneNumber">Phone Number<span className="text-red-500">*</span></Label>
-                        <Input
-                            id="phoneNumber"
-                            name="phoneNumber"
-                            type="tel"
-                            value={formData.phoneNumber}
-                            onChange={handleInputChange}
-                            placeholder="Enter your phone number"
-                            required
-                            className="mt-1"
-                        />
-                    </div>
-
-                    <div>
-                        <Label htmlFor="dateOfBirth">Date of Birth<span className="text-red-500">*</span></Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    id="dateOfBirth"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal mt-1",
-                                        !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={handleDateSelect}
-                                    initialFocus
-                                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-
-                    <div>
-                        <Label htmlFor="address">Address<span className="text-red-500">*</span></Label>
-                        <Textarea
-                            id="address"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleInputChange}
-                            placeholder="Enter your full address"
-                            required
-                            className="mt-1 min-h-[100px]"
-                        />
-                    </div>
-                </div>
-
-                <div className="mt-8 flex space-x-4">
-                    <Button type="button" variant="outline" className="w-1/2" onClick={handleSkip}>
-                        Skip for Now
-                    </Button>
-                    <Button type="submit" className="w-1/2" disabled={loading}>
-                        {loading ? "Saving..." : "Save Profile"}
-                    </Button>
-                </div>
-
-                <p className="text-xs text-gray-500 mt-4 text-center">
-                    You can always update your profile information later from your account settings.
+        <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900 flex items-center justify-center">
+            <div className="w-full max-w-md mx-auto p-6 bg-gray-900/70 rounded-lg shadow-xl border border-gray-800/60">
+                <h2 className="text-2xl font-bold mb-6 text-center text-white">Complete Your Profile</h2>
+                <p className="text-sm text-gray-400 mb-6 text-center">
+                    Please provide additional information to continue.
                 </p>
-            </form>
+
+                {error && <div className="p-3 mb-4 text-sm text-red-200 bg-red-600/20 border border-red-400 rounded-lg">{error}</div>}
+
+                <form onSubmit={handleSubmit}>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="email" className="text-white">Email</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                disabled={!!user?.email}
+                                className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-400"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="phoneNumber" className="text-white">Phone Number<span className="text-red-500">*</span></Label>
+                            <Input
+                                id="phoneNumber"
+                                name="phoneNumber"
+                                type="tel"
+                                value={formData.phoneNumber}
+                                onChange={handleInputChange}
+                                placeholder="Enter your phone number"
+                                required
+                                className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-400"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="dateOfBirth" className="text-white">Date of Birth<span className="text-red-500">*</span></Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        id="dateOfBirth"
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal mt-1 bg-gray-800/50 border-gray-700/50 text-white",
+                                            !date && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 bg-white border-gray-200 text-black">
+                                    <Calendar
+                                        mode="single"
+                                        selected={date}
+                                        onSelect={handleDateSelect}
+                                        initialFocus
+                                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                                        captionLayout="dropdown-buttons"
+                                        fromYear={1900}
+                                        toYear={new Date().getFullYear()}
+                                        classNames={{
+                                            day_selected: "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+                                            day_today: "bg-gray-100 text-gray-900",
+                                            day: "h-9 w-9 p-0 font-normal",
+                                            day_disabled: "text-gray-400 opacity-50",
+                                            day_outside: "text-gray-400 opacity-50",
+                                            head_cell: "text-gray-500 font-semibold",
+                                            caption: "flex justify-center pt-1 pb-2 px-2",
+                                            caption_label: "hidden",
+                                            dropdown: "p-1 bg-white text-gray-900 border border-gray-200 rounded shadow",
+                                            cell: "text-center text-sm p-0 relative",
+                                            nav_button: "border border-gray-200 bg-white hover:bg-gray-100 rounded p-1",
+                                            nav_button_previous: "absolute left-1",
+                                            nav_button_next: "absolute right-1",
+                                            table: "w-full border-collapse",
+                                            root: "p-2"
+                                        }}
+                                    />
+                                    <div className="p-2 flex justify-between border-t border-gray-200">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => setDate(undefined)} 
+                                            className="text-blue-500 hover:text-blue-700"
+                                        >
+                                            Clear
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => setDate(new Date())} 
+                                            className="text-blue-500 hover:text-blue-700"
+                                        >
+                                            Today
+                                        </Button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="address" className="text-white">Address<span className="text-red-500">*</span></Label>
+                            <Textarea
+                                id="address"
+                                name="address"
+                                value={formData.address}
+                                onChange={handleInputChange}
+                                placeholder="Enter your full address"
+                                required
+                                className="mt-1 min-h-[100px] bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-400"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-8 flex space-x-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-1/2 bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50"
+                            onClick={handleSkip}
+                        >
+                            Skip for Now
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="w-1/2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
+                            disabled={loading}
+                        >
+                            {loading ? "Saving..." : "Save Profile"}
+                        </Button>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-4 text-center">
+                        You can always update your profile information later from your account settings.
+                    </p>
+                </form>
+            </div>
         </div>
     );
 };
