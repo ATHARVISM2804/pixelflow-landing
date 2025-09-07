@@ -671,7 +671,7 @@ export function IdCard() {
                     <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
                       <SelectValue placeholder="School - Blue" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectContent className="bg-gray-800 text-white border-gray-700">
                       <SelectItem value="school-blue">School - Blue</SelectItem>
                       <SelectItem value="school-red">School - Red</SelectItem>
                       <SelectItem value="school-green">School - Green</SelectItem>
