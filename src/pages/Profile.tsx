@@ -31,6 +31,8 @@ import axios from "axios"
 import { doc, getDoc, setDoc } from "firebase/firestore"
 import { db } from '../auth/firebase'
 import { useToast } from '@/hooks/use-toast'
+import { updateProfile } from 'firebase/auth'
+import { auth } from '../auth/firebase'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -77,34 +79,50 @@ export function Profile() {
 
   const handleSave = async () => {
     if (!user) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       // Check if profile would be complete after this save
       const isComplete = !!(
-        profileData.phone && 
-        profileData.address && 
+        profileData.phone &&
+        profileData.address &&
         profileData.dateOfBirth
       );
-      
+
       // Save to Firestore
       const userProfileRef = doc(db, "userProfiles", user.uid);
       await setDoc(userProfileRef, {
         ...profileData,
-        // Update phoneNumber field to match what CompleteSignup component uses
         phoneNumber: profileData.phone,
-        // Update the profileComplete flag based on required fields
         profileComplete: isComplete,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      
-      // Update local state to match
+
+      // Update Firebase Authentication profile
+      try {
+        await updateProfile(auth.currentUser, {
+          displayName: profileData.displayName,
+          photoURL: imagePreview || null
+        });
+        
+        // If we have a new profile image as File object, we could upload it to Firebase Storage here
+        // and then update the profile with the storage URL
+        if (profileImage) {
+          // Code for uploading to Firebase Storage would go here if needed
+          // Then update the photoURL with the storage URL
+        }
+      } catch (err) {
+        console.warn("Firebase Auth profile update failed:", err);
+        // Continue with the function - Firestore update is more important
+      }
+
+      // Update local state
       setProfileData(prev => ({
         ...prev,
         profileComplete: isComplete
       }));
-      
+
       toast({
         title: "Profile Updated",
         description: "Your profile information has been saved successfully.",
@@ -246,9 +264,9 @@ export function Profile() {
                   </div>
                   <CardTitle className="text-white text-xl mt-4">{profileData.displayName}</CardTitle>
                   <p className="text-gray-400">{profileData.occupation}</p>
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                  {/* <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                     Active User
-                  </Badge>
+                  </Badge> */}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3 text-gray-300">
@@ -311,7 +329,7 @@ export function Profile() {
                     </div>
                     <span className="text-white font-semibold">{transactionCount}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-purple-400" />
                       <span className="text-gray-300 text-sm">Account Security</span>
@@ -319,7 +337,7 @@ export function Profile() {
                     <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-xs">
                       Verified
                     </Badge>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             </div>
@@ -388,6 +406,7 @@ export function Profile() {
                             onChange={(e) => handleInputChange('email', e.target.value)}
                             className="mt-1 bg-gray-800/50 border-gray-700/50 text-white"
                             type="email"
+                            disabled
                           />
                         ) : (
                           <p className="mt-1 text-gray-300 p-2">{profileData.email}</p>
@@ -423,7 +442,6 @@ export function Profile() {
 
                   {/* Additional Information */}
                   <div>
-                    {/* <h3 className="text-white font-semibold mb-4">Additional Information</h3> */}
                     <div className="space-y-4">
                       <div>
                         <Label className="text-white text-sm">Address</Label>
@@ -464,7 +482,6 @@ export function Profile() {
                       </div>
                     </div>
                   </div>
-
                   {/* Account Settings */}
                   {/* <div>
                     <h3 className="text-white font-semibold mb-4">Account Settings</h3>
