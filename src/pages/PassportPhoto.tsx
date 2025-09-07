@@ -480,7 +480,6 @@ export function PassportPhoto() {
                                 {formData.name && (
                                   <span className="text-white text-[5px] truncate max-w-[70%]">{formData.name}</span>
                                 )}
-                                {/* Add a spacer if both name and date exist */}
                                 {formData.name && formData.date && <span className="mx-1" />}
                                 {formData.date && (
                                   <span className="text-white text-[5px]">
@@ -499,8 +498,11 @@ export function PassportPhoto() {
                 </div>
                 <Button 
                   className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm"
-                  onClick={() => selectedFiles.length > 0 && handleSubmit(selectedFiles[0], 0)}
-                  disabled={selectedFiles.length === 0}
+                  onClick={() => {
+                    const filesToUse = getActiveFiles();
+                    if (filesToUse.length > 0) handleSubmit(filesToUse[0], 0);
+                  }}
+                  disabled={getActiveFiles().length === 0}
                 >
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Download
@@ -508,8 +510,70 @@ export function PassportPhoto() {
                 {/* Print Button */}
                 <Button
                   className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white text-sm"
-                  onClick={handlePrint}
-                  disabled={selectedFiles.length === 0}
+                  onClick={async () => {
+                    const filesToUse = getActiveFiles();
+                    if (!filesToUse.length) return;
+
+                    if (!window.confirm("Are you sure you want to print the passport photo PDF?")) return;
+
+                    try {
+                      const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                      });
+
+                      const margin = 10;
+                      const spacing = 2;
+                      const photosPerRow = Math.floor((A4_DIMENSIONS.width - 2 * margin + spacing) / (ORIGINAL_PASSPORT.width + spacing));
+                      const photosPerCol = Math.floor((A4_DIMENSIONS.height - 2 * margin + spacing) / (ORIGINAL_PASSPORT.height + spacing));
+
+                      for (let i = 0; i < formData.number; i++) {
+                        const file = filesToUse[i % filesToUse.length];
+                        // Fix: Always create a new Image instance for each file
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        await new Promise((resolve) => { img.onload = resolve; });
+
+                        const row = Math.floor(i / photosPerRow);
+                        const col = i % photosPerRow;
+                        const x = margin + (col * (ORIGINAL_PASSPORT.width + spacing));
+                        const y = margin + (row * (ORIGINAL_PASSPORT.height + spacing));
+
+                        pdf.setDrawColor(200);
+                        pdf.rect(x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height);
+                        pdf.addImage(img, 'JPEG', x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height);
+
+                        if (formData.name || formData.date) {
+                          pdf.setTextColor(225, 225, 225);
+                          pdf.setFontSize(7);
+                          if (formData.name) {
+                            pdf.text(formData.name, x + 2, y + ORIGINAL_PASSPORT.height - 2, { align: 'left' });
+                          }
+                          if (formData.date) {
+                            const dateText = new Date(formData.date).toLocaleDateString();
+                            pdf.text(dateText, x + ORIGINAL_PASSPORT.width - 2, y + ORIGINAL_PASSPORT.height - 2, { align: 'right' });
+                          }
+                        }
+
+                        if ((i + 1) % (photosPerRow * photosPerCol) === 0 && i + 1 < formData.number) {
+                          pdf.addPage();
+                        }
+                      }
+
+                      const pdfUrl = pdf.output('bloburl');
+                      const printWindow = window.open(pdfUrl);
+                      if (printWindow) {
+                        printWindow.onload = function () {
+                          printWindow.focus();
+                          printWindow.print();
+                        };
+                      }
+                    } catch (error) {
+                      console.error('Error generating PDF for print:', error);
+                    }
+                  }}
+                  disabled={getActiveFiles().length === 0}
                   type="button"
                 >
                   Print
@@ -524,4 +588,3 @@ export function PassportPhoto() {
 }
 
 export default PassportPhoto;
-   
