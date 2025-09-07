@@ -214,51 +214,93 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                                         {date ? format(date, "PPP") : <span>Pick a date</span>}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0 bg-white border-gray-200 text-black">
-                                    <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={handleDateSelect}
-                                        initialFocus
-                                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                        captionLayout="dropdown-buttons"
-                                        fromYear={1900}
-                                        toYear={new Date().getFullYear()}
-                                        classNames={{
-                                            day_selected: "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
-                                            day_today: "bg-gray-100 text-gray-900",
-                                            day: "h-9 w-9 p-0 font-normal",
-                                            day_disabled: "text-gray-400 opacity-50",
-                                            day_outside: "text-gray-400 opacity-50",
-                                            head_cell: "text-gray-500 font-semibold",
-                                            caption: "flex justify-center pt-1 pb-2 px-2",
-                                            caption_label: "hidden",
-                                            dropdown: "p-1 bg-white text-gray-900 border border-gray-200 rounded shadow",
-                                            cell: "text-center text-sm p-0 relative",
-                                            nav_button: "border border-gray-200 bg-white hover:bg-gray-100 rounded p-1",
-                                            nav_button_previous: "absolute left-1",
-                                            nav_button_next: "absolute right-1",
-                                            table: "w-full border-collapse",
-                                            root: "p-2"
-                                        }}
-                                    />
-                                    <div className="p-2 flex justify-between border-t border-gray-200">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            onClick={() => setDate(undefined)} 
-                                            className="text-blue-500 hover:text-blue-700"
-                                        >
-                                            Clear
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            onClick={() => setDate(new Date())} 
-                                            className="text-blue-500 hover:text-blue-700"
-                                        >
-                                            Today
-                                        </Button>
+                                <PopoverContent
+                                    className="w-auto p-0 bg-[#151a29] translate-y-40 border border-gray-700 text-white rounded-md shadow-lg"
+                                    align="center"
+                                    side="bottom"
+                                    sideOffset={5}
+                                >
+                                    <div className="max-w-[260px] mx-auto">
+                                        <div className="p-3 border-b  border-gray-700">
+                                            <div className="text-center font-medium mb-2">
+                                                {date ? format(date, "MMMM yyyy") : format(new Date(), "MMMM yyyy")}
+                                            </div>
+                                        </div>
+                                        <Calendar
+                                            mode="single"
+                                            selected={date}
+                                            onSelect={handleDateSelect}
+                                            initialFocus
+                                            captionLayout="dropdown-buttons"
+                                            fromYear={1900}
+                                            toYear={new Date().getFullYear()}
+                                            disabled={(currentDate) =>
+                                                currentDate > new Date() || currentDate < new Date("1900-01-01")
+                                            }
+                                            classNames={{
+                                                day_selected: "bg-indigo-600 text-white hover:bg-indigo-600 hover:text-white",
+                                                day_today: "bg-gray-700 text-white",
+                                                day: "h-8 w-8 p-0 font-normal text-white hover:bg-gray-800 hover:text-white text-xs sm:text-sm rounded-md",
+                                                day_disabled: "text-gray-500 opacity-50",
+                                                day_outside: "text-gray-500 opacity-50",
+                                                head_cell: "text-gray-400 font-normal text-xs py-1",
+                                                caption: "flex justify-between px-2 py-2",
+                                                caption_label: "hidden",
+                                                dropdown: "p-1 bg-[#1c2337] text-white border border-gray-700 rounded shadow-md text-sm",
+                                                dropdown_month: "p-1 bg-[#1c2337] text-white border border-gray-700 rounded shadow-md text-sm",
+                                                dropdown_year: "p-1 bg-[#1c2337] text-white border border-gray-700 rounded shadow-md text-sm",
+                                                cell: "text-center text-sm p-0 relative",
+                                                nav_button: "border border-gray-700 bg-[#1c2337] hover:bg-gray-700 rounded p-1 text-white",
+                                                nav_button_previous: "absolute left-1",
+                                                nav_button_next: "absolute right-1",
+                                                table: "w-full border-collapse space-y-1",
+                                                row: "flex w-full mt-0.5",
+                                                head_row: "flex w-full mt-0.5",
+                                                root: "p-2 bg-[#151a29] text-white"
+                                            }}
+                                            components={{
+                                                Dropdown: ({ value, onChange, ...props }) => {
+                                                    return (
+                                                        <select
+                                                            value={value}
+                                                            onChange={e => onChange(e.target.value)}
+                                                            className="bg-[#1c2337] translate-x-4 text-white text-xs border border-gray-700 rounded py-0.5 px-1"
+                                                            {...props}
+                                                        >
+                                                            {props.children}
+                                                        </select>
+                                                    )
+                                                }
+                                            }}
+                                        />
+                                        <div className="p-2 flex justify-between border-t border-gray-700">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setDate(undefined);
+                                                    setFormData(prev => ({ ...prev, dateOfBirth: '' }));
+                                                }}
+                                                className="text-gray-300 hover:text-white text-xs"
+                                            >
+                                                Clear
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const today = new Date();
+                                                    setDate(today);
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        dateOfBirth: today.toISOString().split('T')[0]
+                                                    }));
+                                                }}
+                                                className="text-gray-300 hover:text-white text-xs"
+                                            >
+                                                Today
+                                            </Button>
+                                        </div>
                                     </div>
                                 </PopoverContent>
                             </Popover>
