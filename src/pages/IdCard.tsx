@@ -618,7 +618,7 @@ export function IdCard() {
     // Add other fields if needed
   };
 
-  // Add handleSubmit function for API call and download
+  // Add handleSubmit function for API call, save card data and download
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
     // Confirmation popup
     if (!window.confirm("Are you sure you want to download this ID card?")) return;
@@ -631,18 +631,33 @@ export function IdCard() {
         date: new Date().toISOString(),
         metadata: { page: card.originalPage }
       };
-      // Call your backend API
-      await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
+      
+      // Save card data to backend
+      const cardData = {
+        ...formData,
+        userId: auth.currentUser?.uid,
+        createdAt: new Date().toISOString(),
+        templateData: templateConfigs[formData.template],
+        customFields: customFields.filter(f => f.key && f.value)
+      };
+      
+      // Call backend APIs in parallel
+      await Promise.all([
+        axios.post(`${BACKEND_URL}/api/transactions/card`, transaction),
+        axios.post(`${BACKEND_URL}/api/cards`, cardData)
+      ]);
+
       toast({
-        title: "Transaction Success",
-        description: "Transaction and download started.",
+        title: "Success",
+        description: "Card saved and transaction completed successfully.",
       });
+      
       // Proceed with download after successful transaction
       await downloadAsImage();
     } catch (err: any) {
       toast({
         title: "API Error",
-        description: err?.response?.data?.message || err.message || "Failed to create transaction.",
+        description: err?.response?.data?.message || err.message || "Failed to process request.",
         variant: "destructive"
       });
     }
