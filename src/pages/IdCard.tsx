@@ -853,42 +853,7 @@ export function IdCard() {
                   </div>
                 </div>
 
-                {/* School Contact */}
-                <div>
-                  <Label className="text-white">School Contact</Label>
-                  <Input 
-                    placeholder="School Contact"
-                    className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
-                    value={formData.schoolContact}
-                    onChange={(e) => setFormData({...formData, schoolContact: e.target.value})}
-                  />
-                </div>
-
-                {/* Custom Key-Value Pairs */}
-                <div className="space-y-4">
-                  {customFields.map((field, index) => (
-                    <div key={index} className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-white">Key {index + 1}</Label>
-                        <Input 
-                          placeholder={`Key ${index + 1}`}
-                          className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
-                          value={field.key}
-                          onChange={(e) => handleCustomFieldChange(index, 'key', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-white">Value {index + 1}</Label>
-                        <Input 
-                          placeholder={`Value ${index + 1}`}
-                          className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
-                          value={field.value}
-                          onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+               
               </CardContent>
             </Card>
 
@@ -922,7 +887,7 @@ export function IdCard() {
                   className="max-w-md mx-auto rounded-lg overflow-hidden shadow-xl border-2 border-gray-300"
                   style={{ 
                     backgroundColor: '#ffffff',
-                    aspectRatio: '85.6/53.98'
+                    aspectRatio: '85.6/75'
                   }}
                 >
                   {/* Card Header */}
@@ -972,7 +937,7 @@ export function IdCard() {
                   <div className="p-4 bg-white" style={{ minHeight: '380px' }}>
                     <div className="flex gap-4">
                       {/* Photo with decorative corners */}
-                      <div className="relative flex-shrink-0">
+                      <div className="relative ml-5 flex-shrink-0">
                         <div className="w-24 h-32 bg-gray-100 border-2 border-gray-300 flex items-center justify-center relative overflow-hidden">
                           {fileUrls.photo ? (
                             <img 
@@ -1017,7 +982,7 @@ export function IdCard() {
                       </div>
                       
                       {/* Student Info */}
-                      <div className="flex-1 text-sm space-y-1" style={{ color: '#000000' }}>
+                      <div className="flex-1 text-xs ml-10 space-y-1" style={{ color: '#000000' }}>
                         <div><strong>Name:</strong> {formData.name || 'Student Name'}</div>
                         <div><strong>Father:</strong> {formData.father || 'Father Name'}</div>
                         <div><strong>Mother:</strong> {formData.mother || 'Mother Name'}</div>
@@ -1032,17 +997,8 @@ export function IdCard() {
                     <div className="mt-4 space-y-2 text-sm" style={{ color: '#000000' }}>
                       <div><strong>Address:</strong> {formData.address || 'Student Address'}</div>
                       
-                      {/* Custom Fields */}
-                      {customFields.map((field, index) => (
-                        field.key && field.value && (
-                          <div key={index}>
-                            <strong>{field.key}:</strong> {field.value}
-                          </div>
-                        )
-                      ))}
-                      
                       {/* Signature and Contact */}
-                      <div className="flex justify-between items-end mt-6">
+                      <div className="flex justify-between items-end">
                         <div className="text-xs">
                           {formData.schoolContact && (
                             <div>Contact: {formData.schoolContact}</div>
@@ -1053,7 +1009,7 @@ export function IdCard() {
                             <img 
                               src={fileUrls.sign} 
                               alt="Signature" 
-                              className="h-6 w-20 object-contain mb-1"
+                              className="h-10 object-contain mb-1"
                             />
                           ) : (
                             <div className="h-6 w-20 mb-1"></div>
