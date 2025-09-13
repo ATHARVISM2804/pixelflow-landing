@@ -10,6 +10,7 @@ import {
     FileText,
     Loader2,
     CreditCard,
+    Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/Sidebar";
@@ -19,6 +20,10 @@ import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
 import NationalEmblem from './National-Emblem.png'
 import narendramodi from './NarendraModi.png'
+import jsPDF from 'jspdf';
+import axios from "axios";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import { auth } from "../auth/firebase";
 
 interface VaccinationData {
     certificateId: string;
@@ -38,6 +43,7 @@ interface VaccinationData {
     batch2: string;
     vaccinator: string;
     location: string;
+    qrCodeDataUrl?: string;
 }
 
 // bilingual labels
@@ -61,6 +67,8 @@ export function Vaccine() {
     const [cardData, setCardData] = useState<VaccinationData | null>(null);
     const [rawLines, setRawLines] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const frontRef = useRef<HTMLDivElement>(null);
+    const backRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
     const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,31 +117,97 @@ export function Vaccine() {
                 const dataStart = lines.findIndex(l => /^\d{9,}$/.test(l.trim()));
                 const info = lines.slice(dataStart);
 
-                const data: VaccinationData = {
-                    certificateId: info[0] || "",
-                    name: info[1] || "",
-                    age: info[2] || "",
-                    gender: info[3] || "",
-                    idVerified: info[4] || "",
-                    referenceId: info[5] || "",
-                    status: info[6] || "",
-                    vaccine: info[7] || "",
-                    vaccineType: info[8] || "",
-                    manufacturer: info[9] || "",
-                    dose1: info[11] || "",
-                    batch1: info[12] || "",
-                    dose2: info[14] || "",
-                    batch2: info[15] || "",
-                    vaccinator: info[16] || "",
-                    location: info[17] || "",
-                };
+                // Extract QR code
+                let qrCodeDataUrl = "";
+                try {
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d')!;
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-                setCardData(data);
-                toast({
-                    title: "Extraction Success",
-                    description: "Vaccination card data extracted.",
-                });
-                setIsProcessing(false);
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+
+                    // Convert canvas to image data
+                    const imageData = canvas.toDataURL('image/png');
+                    
+                    // For QR code extraction, we'll crop the bottom-right area where QR codes are typically located
+                    const qrCanvas = document.createElement('canvas');
+                    const qrContext = qrCanvas.getContext('2d')!;
+                    const qrSize = 430; // Size of QR code area to extract
+                    qrCanvas.width = qrSize;
+                    qrCanvas.height = qrSize;
+
+                    const img = new Image();
+                    img.onload = () => {
+                        // Crop from bottom-right corner (typical QR location)
+                        const sourceX = img.width - qrSize - 50;
+                        const sourceY = img.height - qrSize - 97;
+                        qrContext.drawImage(img, sourceX, sourceY, qrSize, qrSize, 0, 0, qrSize, qrSize);
+                        qrCodeDataUrl = qrCanvas.toDataURL('image/png');
+                        
+                        // Update data with QR code
+                        const data: VaccinationData = {
+                            certificateId: info[0] || "",
+                            name: info[1] || "",
+                            age: info[2] || "",
+                            gender: info[3] || "",
+                            idVerified: info[4] || "",
+                            referenceId: info[5] || "",
+                            status: info[6] || "",
+                            vaccine: info[7] || "",
+                            vaccineType: info[8] || "",
+                            manufacturer: info[9] || "",
+                            dose1: info[11] || "",
+                            batch1: info[12] || "",
+                            dose2: info[14] || "",
+                            batch2: info[15] || "",
+                            vaccinator: info[16] || "",
+                            location: info[17] || "",
+                            qrCodeDataUrl: qrCodeDataUrl
+                        };
+
+                        setCardData(data);
+                        toast({
+                            title: "Extraction Success",
+                            description: "Vaccination card data and QR code extracted.",
+                        });
+                        setIsProcessing(false);
+                    };
+                    img.src = imageData;
+                } catch (qrError) {
+                    console.warn("QR extraction failed:", qrError);
+                    // Fallback without QR code
+                    const data: VaccinationData = {
+                        certificateId: info[0] || "",
+                        name: info[1] || "",
+                        age: info[2] || "",
+                        gender: info[3] || "",
+                        idVerified: info[4] || "",
+                        referenceId: info[5] || "",
+                        status: info[6] || "",
+                        vaccine: info[7] || "",
+                        vaccineType: info[8] || "",
+                        manufacturer: info[9] || "",
+                        dose1: info[11] || "",
+                        batch1: info[12] || "",
+                        dose2: info[14] || "",
+                        batch2: info[15] || "",
+                        vaccinator: info[16] || "",
+                        location: info[17] || "",
+                        qrCodeDataUrl: ""
+                    };
+
+                    setCardData(data);
+                    toast({
+                        title: "Extraction Success",
+                        description: "Vaccination card data extracted (QR code extraction failed).",
+                    });
+                    setIsProcessing(false);
+                }
             };
             reader.readAsArrayBuffer(selectedPdf);
         } catch (error) {
@@ -143,6 +217,48 @@ export function Vaccine() {
                 variant: "destructive"
             });
             setIsProcessing(false);
+        }
+    };
+
+    // Download and API logic
+    const handleDownload = async () => {
+        if (!cardData) return;
+        if (!window.confirm("Are you sure you want to download the vaccination card PDF?")) return;
+        try {
+            // Transaction API call
+            const transaction = {
+                uid: auth.currentUser?.uid,
+                cardName: 'Vaccination Card',
+                amount: 2, // or any logic for pricing
+                type: 'CARD_CREATION',
+                date: new Date().toISOString(),
+                metadata: { certificateId: cardData.certificateId }
+            };
+            await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
+
+            // PDF generation
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [650, 400] });
+            const html2canvas = (await import('html2canvas')).default;
+            const front = frontRef.current;
+            const back = backRef.current;
+            if (front && back) {
+                const width = front.offsetWidth;
+                const height = front.offsetHeight;
+                const frontCanvas = await html2canvas(front, { backgroundColor: '#fff', scale: 1, width, height });
+                const backCanvas = await html2canvas(back, { backgroundColor: '#fff', scale: 1, width, height });
+                const frontImg = frontCanvas.toDataURL('image/png');
+                const backImg = backCanvas.toDataURL('image/png');
+                pdf.addImage(frontImg, 'PNG', 0, 0, width, height);
+                pdf.addPage([width, height], 'landscape');
+                pdf.addImage(backImg, 'PNG', 0, 0, width, height);
+                pdf.save(`vaccination_card_${cardData.certificateId || 'download'}.pdf`);
+            }
+        } catch (err: any) {
+            toast({
+                title: "Download Error",
+                description: err?.response?.data?.message || err.message || "Failed to download vaccination card.",
+                variant: "destructive"
+            });
         }
     };
 
@@ -249,7 +365,8 @@ export function Vaccine() {
                             <div className="flex gap-6 flex-wrap justify-center">
                                 {/* FRONT */}
                                 <div
-                                    className="relative w-[650px] h-[400px] bg-cover bg-white bg-no-repeat shadow-lg border rounded-xl p-6"
+                                    ref={frontRef}
+                                    className="vaccine-card-front relative w-[650px] h-[400px] bg-cover bg-white bg-no-repeat shadow-lg border rounded-xl p-6"
                                     style={{ backgroundImage: "url('/card-front-template.png')" }}
                                 >
                                     {/* National Emblem overlay */}
@@ -303,7 +420,8 @@ export function Vaccine() {
 
                                 {/* BACK */}
                                 <div
-                                    className="relative w-[650px] h-[400px] bg-cover bg-white bg-no-repeat shadow-lg border rounded-xl p-6"
+                                    ref={backRef}
+                                    className="vaccine-card-back relative w-[650px] h-[400px] bg-cover bg-white bg-no-repeat shadow-lg border rounded-xl p-6"
                                     style={{ backgroundImage: "url('/card-back-template.png')" }}
                                 >
                                     {/* Top left: Vaccinated by / at */}
@@ -346,10 +464,32 @@ export function Vaccine() {
                                     <div className="absolute left-6 bottom-6 w-[340px] text-[11px] text-gray-700">
                                         The information on the card is a copy provided by the beneficiary, based on publicly available data, and is for reference/personal use only, not a valid document.
                                     </div>
-                                    {/* Bottom right: Scan QR Code text (no QR for now) */}
-                                    <div className="absolute right-6 bottom-6 text-[13px] text-black font-semibold">
-                                        Scan QR Code on https://verify.cowin.gov.in
+                                    {/* Bottom right: QR Code */}
+                                    <div className="absolute right-6 bottom-6 flex translate-x-3 flex-col items-center">
+                                        {cardData.qrCodeDataUrl ? (
+                                            <div className="flex flex-col items-center">
+                                                <img 
+                                                    src={cardData.qrCodeDataUrl} 
+                                                    alt="QR Code" 
+                                                    className="w-[240px] p-2 h-[240px] object-contain border border-gray-300"
+                                                />
+                                                <p className="text-[12px] text-black font-bold mt-2 text-center">
+                                                    Scan QR Code on https://verify.cowin.gov.in
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="w-[150px] h-[150px] border-2 border-dashed border-gray-400 flex items-center justify-center">
+                                                <p className="text-[10px] text-gray-600 text-center">QR Code<br/>Not Available</p>
+                                            </div>
+                                        )}
                                     </div>
+                                </div>
+
+                                {/* Download Button */}
+                                <div className="w-full flex justify-center mt-4">
+                                    <Button className="bg-indigo-500 hover:bg-indigo-600 text-white text-base px-8 py-2" onClick={handleDownload}>
+                                        <Download className="h-4 w-4 mr-2" />Download PDF
+                                    </Button>
                                 </div>
                             </div>
                         )}

@@ -32,6 +32,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 import { auth } from "../auth/firebase"
+import { removeBgFromFile } from "./RemoveBg"
 
 const A4_DIMENSIONS = {
   width: 210, // mm
@@ -55,16 +56,47 @@ export function PassportPhoto() {
   const [isMultiple, setIsMultiple] = useState(false)
   const [tab, setTab] = useState<'single' | 'multiple'>('single')
   const [multiFiles, setMultiFiles] = useState<(File | null)[]>(Array(8).fill(null));
+  const [processedFiles, setProcessedFiles] = useState<{ name: string; blob: Blob }[]>([]);
+  const [processing, setProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(files);
+  // Helper to process files and remove background
+  const processFilesWithBgRemoval = async (files: File[]) => {
+    setProcessing(true);
+    try {
+      const processed = await Promise.all(
+        files.map(async (file) => {
+          const blob = await removeBgFromFile(file);
+          return { name: file.name, blob };
+        })
+      );
+      setProcessedFiles(processed);
+    } catch (e) {
+      toast({
+        title: "Background Removal Error",
+        description: "Failed to remove background from one or more images.",
+        variant: "destructive"
+      });
+      setProcessedFiles([]);
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const handleMultiFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  // When files are selected, process them
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(files);
+    if (files.length > 0) {
+      await processFilesWithBgRemoval(files);
+    } else {
+      setProcessedFiles([]);
+    }
+  };
+
+  const handleMultiFileChange = async (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setMultiFiles(prev => {
@@ -72,6 +104,13 @@ export function PassportPhoto() {
       arr[idx] = files[0];
       return arr;
     });
+    // Process all non-null files
+    const allFiles = multiFiles.map((f, i) => (i === idx ? files[0] : f)).filter(Boolean) as File[];
+    if (allFiles.length > 0) {
+      await processFilesWithBgRemoval(allFiles);
+    } else {
+      setProcessedFiles([]);
+    }
   };
 
   const triggerFileUpload = () => {
@@ -86,15 +125,14 @@ export function PassportPhoto() {
   const handleTabChange = (value: string) => {
     setTab(value as 'single' | 'multiple');
     setSelectedFiles([]);
+    setProcessedFiles([]);
   }
 
-  const getActiveFiles = () => {
-    if (tab === "single") return selectedFiles;
-    return multiFiles.filter(Boolean) as File[];
-  };
+  // Use processed files for preview and PDF
+  const getActiveProcessedFiles = () => processedFiles;
 
   // Shared PDF generation logic
-  const generatePDF = async (files: File[]) => {
+  const generatePDF = async (files: { name: string; blob: Blob }[]) => {
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -109,7 +147,7 @@ export function PassportPhoto() {
     for (let i = 0; i < formData.number; i++) {
       const file = files[i % files.length];
       const img = new Image();
-      img.src = URL.createObjectURL(file);
+      img.src = URL.createObjectURL(file.blob);
       await new Promise((resolve) => { img.onload = resolve });
 
       const row = Math.floor(i / photosPerRow);
@@ -119,7 +157,7 @@ export function PassportPhoto() {
 
       pdf.setDrawColor(200);
       pdf.rect(x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height);
-      pdf.addImage(img, 'JPEG', x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height);
+      pdf.addImage(img, 'PNG', x, y, ORIGINAL_PASSPORT.width, ORIGINAL_PASSPORT.height);
 
       if (formData.name || formData.date) {
         pdf.setTextColor(0, 0, 0);
@@ -165,13 +203,13 @@ export function PassportPhoto() {
   };
 
   const handleDownload = async () => {
-    const files = getActiveFiles();
+    const files = getActiveProcessedFiles();
     if (!files.length) return;
     if (!window.confirm("Are you sure you want to download the passport photo PDF?")) return;
 
     try {
       const pdf = await generatePDF(files);
-      await handleSubmit(files[0], 0);
+      await handleSubmit(selectedFiles[0], 0);
       pdf.save(`passport_photos_${formData.name || 'download'}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -179,13 +217,13 @@ export function PassportPhoto() {
   };
 
   const handlePrint = async () => {
-    const files = getActiveFiles();
+    const files = getActiveProcessedFiles();
     if (!files.length) return;
     if (!window.confirm("Are you sure you want to print the passport photo PDF?")) return;
 
     try {
       const pdf = await generatePDF(files);
-      await handleSubmit(files[0], 0);
+      await handleSubmit(selectedFiles[0], 0);
       const pdfUrl = pdf.output('bloburl');
       const printWindow = window.open(pdfUrl);
       if (printWindow) {
@@ -304,13 +342,15 @@ export function PassportPhoto() {
               </CardHeader>
               <CardContent>
                 <div ref={previewRef} className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center overflow-hidden p-[10mm]">
-                  {getActiveFiles().length > 0 ? (
+                  {processing ? (
+                    <p className="text-gray-600 text-sm">Removing background...</p>
+                  ) : getActiveProcessedFiles().length > 0 ? (
                     <div className="grid gap-[2mm] w-full h-full" style={{ gridTemplateColumns: `repeat(auto-fit, ${ORIGINAL_PASSPORT.width}mm)`, gridAutoRows: `${ORIGINAL_PASSPORT.height}mm`, alignContent: 'start' }}>
                       {Array.from({ length: formData.number }).map((_, index) => (
                         <div key={index} className="bg-white rounded overflow-hidden flex items-center justify-center border border-gray-200 relative" style={{ width: `${ORIGINAL_PASSPORT.width}mm`, height: `${ORIGINAL_PASSPORT.height}mm`, backgroundColor: formData.backgroundColor }}>
-                          {getActiveFiles()[index % getActiveFiles().length] && (
+                          {getActiveProcessedFiles()[index % getActiveProcessedFiles().length] && (
                             <>
-                              <img src={URL.createObjectURL(getActiveFiles()[index % getActiveFiles().length])} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                              <img src={URL.createObjectURL(getActiveProcessedFiles()[index % getActiveProcessedFiles().length].blob)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
                               <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-20 py-0.5 px-1 flex justify-between items-center">
                                 {formData.name && <span className="text-white text-[5px] truncate max-w-[70%]">{formData.name}</span>}
                                 {formData.name && formData.date && <span className="mx-1" />}
@@ -325,10 +365,10 @@ export function PassportPhoto() {
                     <p className="text-gray-600 text-sm">Preview will appear here</p>
                   )}
                 </div>
-                <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm" onClick={handleDownload} disabled={getActiveFiles().length === 0}>
+                <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm" onClick={handleDownload} disabled={getActiveProcessedFiles().length === 0 || processing}>
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />Download
                 </Button>
-                <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white text-sm" onClick={handlePrint} disabled={getActiveFiles().length === 0}>
+                <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white text-sm" onClick={handlePrint} disabled={getActiveProcessedFiles().length === 0 || processing}>
                   Print
                 </Button>
               </CardContent>
@@ -341,4 +381,3 @@ export function PassportPhoto() {
 }
 
 export default PassportPhoto;
-  
