@@ -40,6 +40,7 @@ import Apaar from "./pages/Apaar.tsx";
 import Aayushmaan from "./pages/Aayushmaan.tsx";
 import VaccinationCard from "./pages/Vaccine.tsx";
 import CompleteSignup from "./components/CompleteSignup.tsx";
+import RemoveBg from "./pages/RemoveBg.tsx";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/vaccination" element={<VaccinationCard />} />
             <Route path="/text" element={<PdfTextExtractor />} />
             <Route path="/complete-profile" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
+            <Route path="/remove-bg" element={<ProtectedRoute><RemoveBg /></ProtectedRoute>} />
 
             {/* Protected Routes without Profile Completion Requirement */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
