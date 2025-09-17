@@ -10,6 +10,8 @@ const nextConfig = {
     domains: [],
     unoptimized: true
   },
+  output: 'export',
+  trailingSlash: true,
   // Support for PDF files and other assets
   webpack: (config) => {
     config.resolve.alias.canvas = false;

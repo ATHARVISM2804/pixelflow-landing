@@ -35,7 +35,10 @@ const stateNames = {
 }
 
 export function CardMaker() {
-  const { cardType, stateCode } = useParams<{ cardType: string; stateCode: string }>()
+  const params = useParams<{ cardType?: string; stateCode?: string }>()
+  const cardType = params?.cardType || ''
+  const stateCode = params?.stateCode || ''
+  
   const [formData, setFormData] = useState({
     password: '',
     phoneNumber: 'No',

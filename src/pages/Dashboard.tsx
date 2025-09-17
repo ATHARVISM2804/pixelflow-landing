@@ -33,7 +33,7 @@ import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import axios from "axios";
 import { auth } from "../auth/firebase.ts";
-import { useAuth } from '../auth/AuthContext.tsx';
+import { useAuth } from '../auth/AuthContext';
 import { fetchCardPrices } from '../services/cardPrice';
 
 // import { User } from 'firebase/auth'

@@ -26,12 +26,18 @@ import React, {
     const [isLoading, setIsLoading] = useState<boolean>(true);
   
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
-        setIsLoading(false);
-      });
+      // Only initialize Firebase auth on client side
+      if (typeof window !== 'undefined') {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setIsLoading(false);
+        });
   
-      return () => unsubscribe();
+        return () => unsubscribe();
+      } else {
+        // On server side, set loading to false immediately
+        setIsLoading(false);
+      }
     }, []);
   
     return (
@@ -45,6 +51,14 @@ import React, {
   export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
     if (!context) {
+      // During SSR, provide a default context to prevent errors
+      if (typeof window === 'undefined') {
+        return {
+          user: null,
+          isLoading: true,
+          signOut: async () => {}
+        };
+      }
       throw new Error("useAuth must be used within an AuthProvider");
     }
     return context;

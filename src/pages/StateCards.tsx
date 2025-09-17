@@ -48,7 +48,8 @@ const cardLogos: Record<string, string> = {
 }
 
 export function StateCards() {
-  const { stateCode } = useParams<{ stateCode: string }>()
+  const params = useParams<{ stateCode?: string }>()
+  const stateCode = params?.stateCode || ''
   const stateName = stateNames[stateCode?.toLowerCase() as keyof typeof stateNames]
   const [search, setSearch] = useState('')
 
