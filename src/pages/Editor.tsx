@@ -42,6 +42,9 @@ export function Editor() {
   const [redoStack, setRedoStack] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewImgRef = useRef<HTMLImageElement>(null) // Add ref for preview image
+  const [rotation, setRotation] = useState(0); // degrees: 0, 90, 180, 270
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -125,27 +128,54 @@ export function Editor() {
     if (!imagePreview) return;
 
     try {
-      // Create transaction first
       await createCardTransaction();
 
       const img = previewImgRef.current;
       if (!img) return;
 
-      // Create a canvas with the same size as the image
+      // Create a canvas with the same size as the image (swap width/height for 90/270)
+      const isRotated = rotation % 180 !== 0;
       const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      canvas.width = isRotated ? img.naturalHeight : img.naturalWidth;
+      canvas.height = isRotated ? img.naturalWidth : img.naturalHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Apply filters
+      // Set up transform for rotation and flip
+      ctx.save();
+      // Move to center
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      // Apply rotation
+      ctx.rotate((rotation * Math.PI) / 180);
+      // Apply flip
+      ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+      // Draw image with correct offset
       ctx.filter = `
         brightness(${brightness[0]}%)
         saturate(${saturation[0]}%)
         invert(${inversion[0]}%)
         grayscale(${grayscale[0]}%)
       `;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // For 90/270 deg, swap width/height
+      if (isRotated) {
+        ctx.drawImage(
+          img,
+          -img.naturalHeight / 2,
+          -img.naturalWidth / 2,
+          img.naturalHeight,
+          img.naturalWidth
+        );
+      } else {
+        ctx.drawImage(
+          img,
+          -img.naturalWidth / 2,
+          -img.naturalHeight / 2,
+          img.naturalWidth,
+          img.naturalHeight
+        );
+      }
+      ctx.restore();
 
       // Download the canvas as PNG or JPEG
       const link = document.createElement('a');
@@ -190,14 +220,32 @@ export function Editor() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  // Rotate and flip handlers
+  const handleRotate = () => setRotation((prev) => (prev + 90) % 360);
+  const handleFlipH = () => setFlipH((prev) => !prev);
+  const handleFlipV = () => setFlipV((prev) => !prev);
+
+  // Add transforms to preview image
+  const getPreviewStyle = () => ({
+    filter: `
+      brightness(${brightness[0]}%)
+      saturate(${saturation[0]}%)
+      invert(${inversion[0]}%)
+      grayscale(${grayscale[0]}%)
+    `,
+    transform: `
+      rotate(${rotation}deg)
+      scaleX(${flipH ? -1 : 1})
+      scaleY(${flipV ? -1 : 1})
+    `
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
-
       {/* Main Content */}
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
         <DashboardHeader title="Image Editor" icon={Edit3} showNewServiceButton={false} />
-
         <main className="flex-1 p-3 sm:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Editor Panel */}
@@ -226,6 +274,40 @@ export function Editor() {
                   </Button>
                   <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
                     Quality
+                  </Button>
+                </div>
+
+                {/* Rotate & Flip Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
+                    onClick={handleRotate}
+                    disabled={!imagePreview}
+                  >
+                    <RotateCw className="h-4 w-4 mr-1" />
+                    Rotate
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 ${flipH ? 'border-indigo-500' : ''}`}
+                    onClick={handleFlipH}
+                    disabled={!imagePreview}
+                  >
+                    <span className="mr-1">↔</span>
+                    Flip H
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50 ${flipV ? 'border-indigo-500' : ''}`}
+                    onClick={handleFlipV}
+                    disabled={!imagePreview}
+                  >
+                    <span className="mr-1">↕</span>
+                    Flip V
                   </Button>
                 </div>
 
@@ -362,14 +444,7 @@ export function Editor() {
                       src={imagePreview}
                       alt="Preview"
                       className="max-w-full max-h-full object-contain"
-                      style={{
-                        filter: `
-                          brightness(${brightness[0]}%)
-                          saturate(${saturation[0]}%)
-                          invert(${inversion[0]}%)
-                          grayscale(${grayscale[0]}%)
-                        `
-                      }}
+                      style={getPreviewStyle()}
                     />
                   ) : (
                     <div className="w-full max-w-sm space-y-6">
@@ -404,4 +479,3 @@ export function Editor() {
 }
 
 export default Editor;
-                    
