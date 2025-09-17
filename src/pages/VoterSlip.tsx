@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react'
 import {
   Card,
@@ -113,4 +115,5 @@ export function VoterSlip() {
 }
 
 export default VoterSlip
+
 

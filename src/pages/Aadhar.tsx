@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
 import {
   Card,
@@ -308,3 +310,4 @@ export function Aadhar() {
 }
 
 export default Aadhar
+

@@ -1,3 +1,5 @@
+'use client'
+
 // PdfCropper.tsx
 'use client';
 
@@ -200,3 +202,4 @@ export default function PdfCropper() {
     </div>
   );
 }
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react'
 import {
   Card,
@@ -266,3 +268,4 @@ export function AddMoney() {
 }
 
 export default AddMoney
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react'
 import {
   Card,
@@ -29,7 +31,7 @@ import { PDFDocument, rgb } from 'pdf-lib'
 import html2canvas from 'html2canvas'
 import axios from "axios";
 import { auth } from '../auth/firebase'
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
 

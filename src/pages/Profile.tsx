@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,7 +36,7 @@ import { useToast } from '@/hooks/use-toast'
 import { updateProfile } from 'firebase/auth'
 import { auth } from '../auth/firebase'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export function Profile() {
   const { user } = useAuth()
@@ -526,3 +528,4 @@ export function Profile() {
 }
 
 export default Profile
+

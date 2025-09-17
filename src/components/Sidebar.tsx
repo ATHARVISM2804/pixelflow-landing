@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Home, 
   CreditCard, 
@@ -25,8 +26,8 @@ import { auth } from '../auth/firebase';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -52,14 +53,14 @@ const Sidebar = () => {
     try {
       await signOut(auth);
       localStorage.removeItem('token');
-      navigate('/login');
+      router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);
       alert('Failed to log out. Please try again.');
     }
   };
 
-  const isActiveRoute = (path: string) => location.pathname === path;
+  const isActiveRoute = (path: string) => pathname === path;
 
   return (
     <>
@@ -95,7 +96,7 @@ const Sidebar = () => {
             {menuItems.map((item, index) => (
               <Link
                 key={index}
-                to={item.path}
+                href={item.path}
                 className={`
                   w-full text-left p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base
                   ${isActiveRoute(item.path) 
@@ -115,7 +116,7 @@ const Sidebar = () => {
             {otherItems.map((item, index) => (
               <Link
                 key={index}
-                to={item.path}
+                href={item.path}
                 className="w-full text-left p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
                 onClick={() => setIsOpen(false)}
               >

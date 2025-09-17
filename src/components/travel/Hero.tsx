@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroTraveler from "@/assets/hero-traveler.jpg";
+import Image from "next/image";
 
 const Hero = () => {
   return (
@@ -14,9 +14,11 @@ const Hero = () => {
         <div className="relative order-1 lg:order-2">
           <div className="absolute -top-2 sm:-top-4 -left-2 sm:-left-4 w-full h-full rounded-full bg-gradient-to-br from-indigo-900 to-indigo-700 opacity-20"></div>
           <div className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto">
-            <img 
-              src={heroTraveler} 
+            <Image 
+              src="/assets/hero-traveler.jpg" 
               alt="Happy traveler with backpack" 
+              width={400}
+              height={400}
               className="w-full h-auto rounded-full object-cover border-4 border-gray-800"
             />
           </div>

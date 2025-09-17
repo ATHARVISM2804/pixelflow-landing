@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import {
   Card,
@@ -19,7 +21,7 @@ import {
   Shield
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
-import { Link } from "react-router-dom"
+import Link from "next/link"
 import DashboardHeader from "@/components/DashboardHeader"
 
 const freeCards = [
@@ -74,7 +76,7 @@ export function Cards() {
           {/* Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {freeCards.map((card) => (
-              <Link key={card.id} to={card.path}>
+              <Link key={card.id} href={card.path}>
                 <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
                   <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
                     {/* Icon Circle */}

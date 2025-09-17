@@ -1,8 +1,11 @@
+'use client'
+
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, CreditCard } from 'lucide-react';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../../auth/firebase.ts';
+import { auth } from '../../auth/firebase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -12,7 +15,7 @@ const Login = () => {
     email: '',
     password: ''
   });
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +25,7 @@ const Login = () => {
       const token = await userCredential.user.getIdToken(); 
       localStorage.setItem('token', token); 
       console.log("Login successful!"); 
-      navigate('/dashboard'); 
+      router.push('/dashboard'); 
     } catch (error) {
       console.error("Login failed:", error);
       alert("Invalid email or password.");
@@ -36,7 +39,7 @@ const Login = () => {
         const token = await result.user.getIdToken();
         localStorage.setItem('token', token);
         console.log("Login successful!");
-        navigate('/dashboard');
+        router.push('/dashboard');
       })
       .catch((error) => {
         console.error("Login failed:", error);
@@ -59,7 +62,7 @@ const Login = () => {
       
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-8">
+          <Link href="/" className="flex items-center justify-center space-x-3 mb-8">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
               <CreditCard className="h-8 w-8 text-white" />
             </div>
@@ -130,7 +133,7 @@ const Login = () => {
                   Remember me
                 </label>
               </div>
-              <Link to="/forgot-password" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+              <Link href="/forgot-password" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
                 Forgot your password?
               </Link>
             </div>
@@ -185,7 +188,7 @@ const Login = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
                 Sign up
               </Link>
             </p>

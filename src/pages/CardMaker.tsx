@@ -1,5 +1,8 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,7 +55,7 @@ export function CardMaker() {
           <main className="flex-1 p-6 flex items-center justify-center">
             <div className="text-center">
               <p className="text-white text-xl mb-4">Card type not available</p>
-              <Link to="/free-cards">
+              <Link href="/free-cards">
                 <Button>Back to Free Cards</Button>
               </Link>
             </div>
@@ -73,6 +76,10 @@ export function CardMaker() {
     fileInputRef.current?.click()
   }
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
   // Show Aadhar-specific interface for aadhar card type
   if (cardType === 'aadhar') {
     return (
@@ -84,7 +91,7 @@ export function CardMaker() {
 
           <main className="flex-1 p-3 sm:p-6">
             <div className="mb-6">
-              <Link to={`/free-cards/${stateCode}`}>
+              <Link href={`/free-cards/${stateCode}`}>
                 <Button variant="outline" className="mb-4 bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to {stateName} Cards
@@ -261,7 +268,7 @@ export function CardMaker() {
 
         <main className="flex-1 p-3 sm:p-6">
           <div className="mb-6">
-            <Link to={`/free-cards/${stateCode}`}>
+            <Link href={`/free-cards/${stateCode}`}>
               <Button variant="outline" className="mb-4 bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to {stateName} Cards

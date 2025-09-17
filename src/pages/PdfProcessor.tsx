@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useCallback } from 'react'
 import {
   Card,
@@ -29,10 +31,9 @@ import { useToast } from "@/components/ui/use-toast"
 import * as pdfjsLib from 'pdfjs-dist'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
-import overlayImage from '@/assets/overlay3.png'; // You'll need to add this image to your assets folder
 import axios from "axios";
-import { auth } from "../auth/firebase.ts"
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import { auth } from "../auth/firebase"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 // Configure PDF.js on component load
 configurePdfJs()
 
@@ -1551,5 +1552,6 @@ export function PdfProcessor() {
 }
 
 export default PdfProcessor;
+
 
 

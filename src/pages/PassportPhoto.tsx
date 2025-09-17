@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
 import jsPDF from 'jspdf'
 import {
@@ -30,7 +32,7 @@ import DashboardHeader from "@/components/DashboardHeader"
 import axios from "axios";
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 import { auth } from "../auth/firebase"
 import { removeBgFromFile } from "./RemoveBg"
 
@@ -381,3 +383,4 @@ export function PassportPhoto() {
 }
 
 export default PassportPhoto;
+

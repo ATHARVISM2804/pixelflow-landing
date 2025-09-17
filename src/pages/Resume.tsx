@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react';
 import {
   Card,
@@ -319,3 +321,4 @@ export function Resume() {
 }
 
 export default Resume;
+

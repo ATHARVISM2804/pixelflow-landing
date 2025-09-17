@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from '../auth/AuthContext.tsx';  
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';  
+import { useRouter } from 'next/navigation';
 import {
   Plus,
   User,
@@ -31,7 +31,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onMobileMenuToggle
 }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [balance] = useState(100); // You can replace with actual balance logic
   
@@ -45,11 +45,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const unreadNotificationCount = 3;
 
   const handleProfileClick = () => {
-    navigate('/profile');
+    router.push('/profile');
   };
 
   const handleWalletClick = () => {
-    navigate('/add-money');
+    router.push('/add-money');
   };
 
   return (

@@ -1,5 +1,8 @@
+'use client'
+
 import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -58,7 +61,7 @@ export function StateCards() {
           <main className="flex-1 p-6 flex items-center justify-center">
             <div className="text-center">
               <p className="text-white text-xl mb-4">State cards not available yet</p>
-              <Link to="/free-cards">
+              <Link href="/free-cards">
                 <Button>Back to States</Button>
               </Link>
             </div>
@@ -83,7 +86,7 @@ export function StateCards() {
 
         <main className="flex-1 p-3 sm:p-6">
           <div className="mb-6">
-            <Link to="/free-cards">
+            <Link href="/free-cards">
               <Button variant="outline" className="mb-4 bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to States
@@ -113,7 +116,7 @@ export function StateCards() {
               if (card.id === "did") to = "/did";
               if (card.id === "uan") to = "/uan";
               return (
-                <Link key={card.id} to={to}>
+                <Link key={card.id} href={to}>
                   <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
                     <CardContent className="p-4 sm:p-6 text-center space-y-4">
                       <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg`}>

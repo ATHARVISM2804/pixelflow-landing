@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useEffect, useState, ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "./AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
@@ -18,7 +20,7 @@ const ProfileCheckRoute: React.FC<ProfileCheckRouteProps> = ({
   const [isProfileComplete, setIsProfileComplete] = useState<boolean | null>(null);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
-  const location = useLocation();
+  const router = useRouter();
 
   useEffect(() => {
     const checkProfileCompletion = async () => {
@@ -55,7 +57,8 @@ const ProfileCheckRoute: React.FC<ProfileCheckRouteProps> = ({
 
   // If user is not logged in, redirect to login
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    router.push("/login");
+    return null;
   }
 
   // If profile completion is required and profile is not complete, show the form

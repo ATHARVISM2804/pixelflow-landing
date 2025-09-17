@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
 import {
   Card,
@@ -26,7 +28,7 @@ import { cardApi } from '@/services/cardApi';
 import { toast } from '@/components/ui/use-toast';
 import axios from "axios";
 import { auth } from "../auth/firebase"
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export function Editor() {
   const [brightness, setBrightness] = useState([100])
@@ -479,3 +481,4 @@ export function Editor() {
 }
 
 export default Editor;
+

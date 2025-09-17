@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { FileStack } from "lucide-react"
-import { Link } from "react-router-dom"
+import Link from "next/link"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 
@@ -77,7 +79,7 @@ export function FreeCards() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
             {filteredStates.map((state) => (
-              <Link key={state.code} to={`/free-cards/${state.code.toLowerCase()}`}>
+              <Link key={state.code} href={`/free-cards/${state.code.toLowerCase()}`}>
                 <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group h-full">
                   <CardContent className="p-4 sm:p-6 text-center space-y-4 h-full flex flex-col justify-between">
                     <div className="space-y-3">

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
 import {
   Card,
@@ -28,7 +30,7 @@ import * as pdfjsLib from 'pdfjs-dist'
 import axios from "axios"
 import { auth } from "../auth/firebase"
 import { PDFDocument } from 'pdf-lib'
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface PanCardData {
   image: string

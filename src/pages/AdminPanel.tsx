@@ -1,3 +1,5 @@
+'use client'
+
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -33,7 +35,7 @@ interface Card {
   price: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/cards';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/cards';
 
 const AdminPanel: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([]);
@@ -182,3 +184,4 @@ const AdminPanel: React.FC = () => {
 };
 
 export default AdminPanel;
+

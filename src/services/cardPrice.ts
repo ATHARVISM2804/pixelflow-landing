@@ -1,6 +1,6 @@
 // Fetches card prices from the backend and returns a name-price map
 export async function fetchCardPrices(): Promise<Record<string, number>> {
-  const API_HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
   const API_URL = `${API_HOST.replace(/\/$/, '')}/api`;
   const response = await fetch(`${API_URL}/cards`); // Update URL if needed
   if (!response.ok) throw new Error('Failed to fetch card prices');

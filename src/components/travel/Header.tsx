@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 const Header = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <header className="bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 border-b border-gray-800 sticky top-0 z-50">
@@ -24,14 +24,14 @@ const Header = () => {
           <Button 
             variant="ghost" 
             className="flex items-center gap-2 text-gray-200 hover:text-indigo-400"
-            onClick={() => navigate('/login')}
+            onClick={() => router.push('/login')}
           >
             <LogIn className="w-4 h-4" />
             Login
           </Button>
           <Button 
             className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"
-            onClick={() => navigate('/signup')}
+            onClick={() => router.push('/signup')}
           >
             <LogIn className="w-4 h-4" />
             Sign Up

@@ -1,8 +1,11 @@
+'use client'
+
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, User, CreditCard } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../../auth/firebase.ts';
+import { auth } from '../../auth/firebase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -16,7 +19,7 @@ const Signup = () => {
     password: '',
     confirmPassword: ''
   });
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -43,7 +46,7 @@ const Signup = () => {
       localStorage.setItem('token', token);
   
       console.log("Signup successful!");
-      navigate("/complete-profile");
+      router.push("/complete-profile");
     } catch (error) {
       console.error("Signup failed:", error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -58,7 +61,7 @@ const Signup = () => {
         const token = await result.user.getIdToken();
         localStorage.setItem('token', token);
         console.log("Signup successful!");
-        navigate('/complete-profile');
+        router.push('/complete-profile');
       })
       .catch((error) => {
         console.error("Signup failed:", error);
@@ -74,7 +77,7 @@ const Signup = () => {
       
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-8">
+          <Link href="/" className="flex items-center justify-center space-x-3 mb-8">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
               <CreditCard className="h-8 w-8 text-white" />
             </div>
@@ -268,7 +271,7 @@ const Signup = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
               Already have an account?{' '}
-              <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
                 Sign in
               </Link>
             </p>

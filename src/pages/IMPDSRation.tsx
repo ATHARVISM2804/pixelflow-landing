@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react'
 import {
   Card,
@@ -75,4 +77,5 @@ export function IMPDSRation() {
 }
 
 export default IMPDSRation
+
 

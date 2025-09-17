@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
 import {
   Card,
@@ -252,3 +254,4 @@ export function PageMaker() {
 }
 
 export default PageMaker
+

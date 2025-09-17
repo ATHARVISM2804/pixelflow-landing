@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from "react";
 import {
     Card,
@@ -22,7 +24,7 @@ import NationalEmblem from './National-Emblem.png'
 import narendramodi from './NarendraModi.png'
 import jsPDF from 'jspdf';
 import axios from "axios";
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 import { auth } from "../auth/firebase";
 
 interface VaccinationData {
@@ -517,3 +519,4 @@ export function Vaccine() {
 }
 
 export default Vaccine;
+

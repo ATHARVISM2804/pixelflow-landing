@@ -1,3 +1,5 @@
+'use client'
+
 // PdfTextExtractor.tsx
 import React, { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
@@ -43,3 +45,4 @@ const PdfTextExtractor: React.FC = () => {
 };
 
 export default PdfTextExtractor;
+

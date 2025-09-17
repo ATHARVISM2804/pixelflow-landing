@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 
 // Reusable function for background removal
@@ -74,3 +76,4 @@ function RemoveBg() {
 }
 
 export default RemoveBg;
+

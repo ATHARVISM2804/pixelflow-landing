@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react'
 import {
   Card,
@@ -109,3 +111,4 @@ export function DrivingLicense() {
 }
 
 export default DrivingLicense
+

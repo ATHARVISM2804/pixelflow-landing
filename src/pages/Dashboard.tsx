@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react'
 // import { useTransactions } from '@/hooks/useTransactions';
 import {
@@ -46,7 +48,7 @@ interface Transaction {
 }
 
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export function Dashboard() {
   // Assuming you have the user's UID from authentication

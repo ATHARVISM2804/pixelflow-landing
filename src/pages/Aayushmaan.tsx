@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react'
 import {
   Card,
@@ -25,7 +27,7 @@ import axios from "axios"
 import { auth } from "../auth/firebase"
 import { PDFDocument } from 'pdf-lib'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface AyushmaanCardData {
   image: string
@@ -574,3 +576,4 @@ export function Aayushmaan() {
 }
 
 export default Aayushmaan;
+

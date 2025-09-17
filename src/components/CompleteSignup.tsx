@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +16,7 @@ import { useAuth } from '@/auth/AuthContext';
 
 // Firebase imports
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from '../auth/firebase';
+import { db } from '../auth/firebase';
 
 interface UserProfile {
     email: string;
@@ -36,7 +38,7 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
-    const navigate = useNavigate();
+    const router = useRouter();
     const { toast } = useToast();
     const { user } = useAuth();
 
@@ -136,7 +138,7 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
             } else if (prevPage) {
                 window.location.href = prevPage;
             } else {
-                navigate('/dashboard');
+                router.push('/dashboard');
             }
         } catch (err) {
             console.error("Error saving profile:", err);
@@ -155,7 +157,7 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
         if (onSkip) {
             onSkip();
         } else {
-            navigate('/dashboard');
+            router.push('/dashboard');
         }
     };
 
@@ -263,7 +265,7 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                                                     return (
                                                         <select
                                                             value={value}
-                                                            onChange={e => onChange(e.target.value)}
+                                                            onChange={onChange}
                                                             className="bg-[#1c2337] translate-x-4 text-white text-xs border border-gray-700 rounded py-0.5 px-1"
                                                             {...props}
                                                         >
