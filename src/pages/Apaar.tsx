@@ -214,7 +214,7 @@ export function Apaar() {
     try {
       const transaction = {
         uid: uid,
-        cardName: 'APAAR Card',
+        cardName: 'Apaar',
         amount: 1,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),

@@ -327,7 +327,7 @@ export function Uan() {
     try {
       const transaction = {
         uid: uid,
-        cardName: 'UAN Card',
+        cardName: 'Uan',
         amount: 2,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),

@@ -32,6 +32,7 @@ import DashboardHeader from "@/components/DashboardHeader"
 import axios from "axios";
 import { auth } from "../auth/firebase.ts";
 import { useAuth } from '../auth/AuthContext.tsx';
+import { fetchCardPrices } from '../services/cardPrice';
 
 // import { User } from 'firebase/auth'
 
@@ -68,6 +69,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const pageSize = 5;
+  const [prices, setPrices] = useState<Record<string, number>>({});
 
   // Remove the stats calculation useEffect and instead use a function to calculate stats
   function calculateStats(transactions: Transaction[]) {
@@ -81,6 +83,20 @@ export function Dashboard() {
       payments: rechargeTransactions.length
     };
   }
+
+  useEffect(() => {
+    // Fetch prices on mount
+    fetchCardPrices()
+      .then((fetchedPrices) => {
+        setPrices(fetchedPrices);
+        console.log("Fetched Prices:", fetchedPrices);
+        console.log(fetchedPrices['Uan']);
+      })
+      .catch((err) => {
+        console.error('Error fetching card prices:', err);
+        setPrices({});
+      });
+  }, []);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -146,7 +162,8 @@ export function Dashboard() {
   }];
 
   const totalPages = Math.ceil(transactions.length / pageSize);
-  const paginatedTransactions = transactions.slice((page - 1) * pageSize, page * pageSize);
+  // Reverse transactions to show latest first
+  const paginatedTransactions = [...transactions].reverse().slice((page - 1) * pageSize, page * pageSize);
 
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
@@ -180,12 +197,19 @@ export function Dashboard() {
             </TableCell>
             <TableCell className="text-slate-300">{transaction.cardName}</TableCell>
             <TableCell className="text-slate-300 hidden md:table-cell">
-              {transaction.type === "RECHARGE" ? `₹${transaction.amount}` : "-"}
+              {/* Credit column: leave blank or show "-" */}
+              -
             </TableCell>
             <TableCell className="text-slate-300 hidden md:table-cell">
-              {transaction.type === "CARD_CREATION" ? `₹${transaction.amount}` : "-"}
+              {/* Debit column: show amount * price for CARD_CREATION */}
+              {transaction.type === "CARD_CREATION" && prices[transaction.cardName]
+                ? `₹${transaction.amount * prices[transaction.cardName]}`
+                : "-"}
             </TableCell>
-            <TableCell className="text-slate-300">₹{transaction.amount}</TableCell>
+            <TableCell className="text-slate-300">
+              {/* Amount column: always show the raw amount */}
+              ₹{transaction.amount}
+            </TableCell>
             <TableCell className="text-slate-300 hidden lg:table-cell">
               {transaction.date ? new Date(transaction.date).toLocaleDateString() : ""}
             </TableCell>

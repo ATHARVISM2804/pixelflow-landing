@@ -81,8 +81,8 @@ export function PdfProcessor() {
     try {
       const transaction = {
         uid: uid,
-        cardName: 'Aadhaar Card',
-        amount: 2,
+        cardName: 'Aadhar',
+        amount: 1,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),
         metadata: { page: card.originalPage }

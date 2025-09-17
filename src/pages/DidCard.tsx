@@ -330,8 +330,8 @@ export function DidCard() {
     try {
       const transaction = {
         uid: uid,
-        cardName: 'DID Card',
-        amount: 2,
+        cardName: 'DidCard',
+        amount: 1,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),
         metadata: { page: card.originalPage }

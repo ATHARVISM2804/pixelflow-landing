@@ -228,7 +228,7 @@ export function Vaccine() {
             // Transaction API call
             const transaction = {
                 uid: auth.currentUser?.uid,
-                cardName: 'Vaccination Card',
+                cardName: 'Vaccine',
                 amount: 2, // or any logic for pricing
                 type: 'CARD_CREATION',
                 date: new Date().toISOString(),

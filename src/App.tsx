@@ -41,6 +41,7 @@ import Aayushmaan from "./pages/Aayushmaan.tsx";
 import VaccinationCard from "./pages/Vaccine.tsx";
 import CompleteSignup from "./components/CompleteSignup.tsx";
 import RemoveBg from "./pages/RemoveBg.tsx";
+import AdminPanel from "./pages/AdminPanel.tsx";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
 
             {/* Protected Routes without Profile Completion Requirement */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/free-cards" element={<FreeCards />} />

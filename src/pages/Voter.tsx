@@ -325,7 +325,7 @@ export function Voter() {
     try {
       const transaction = {
         uid: uid,
-        cardName: 'Voter ID Card',
+        cardName: 'Voter',
         amount: 2,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),

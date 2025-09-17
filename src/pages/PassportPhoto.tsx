@@ -183,7 +183,7 @@ export function PassportPhoto() {
       const transaction = {
         uid: auth.currentUser?.uid,
         cardName: 'Passport Photo',
-        amount: 2 * formData.number,
+        amount: formData.number,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),
         metadata: { fileName: file.name }

@@ -625,7 +625,7 @@ export function IdCard() {
     try {
       const transaction = {
         uid: auth.currentUser?.uid,
-        cardName: 'ID Card',
+        cardName: 'IdCard',
         amount: 2,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),
