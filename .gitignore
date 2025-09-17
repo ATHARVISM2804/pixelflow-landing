@@ -16,6 +16,16 @@ dist-ssr
 .next/
 out/
 
+# Production builds
+build/
+*.tsbuildinfo
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -26,3 +36,11 @@ out/
 *.njsproj
 *.sln
 *.sw?
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Large files that should never be committed
+*.pack
+*.pack.gz
