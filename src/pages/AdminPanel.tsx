@@ -35,7 +35,9 @@ interface Card {
   price: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/cards';
+// Configure API URL consistently with other files
+const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_URL = `${API_HOST.replace(/\/$/, '')}/api/cards`;
 
 const AdminPanel: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([]);

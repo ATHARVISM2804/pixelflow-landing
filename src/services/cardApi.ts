@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-// Use Vite env in the browser; fall back to localhost with the transactions path.
+// Configure API URL for Next.js environment
+const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const API_URL = `${API_HOST.replace(/\/$/, '')}/api`;
 
 const CARD_CHARGES = {
     AADHAAR: 2,
@@ -25,7 +27,7 @@ export const cardApi = {
         };
         
         try {
-            const response = await axios.post(`${API_URL}/card`, payload);
+            const response = await axios.post(`${API_URL}/transactions/card`, payload);
             return response.data;
         } catch (error) {
             throw error;
@@ -34,7 +36,7 @@ export const cardApi = {
 
     getCardsByUser: async (uid: string) => {
         try {
-            const response = await axios.get(`${API_URL}/user/${uid}`);
+            const response = await axios.get(`${API_URL}/transactions/user/${uid}`);
             return response.data.filter((tx: any) => tx.type === 'CARD_CREATION');
         } catch (error) {
             throw error;
@@ -50,7 +52,7 @@ export const cardApi = {
         };
         
         try {
-            const response = await axios.post(`${API_URL}/card`, payload);
+            const response = await axios.post(`${API_URL}/transactions/card`, payload);
             return response.data;
         } catch (error) {
             throw error;
@@ -66,7 +68,7 @@ export const cardApi = {
         };
         
         try {
-            const response = await axios.post(`${API_URL}/card`, payload);
+            const response = await axios.post(`${API_URL}/transactions/card`, payload);
             return response.data;
         } catch (error) {
             throw error;
@@ -82,7 +84,7 @@ export const cardApi = {
         };
         
         try {
-            const response = await axios.post(`${API_URL}/card`, payload);
+            const response = await axios.post(`${API_URL}/transactions/card`, payload);
             return response.data;
         } catch (error) {
             throw error;
