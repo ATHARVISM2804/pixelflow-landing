@@ -73,11 +73,14 @@ export function Dashboard() {
 
   // Remove the stats calculation useEffect and instead use a function to calculate stats
   function calculateStats(transactions: Transaction[]) {
-    const totalBalance = transactions.reduce((acc, curr) => acc + curr.amount, 0);
+    // Sum only debits (CARD_CREATION)
+    const totalDebits = transactions
+      .filter((t) => t.type === 'CARD_CREATION')
+      .reduce((acc, curr) => acc + curr.amount, 0);
     const cardTransactions = transactions.filter((t) => t.type === 'CARD_CREATION');
     const rechargeTransactions = transactions.filter((t) => t.type === 'RECHARGE');
     return {
-      balance: totalBalance,
+      balance: totalDebits,
       cards: cardTransactions.length,
       transactionCount: transactions.length,
       payments: rechargeTransactions.length
