@@ -16,7 +16,8 @@ import {
   Loader2,
   CreditCard,
   ZoomIn,
-  Lock
+  Lock,
+  Printer
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +29,7 @@ import * as pdfjsLib from 'pdfjs-dist'
 import axios from "axios"
 import { auth } from "../auth/firebase"
 import { PDFDocument } from 'pdf-lib'
+import { useTermsNCondition } from "@/components/TermsNCondition"
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface DidCardData {
@@ -47,6 +49,13 @@ export function DidCard() {
   const { toast } = useToast()
 
   const uid = auth.currentUser?.uid;
+  const { open: termsOpen, openModal: openTermsModal, closeModal: closeTermsModal, modal: termsModal } = useTermsNCondition();
+  const [pendingAction, setPendingAction] = useState<null | { type: "download" | "downloadCombined" | "print" | "printCombined", card: DidCardData, index: number, backImage?: string }>(null);
+
+  // Configure PDF.js worker
+  if (typeof window !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
 
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -149,9 +158,12 @@ export function DidCard() {
     }
 
     setIsProcessing(true)
+    console.log('Starting PDF processing...')
 
     try {
       const arrayBuffer = await selectedPdf.arrayBuffer()
+      console.log(`PDF file size: ${arrayBuffer.byteLength} bytes`)
+
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
         password: password || undefined
@@ -160,13 +172,15 @@ export function DidCard() {
       let pdf
       try {
         pdf = await loadingTask.promise
+        console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`)
         setIsPasswordProtected(password ? true : false)
         setNeedsPassword(false)
         toast({
           title: "PDF loaded successfully",
-          description: "Extracting DID card regions from all pages...",
+          description: `Processing ${pdf.numPages} pages for DID cards...`,
         })
       } catch (error: any) {
+        console.error('PDF loading error:', error)
         if (error.name === 'PasswordException') {
           setIsPasswordProtected(true)
           setNeedsPassword(true)
@@ -184,39 +198,54 @@ export function DidCard() {
       const extractedCards: DidCardData[] = []
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum)
-        const pageImage = await renderPageToCanvas(page)
+        console.log(`Processing page ${pageNum}...`)
+        try {
+          const page = await pdf.getPage(pageNum)
+          const pageImage = await renderPageToCanvas(page)
 
-        // Always extract front and back from every page
-        const { front, back } = await extractDidFrontBackFromFullPage(pageImage)
+          // Always extract front and back from every page
+          const { front, back } = await extractDidFrontBackFromFullPage(pageImage)
 
-        extractedCards.push({
-          image: front,
-          originalPage: pageNum
-        })
-        extractedCards.push({
-          image: back,
-          originalPage: pageNum
-        })
+          extractedCards.push({
+            image: front,
+            originalPage: pageNum
+          })
+          extractedCards.push({
+            image: back,
+            originalPage: pageNum
+          })
+
+          console.log(`Successfully extracted cards from page ${pageNum}`)
+        } catch (error) {
+          console.error(`Error processing page ${pageNum}:`, error)
+          toast({
+            title: "Warning",
+            description: `Failed to process page ${pageNum}. Continuing with other pages.`,
+            variant: "destructive"
+          })
+        }
       }
+
+      console.log(`Total extracted cards: ${extractedCards.length}`)
 
       if (extractedCards.length === 0) {
         toast({
           title: "No DID cards found",
-          description: "No card regions extracted from the PDF.",
+          description: "No card regions could be extracted from the PDF. Check if the PDF contains DID cards in the expected format.",
           variant: "destructive"
         })
       } else {
         setDidCards(extractedCards)
         toast({
           title: "DID cards extracted successfully",
-          description: `Extracted ${extractedCards.length} card images from the PDF.`,
+          description: `Extracted ${extractedCards.length} card images from ${pdf.numPages} pages.`,
         })
       }
     } catch (error: any) {
+      console.error('PDF processing error:', error)
       toast({
         title: "Processing failed",
-        description: "An error occurred while processing the PDF.",
+        description: `Error: ${error.message || 'An error occurred while processing the PDF.'}`,
         variant: "destructive"
       })
     } finally {
@@ -353,8 +382,108 @@ export function DidCard() {
     }
   }
 
+  // Wrap download/print to require terms acceptance
+  const handleDownload = (card: DidCardData, index: number) => {
+    setPendingAction({ type: "download", card, index });
+    openTermsModal(() => setPendingAction(null));
+  };
+
+  const handleDownloadCombined = (front: string, back: string, index: number) => {
+    setPendingAction({ type: "downloadCombined", card: { image: front, originalPage: index }, index, backImage: back });
+    openTermsModal(() => setPendingAction(null));
+  };
+
+  const handlePrint = (card: DidCardData, index: number) => {
+    setPendingAction({ type: "print", card, index });
+    openTermsModal(() => setPendingAction(null));
+  };
+
+  const handlePrintCombined = (front: string, back: string, index: number) => {
+    setPendingAction({ type: "printCombined", card: { image: front, originalPage: index }, index, backImage: back });
+    openTermsModal(() => setPendingAction(null));
+  };
+
+  // Effect to handle the action after agreeing to terms
+  React.useEffect(() => {
+    if (!termsOpen && pendingAction) {
+      const { type, card, index, backImage } = pendingAction;
+      setPendingAction(null);
+      if (type === "download") {
+        handleSubmit(card, index);
+      } else if (type === "downloadCombined" && backImage) {
+        downloadCombinedPdf(card.image, backImage, index);
+      } else if (type === "print") {
+        printImage(card.image, `did_${index + 1}`);
+      } else if (type === "printCombined" && backImage) {
+        printCombinedPdf(card.image, backImage, index);
+      }
+    }
+  }, [termsOpen, pendingAction]);
+
+  // Print helpers
+  const printImage = async (imageData: string, filename: string) => {
+    try {
+      const printWindow = window.open('', '_blank')
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print ${filename}</title>
+              <style>
+                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                @media print { body { margin: 0; } img { max-width: 100%; height: auto; } }
+              </style>
+            </head>
+            <body>
+              <img src="${imageData}" alt="${filename}" />
+            </body>
+          </html>
+        `)
+        printWindow.document.close()
+        printWindow.onload = function() {
+          printWindow.focus()
+          printWindow.print()
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Print Error",
+        description: "Failed to open print dialog.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const printCombinedPdf = async (front: string, back: string, index: number) => {
+    try {
+      const pdfBytes = await createCombinedPdf(front, back)
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+      const pdfUrl = URL.createObjectURL(blob)
+      const printWindow = window.open(pdfUrl, '_blank')
+      if (printWindow) {
+        printWindow.onload = function() {
+          printWindow.focus()
+          printWindow.print()
+        }
+      }
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000)
+      toast({
+        title: "Print started",
+        description: "Combined DID card sent to printer.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF for printing.",
+        variant: "destructive"
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+      {termsModal}
       <Sidebar />
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
         <DashboardHeader title="DID Card Extractor" icon={CreditCard} showNewServiceButton={false} />
@@ -504,13 +633,22 @@ export function DidCard() {
                     <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
                       <img src={didCards[0].image} alt="DID Front" className="max-w-full max-h-full object-contain" />
                     </div>
-                    <Button
-                      onClick={() => downloadImage(didCards[0].image, `did_front.png`)}
-                      className="bg-indigo-500 text-white hover:bg-indigo-600"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Front PNG
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleDownload(didCards[0], 0)}
+                        className="flex-1 bg-indigo-500 text-white hover:bg-indigo-600"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Front PNG
+                      </Button>
+                      <Button
+                        onClick={() => handlePrint(didCards[0], 0)}
+                        className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                    </div>
                   </div>
                   {/* Preview 2: Back */}
                   <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
@@ -518,13 +656,22 @@ export function DidCard() {
                     <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
                       <img src={didCards[1].image} alt="DID Back" className="max-w-full max-h-full object-contain" />
                     </div>
-                    <Button
-                      onClick={() => downloadImage(didCards[1].image, `did_back.png`)}
-                      className="bg-purple-500 text-white hover:bg-purple-600"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Back PNG
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleDownload(didCards[1], 1)}
+                        className="flex-1 bg-purple-500 text-white hover:bg-purple-600"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Back PNG
+                      </Button>
+                      <Button
+                        onClick={() => handlePrint(didCards[1], 1)}
+                        className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                    </div>
                   </div>
                   {/* Preview 3: Combined PDF */}
                   <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
@@ -536,13 +683,22 @@ export function DidCard() {
                         <img src={didCards[1].image} alt="DID Back" className="max-w-[45%] max-h-full object-contain rounded" />
                       </div>
                     </div>
-                    <Button
-                      onClick={() => downloadCombinedPdf(didCards[0].image, didCards[1].image, 0)}
-                      className="bg-green-500 text-white hover:bg-green-600"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Combined PDF
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleDownloadCombined(didCards[0].image, didCards[1].image, 0)}
+                        className="flex-1 bg-green-500 text-white hover:bg-green-600"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Combined PDF
+                      </Button>
+                      <Button
+                        onClick={() => handlePrintCombined(didCards[0].image, didCards[1].image, 0)}
+                        className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print PDF
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
