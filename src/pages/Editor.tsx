@@ -28,6 +28,8 @@ import { cardApi } from '@/services/cardApi';
 import { toast } from '@/components/ui/use-toast';
 import axios from "axios";
 import { auth } from "../auth/firebase"
+import { useTermsNCondition } from "@/components/TermsNCondition"
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export function Editor() {
@@ -47,6 +49,8 @@ export function Editor() {
   const [rotation, setRotation] = useState(0); // degrees: 0, 90, 180, 270
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
+  const { open: termsOpen, openModal: openTermsModal, closeModal: closeTermsModal, modal: termsModal } = useTermsNCondition();
+  const [pendingAction, setPendingAction] = useState<null | "download">(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -125,86 +129,99 @@ export function Editor() {
     // Optionally keep for other actions, but not for download
   };
 
-  // Update handleDownloadImage to only handle transaction and download
+  // Wrap download to require terms acceptance
   const handleDownloadImage = async () => {
-    if (!imagePreview) return;
+    setPendingAction("download");
+    openTermsModal();
+  };
 
-    try {
-      await createCardTransaction();
+  // Effect to handle the action after agreeing to terms
+  React.useEffect(() => {
+    if (!termsOpen && pendingAction) {
+      if (pendingAction === "download") {
+        (async () => {
+          if (!imagePreview) return;
 
-      const img = previewImgRef.current;
-      if (!img) return;
+          try {
+            await createCardTransaction();
 
-      // Create a canvas with the same size as the image (swap width/height for 90/270)
-      const isRotated = rotation % 180 !== 0;
-      const canvas = document.createElement('canvas');
-      canvas.width = isRotated ? img.naturalHeight : img.naturalWidth;
-      canvas.height = isRotated ? img.naturalWidth : img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+            const img = previewImgRef.current;
+            if (!img) return;
 
-      // Set up transform for rotation and flip
-      ctx.save();
-      // Move to center
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      // Apply rotation
-      ctx.rotate((rotation * Math.PI) / 180);
-      // Apply flip
-      ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+            // Create a canvas with the same size as the image (swap width/height for 90/270)
+            const isRotated = rotation % 180 !== 0;
+            const canvas = document.createElement('canvas');
+            canvas.width = isRotated ? img.naturalHeight : img.naturalWidth;
+            canvas.height = isRotated ? img.naturalWidth : img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
 
-      // Draw image with correct offset
-      ctx.filter = `
-        brightness(${brightness[0]}%)
-        saturate(${saturation[0]}%)
-        invert(${inversion[0]}%)
-        grayscale(${grayscale[0]}%)
-      `;
-      // For 90/270 deg, swap width/height
-      if (isRotated) {
-        ctx.drawImage(
-          img,
-          -img.naturalHeight / 2,
-          -img.naturalWidth / 2,
-          img.naturalHeight,
-          img.naturalWidth
-        );
-      } else {
-        ctx.drawImage(
-          img,
-          -img.naturalWidth / 2,
-          -img.naturalHeight / 2,
-          img.naturalWidth,
-          img.naturalHeight
-        );
+            // Set up transform for rotation and flip
+            ctx.save();
+            // Move to center
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            // Apply rotation
+            ctx.rotate((rotation * Math.PI) / 180);
+            // Apply flip
+            ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+            // Draw image with correct offset
+            ctx.filter = `
+              brightness(${brightness[0]}%)
+              saturate(${saturation[0]}%)
+              invert(${inversion[0]}%)
+              grayscale(${grayscale[0]}%)
+            `;
+            // For 90/270 deg, swap width/height
+            if (isRotated) {
+              ctx.drawImage(
+                img,
+                -img.naturalHeight / 2,
+                -img.naturalWidth / 2,
+                img.naturalHeight,
+                img.naturalWidth
+              );
+            } else {
+              ctx.drawImage(
+                img,
+                -img.naturalWidth / 2,
+                -img.naturalHeight / 2,
+                img.naturalWidth,
+                img.naturalHeight
+              );
+            }
+            ctx.restore();
+
+            // Download the canvas as PNG or JPEG
+            const link = document.createElement('a');
+            link.download = selectedImage?.name ? `edited_${selectedImage.name}` : 'edited_image.png';
+            if (quality[0] < 100) {
+              link.href = canvas.toDataURL('image/jpeg', quality[0] / 100);
+            } else {
+              link.href = canvas.toDataURL('image/png');
+            }
+            // Ensure the link is added to the DOM and clicked
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast({
+              title: "Download Success",
+              description: "Image downloaded successfully.",
+            });
+          } catch (error: any) {
+            console.error('Error:', error);
+            toast({
+              title: "Error",
+              description: "Failed to download image and create transaction.",
+              variant: "destructive"
+            });
+          }
+        })();
       }
-      ctx.restore();
-
-      // Download the canvas as PNG or JPEG
-      const link = document.createElement('a');
-      link.download = selectedImage?.name ? `edited_${selectedImage.name}` : 'edited_image.png';
-      if (quality[0] < 100) {
-        link.href = canvas.toDataURL('image/jpeg', quality[0] / 100);
-      } else {
-        link.href = canvas.toDataURL('image/png');
-      }
-      // Ensure the link is added to the DOM and clicked
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Download Success",
-        description: "Image downloaded successfully.",
-      });
-    } catch (error: any) {
-      console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to download image and create transaction.",
-        variant: "destructive"
-      });
+      setPendingAction(null);
     }
-  }
+  }, [termsOpen, pendingAction]);
 
   // Reset all controls and image
   const handleReset = () => {
@@ -476,6 +493,7 @@ export function Editor() {
           </div>
         </main>
       </div>
+      {termsModal}
     </div>
   )
 }

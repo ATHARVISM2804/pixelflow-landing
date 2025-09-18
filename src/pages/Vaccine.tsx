@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/Sidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
+import { useTermsNCondition } from "@/components/TermsNCondition";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
 import NationalEmblem from './National-Emblem.png'
@@ -72,6 +73,7 @@ export function Vaccine() {
     const frontRef = useRef<HTMLDivElement>(null);
     const backRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
+    const { openModal, modal } = useTermsNCondition();
 
     const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -358,6 +360,14 @@ export function Vaccine() {
                                             </>
                                         )}
                                     </Button>
+                                    
+                                    <Button 
+                                        onClick={openModal}
+                                        variant="outline"
+                                        className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
+                                    >
+                                        Terms & Conditions
+                                    </Button>
                                 </CardContent>
                             </Card>
                         )}
@@ -514,6 +524,9 @@ export function Vaccine() {
                     </div>
                 </main>
             </div>
+            
+            {/* Terms & Conditions Modal */}
+            {modal}
         </div>
     );
 }

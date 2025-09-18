@@ -33,7 +33,11 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
 import axios from "axios";
 import { auth } from "../auth/firebase"
+import { useTermsNCondition } from "@/components/TermsNCondition"
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+// Add overlay image path
+const overlayImage = "/assets/overlay.png";
 // Configure PDF.js on component load
 configurePdfJs()
 
@@ -58,6 +62,8 @@ export function PdfProcessor() {
   const [responseMessage, setResponseMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { open: termsOpen, openModal: openTermsModal, closeModal: closeTermsModal, modal: termsModal } = useTermsNCondition();
+  const [pendingAction, setPendingAction] = useState<null | { type: "download" | "print", card: AadhaarCardData, index: number }>(null);
 
   // Aadhaar card dimensions (in mm) - standard size
   const AADHAAR_DIMENSIONS = {
@@ -75,35 +81,79 @@ export function PdfProcessor() {
   const uid = auth.currentUser?.uid;
   console.log("User ID:", uid); 
 
-  // Add this function near other handlers
+  // Modified handleSubmit to show terms modal before download
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
-    // Confirmation popup
-    if (!window.confirm("Are you sure you want to download this Aadhaar card?")) return;
-    try {
-      const transaction = {
-        uid: uid,
-        cardName: 'Aadhar',
-        amount: 1,
-        type: 'CARD_CREATION',
-        date: new Date().toISOString(),
-        metadata: { page: card.originalPage }
-      };
-      // Call your backend API
-      const response = await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
-      toast({
-        title: "Transaction Success",
-        description: "Transaction and download started.",
-      });
-      // Proceed with download after successful transaction
-      await downloadCombinedPdf(card, index);
-    } catch (err: any) {
-      toast({
-        title: "API Error",
-        description: err?.response?.data?.message || err.message || "Failed to create transaction.",
-        variant: "destructive"
-      });
-    }
+    setPendingAction({ type: "download", card, index });
+    openTermsModal();
   };
+
+  // Modified handlePrint to show terms modal before print
+  const handlePrint = async (card: AadhaarCardData, index: number) => {
+    setPendingAction({ type: "print", card, index });
+    openTermsModal();
+  };
+
+  // Effect to handle the action after agreeing to terms
+  React.useEffect(() => {
+    if (!termsOpen && pendingAction) {
+      // Only proceed if modal was just closed and there is a pending action
+      const { type, card, index } = pendingAction;
+      setPendingAction(null);
+      if (type === "download") {
+        // Original download logic
+        (async () => {
+          try {
+            const transaction = {
+              uid: uid,
+              cardName: 'Aadhar',
+              amount: 1,
+              type: 'CARD_CREATION',
+              date: new Date().toISOString(),
+              metadata: { page: card.originalPage }
+            };
+            const response = await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
+            toast({
+              title: "Transaction Success",
+              description: "Transaction and download started.",
+            });
+            await downloadCombinedPdf(card, index);
+          } catch (err: any) {
+            toast({
+              title: "API Error",
+              description: err?.response?.data?.message || err.message || "Failed to create transaction.",
+              variant: "destructive"
+            });
+          }
+        })();
+      } else if (type === "print") {
+        // Original print logic
+        (async () => {
+          try {
+            // Create canvases from both images
+            const frontCanvas = await dataURLToCanvas(card.frontImage)
+            const backCanvas = await dataURLToCanvas(card.backImage)
+            const pdfBytes = await createCombinedPdf(frontCanvas, backCanvas)
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+            const pdfUrl = URL.createObjectURL(blob)
+            const printWindow = window.open(pdfUrl)
+            if (printWindow) {
+              printWindow.onload = function () {
+                printWindow.focus()
+                printWindow.print()
+              }
+            }
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000)
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: "Failed to generate PDF for print.",
+              variant: "destructive"
+            })
+          }
+        })();
+      }
+    }
+  }, [termsOpen, pendingAction]);
 
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -1052,33 +1102,6 @@ export function PdfProcessor() {
   //   }
   // };
 
-  // Print PDF directly (open in new tab and trigger print)
-  const handlePrint = async (card: AadhaarCardData, index: number) => {
-    if (!window.confirm("Are you sure you want to print this Aadhaar card?")) return;
-    try {
-      // Create canvases from both images
-      const frontCanvas = await dataURLToCanvas(card.frontImage)
-      const backCanvas = await dataURLToCanvas(card.backImage)
-      const pdfBytes = await createCombinedPdf(frontCanvas, backCanvas)
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
-      const pdfUrl = URL.createObjectURL(blob)
-      const printWindow = window.open(pdfUrl)
-      if (printWindow) {
-        printWindow.onload = function () {
-          printWindow.focus()
-          printWindow.print()
-        }
-      }
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF for print.",
-        variant: "destructive"
-      })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -1547,6 +1570,8 @@ export function PdfProcessor() {
           </div>
         </main>
       </div>
+
+      {termsModal}
     </div>
   )
 }

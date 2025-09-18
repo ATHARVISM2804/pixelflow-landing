@@ -27,6 +27,7 @@ import {
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
+import { useTermsNCondition } from "@/components/TermsNCondition"
 import { PDFDocument, rgb } from 'pdf-lib'
 import html2canvas from 'html2canvas'
 import axios from "axios";
@@ -36,6 +37,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
 export function IdCard() {
+  const { toast } = useToast()
+  const { openModal, modal } = useTermsNCondition()
   const [formData, setFormData] = useState({
     template: 'school-blue',
     header: '',
@@ -73,7 +76,6 @@ export function IdCard() {
   })
 
   const cardRef = useRef<HTMLDivElement>(null)
-  const { toast } = useToast()
 
   const handleFileChange = (field: string, file: File | null) => {
     setFiles(prev => ({ ...prev, [field]: file }))
@@ -894,6 +896,13 @@ export function IdCard() {
                       <Download className="h-4 w-4 mr-2" />
                       PDF
                     </Button>
+                    <Button 
+                      onClick={openModal}
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    >
+                      Terms
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -1060,6 +1069,9 @@ export function IdCard() {
           </div>
         </main>
       </div>
+      
+      {/* Terms & Conditions Modal */}
+      {modal}
     </div>
   )
 }

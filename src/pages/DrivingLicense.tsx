@@ -25,8 +25,10 @@ import {
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import { useTermsNCondition } from "@/components/TermsNCondition"
 
 export function DrivingLicense() {
+  const { openModal, modal } = useTermsNCondition()
   const [formData, setFormData] = useState({
     criteria: '',
     licenseNumber: '',
@@ -84,6 +86,14 @@ export function DrivingLicense() {
                 <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white">
                   Submit
                 </Button>
+                
+                <Button 
+                  onClick={openModal}
+                  variant="outline"
+                  className="w-full mt-3 border-gray-600 text-gray-300 hover:bg-gray-800"
+                >
+                  Terms & Conditions
+                </Button>
               </CardContent>
             </Card>
 
@@ -106,6 +116,9 @@ export function DrivingLicense() {
           </div>
         </main>
       </div>
+      
+      {/* Terms & Conditions Modal */}
+      {modal}
     </div>
   )
 }

@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import { useTermsNCondition } from "@/components/TermsNCondition"
 
 export function Aadhar() {
   const [originalImage, setOriginalImage] = useState<string | null>(null)
@@ -32,6 +33,7 @@ export function Aadhar() {
   const [cropMode, setCropMode] = useState<'front' | 'back' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { openModal, modal } = useTermsNCondition()
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -155,6 +157,14 @@ export function Aadhar() {
                   >
                     <Scissors className="h-4 w-4 mr-2" />
                     {isProcessing && cropMode === 'back' ? 'Processing...' : 'Extract Back Card'}
+                  </Button>
+
+                  <Button 
+                    onClick={openModal}
+                    variant="outline"
+                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
+                  >
+                    Terms & Conditions
                   </Button>
                 </div>
 
@@ -305,6 +315,9 @@ export function Aadhar() {
 
       {/* Hidden canvas for image processing */}
       <canvas ref={canvasRef} className="hidden" />
+      
+      {/* Terms & Conditions Modal */}
+      {modal}
     </div>
   )
 }

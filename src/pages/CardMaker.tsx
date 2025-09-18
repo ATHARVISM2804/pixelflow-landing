@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, FileText, Download, ChevronLeft, ChevronRight } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import { useTermsNCondition } from "@/components/TermsNCondition"
 
 const cardTypes = {
   aadhar: { name: "Aadhar Card", icon: "🆔", fields: ["aadharNumber", "name", "dob"] },
@@ -70,6 +71,7 @@ export function CardMaker() {
   const params = useParams<{ cardType?: string; stateCode?: string }>()
   const cardType = params?.cardType || ''
   const stateCode = params?.stateCode || ''
+  const { openModal, modal } = useTermsNCondition()
   
   const [formData, setFormData] = useState({
     password: '',
@@ -214,6 +216,15 @@ export function CardMaker() {
                     disabled={!formData.selectedFile}
                   >
                     Submit
+                  </Button>
+                  
+                  {/* Terms & Conditions Button */}
+                  <Button 
+                    onClick={openModal}
+                    variant="outline"
+                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 mt-3"
+                  >
+                    Terms & Conditions
                   </Button>
                 </CardContent>
               </Card>
@@ -366,6 +377,9 @@ export function CardMaker() {
           </div>
         </main>
       </div>
+      
+      {/* Terms & Conditions Modal */}
+      {modal}
     </div>
   )
 }

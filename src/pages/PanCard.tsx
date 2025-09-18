@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import { useToast } from "@/components/ui/use-toast"
+import { useTermsNCondition } from "@/components/TermsNCondition"
 import * as pdfjsLib from 'pdfjs-dist'
 import axios from "axios"
 import { auth } from "../auth/firebase"
@@ -47,6 +48,7 @@ export function PanCard() {
   const [isPasswordProtected, setIsPasswordProtected] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { openModal, modal } = useTermsNCondition()
 
   const uid = auth.currentUser?.uid;
 
@@ -520,6 +522,14 @@ export function PanCard() {
                         </>
                       )}
                     </Button>
+                    
+                    <Button 
+                      onClick={openModal}
+                      variant="outline"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    >
+                      Terms & Conditions
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -651,6 +661,9 @@ export function PanCard() {
           </div>
         </main>
       </div>
+      
+      {/* Terms & Conditions Modal */}
+      {modal}
     </div>
   )
 }

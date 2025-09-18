@@ -35,6 +35,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 import { auth } from "../auth/firebase"
 import { removeBgFromFile } from "./RemoveBg"
+import { useTermsNCondition } from "@/components/TermsNCondition"
 
 const A4_DIMENSIONS = {
   width: 210, // mm
@@ -63,6 +64,8 @@ export function PassportPhoto() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast();
+  const { open: termsOpen, openModal: openTermsModal, closeModal: closeTermsModal, modal: termsModal } = useTermsNCondition();
+  const [pendingAction, setPendingAction] = useState<null | "download" | "print">(null);
 
   // Helper to process files and remove background
   const processFilesWithBgRemoval = async (files: File[]) => {
@@ -204,45 +207,61 @@ export function PassportPhoto() {
     }
   };
 
+  // Wrap download/print to require terms acceptance
   const handleDownload = async () => {
-    const files = getActiveProcessedFiles();
-    if (!files.length) return;
-    if (!window.confirm("Are you sure you want to download the passport photo PDF?")) return;
-
-    try {
-      const pdf = await generatePDF(files);
-      await handleSubmit(selectedFiles[0], 0);
-      pdf.save(`passport_photos_${formData.name || 'download'}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    }
+    setPendingAction("download");
+    openTermsModal();
   };
 
   const handlePrint = async () => {
-    const files = getActiveProcessedFiles();
-    if (!files.length) return;
-    if (!window.confirm("Are you sure you want to print the passport photo PDF?")) return;
-
-    try {
-      const pdf = await generatePDF(files);
-      await handleSubmit(selectedFiles[0], 0);
-      const pdfUrl = pdf.output('bloburl');
-      const printWindow = window.open(pdfUrl);
-      if (printWindow) {
-        printWindow.onload = function () {
-          printWindow.focus();
-          printWindow.print();
-        };
-      }
-    } catch (error) {
-      console.error('Error during printing process:', error);
-      toast({
-        title: "Print Error",
-        description: "There was an error processing your request.",
-        variant: "destructive"
-      });
-    }
+    setPendingAction("print");
+    openTermsModal();
   };
+
+  // Effect to handle the action after agreeing to terms
+  React.useEffect(() => {
+    if (!termsOpen && pendingAction) {
+      const files = getActiveProcessedFiles();
+      if (!files.length) {
+        setPendingAction(null);
+        return;
+      }
+      if (pendingAction === "download") {
+        (async () => {
+          try {
+            const pdf = await generatePDF(files);
+            await handleSubmit(selectedFiles[0], 0);
+            pdf.save(`passport_photos_${formData.name || 'download'}.pdf`);
+          } catch (error) {
+            console.error('Error generating PDF:', error);
+          }
+        })();
+      } else if (pendingAction === "print") {
+        (async () => {
+          try {
+            const pdf = await generatePDF(files);
+            await handleSubmit(selectedFiles[0], 0);
+            const pdfUrl = pdf.output('bloburl');
+            const printWindow = window.open(pdfUrl);
+            if (printWindow) {
+              printWindow.onload = function () {
+                printWindow.focus();
+                printWindow.print();
+              };
+            }
+          } catch (error) {
+            console.error('Error during printing process:', error);
+            toast({
+              title: "Print Error",
+              description: "There was an error processing your request.",
+              variant: "destructive"
+            });
+          }
+        })();
+      }
+      setPendingAction(null);
+    }
+  }, [termsOpen, pendingAction]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
@@ -367,6 +386,7 @@ export function PassportPhoto() {
                     <p className="text-gray-600 text-sm">Preview will appear here</p>
                   )}
                 </div>
+                {termsModal}
                 <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm" onClick={handleDownload} disabled={getActiveProcessedFiles().length === 0 || processing}>
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />Download
                 </Button>

@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
+import { useTermsNCondition } from "@/components/TermsNCondition";
 
 const Footer = () => {
+  const { openModal, modal } = useTermsNCondition();
+
   return (
     <footer className="bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 text-gray-200">
       <div className="container mx-auto px-4 py-16">
@@ -83,11 +86,20 @@ const Footer = () => {
           </p>
           <div className="mt-4 flex justify-center space-x-6">
             <Link href="/privacy" className="text-sm hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="text-sm hover:text-white">Terms of Service</Link>
+            {/* Replace the Terms & Conditions link with a button */}
+            <button
+              type="button"
+              className="text-sm hover:text-white underline bg-transparent border-none p-0 m-0"
+              onClick={openModal}
+            >
+              Terms & Conditions
+            </button>
             <Link href="/refund" className="text-sm hover:text-white">Refund Policy</Link>
           </div>
         </div>
       </div>
+      {/* Render the modal */}
+      {modal}
     </footer>
   );
 };
