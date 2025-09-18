@@ -771,7 +771,7 @@ export function PdfProcessor() {
     return await pdfDoc.save()
   }
 
-  // Update createCombinedPdf for top positioning of both cards
+  // Update createCombinedPdf to increase the border width
   const createCombinedPdf = async (frontCanvas: HTMLCanvasElement, backCanvas: HTMLCanvasElement): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -782,8 +782,8 @@ export function PdfProcessor() {
     const overlayPng = await pdfDoc.embedPng(overlayBytes)
 
     // Increase quality of PNG conversion
-    const frontPngBytes = frontCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
-    const backPngBytes = backCanvas.toDataURL('image/png', 1.0).split(',')[1] // Added quality parameter
+    const frontPngBytes = frontCanvas.toDataURL('image/png', 1.0).split(',')[1]
+    const backPngBytes = backCanvas.toDataURL('image/png', 1.0).split(',')[1]
 
     // Convert base64 to Uint8Array for both images
     const frontBytes = Uint8Array.from(atob(frontPngBytes), c => c.charCodeAt(0))
@@ -791,9 +791,6 @@ export function PdfProcessor() {
 
     const frontImage = await pdfDoc.embedPng(frontBytes)
     const backImage = await pdfDoc.embedPng(backBytes)
-
-    // Remove this line - don't create an initial page
-    // const page = pdfDoc.addPage([A4_DIMENSIONS.width, A4_DIMENSIONS.height])
 
     const margin = 40
     const spacing = 20
@@ -831,6 +828,15 @@ export function PdfProcessor() {
       for (let row = 0; row < rowsOnThisPage; row++) {
         const y = A4_DIMENSIONS.height - ((row + 1) * cardHeight) - margin - (row * spacing)
 
+        // Draw thicker black border for front card
+        page.drawRectangle({
+          x: startX,
+          y,
+          width: cardWidth,
+          height: cardHeight,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 3, // Increased border width
+        })
         // Draw front card
         page.drawImage(frontImage, {
           x: startX,
@@ -839,15 +845,15 @@ export function PdfProcessor() {
           height: cardHeight,
         })
 
-        // Draw overlay on front card
-        // page.drawImage(overlayPng, {
-        //   x: startX + cardWidth/4, // Position at 1/4 of the card width from left
-        //   y: y + cardHeight/4,     // Position at 1/4 of the card height from top
-        //   width: cardWidth/2,      // Width is half of the card width
-        //   height: cardHeight/2,    // Height is half of the card height
-        //   opacity: 0.8,
-        // })
-
+        // Draw thicker black border for back card
+        page.drawRectangle({
+          x: startX + cardWidth + spacing,
+          y,
+          width: cardWidth,
+          height: cardHeight,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 3, // Increased border width
+        })
         // Draw back card with spacing
         page.drawImage(backImage, {
           x: startX + cardWidth + spacing,
