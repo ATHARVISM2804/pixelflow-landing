@@ -24,14 +24,46 @@ const cardTypes = {
 }
 
 const stateNames = {
-  mh: "Maharashtra", hp: "Himachal Pradesh", pb: "Punjab", gj: "Gujarat", rj: "Rajasthan",
-  up: "Uttar Pradesh", br: "Bihar", wb: "West Bengal", tn: "Tamil Nadu", ka: "Karnataka",
-  kl: "Kerala", ap: "Andhra Pradesh", ts: "Telangana", or: "Odisha", jh: "Jharkhand",
-  as: "Assam", hr: "Haryana", mp: "Madhya Pradesh", cg: "Chhattisgarh", uk: "Uttarakhand",
-  ga: "Goa", mn: "Manipur", ml: "Meghalaya", tr: "Tripura", mz: "Mizoram",
-  nl: "Nagaland", ar: "Arunachal Pradesh", sk: "Sikkim", dl: "Delhi", jk: "Jammu & Kashmir",
-  la: "Ladakh", ch: "Chandigarh", py: "Puducherry", an: "Andaman & Nicobar",
-  dn: "Dadra & Nagar Haveli", dd: "Daman & Diu", ld: "Lakshadweep"
+  // States
+  ap: "Andhra Pradesh",
+  ar: "Arunachal Pradesh", 
+  as: "Assam",
+  br: "Bihar",
+  cg: "Chhattisgarh",
+  ga: "Goa",
+  gj: "Gujarat",
+  hr: "Haryana",
+  hp: "Himachal Pradesh",
+  jh: "Jharkhand",
+  ka: "Karnataka",
+  kl: "Kerala",
+  mp: "Madhya Pradesh",
+  mh: "Maharashtra",
+  mn: "Manipur",
+  ml: "Meghalaya",
+  mz: "Mizoram",
+  nl: "Nagaland",
+  or: "Odisha",
+  pb: "Punjab",
+  rj: "Rajasthan",
+  sk: "Sikkim",
+  tn: "Tamil Nadu",
+  tg: "Telangana",
+  tr: "Tripura",
+  up: "Uttar Pradesh",
+  uk: "Uttarakhand",
+  wb: "West Bengal",
+  
+  // Union Territories
+  an: "Andaman & Nicobar Islands",
+  ch: "Chandigarh",
+  dl: "Delhi",
+  dd: "Daman & Diu",
+  dn: "Dadra & Nagar Haveli",
+  jk: "Jammu & Kashmir",
+  la: "Ladakh",
+  ld: "Lakshadweep",
+  py: "Puducherry"
 }
 
 export function CardMaker() {

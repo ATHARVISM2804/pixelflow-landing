@@ -4,7 +4,13 @@ import ProfileCheckRoute from "@/auth/ProfileCheckRoute";
 // Generate static params for all card types and states
 export async function generateStaticParams() {
   const cardTypes = ['aadhar', 'aapar', 'abc', 'ayushman', 'ration', 'voter', 'driving'];
-  const states = ['mh', 'hp', 'pb', 'gj', 'rj', 'up', 'br', 'wb', 'tn', 'ka', 'kl', 'ap', 'ts', 'or', 'jh', 'as', 'hr', 'mp', 'cg', 'uk'];
+  const states = [
+    // States
+    'ap', 'ar', 'as', 'br', 'cg', 'ga', 'gj', 'hr', 'hp', 'jh', 'ka', 'kl', 'mp', 'mh', 
+    'mn', 'ml', 'mz', 'nl', 'or', 'pb', 'rj', 'sk', 'tn', 'tg', 'tr', 'up', 'uk', 'wb',
+    // Union Territories  
+    'an', 'ch', 'dl', 'dd', 'dn', 'jk', 'la', 'ld', 'py'
+  ];
   
   const params = [];
   for (const cardType of cardTypes) {
