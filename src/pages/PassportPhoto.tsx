@@ -54,6 +54,8 @@ export function PassportPhoto() {
     date: '',
     number: 1,
     pageSize: 'a4-full',
+    changeBackground: 'no',
+    expandImage: 'no',
     backgroundColor: '#ffffff'
   })
   const [isMultiple, setIsMultiple] = useState(false)
@@ -67,21 +69,72 @@ export function PassportPhoto() {
   const { open: termsOpen, openModal: openTermsModal, closeModal: closeTermsModal, modal: termsModal } = useTermsNCondition();
   const [pendingAction, setPendingAction] = useState<null | "download" | "print">(null);
 
-  // Helper to process files and remove background
-  const processFilesWithBgRemoval = async (files: File[]) => {
+  // Re-process files when background settings change
+  const handleFormDataChange = async (newFormData: typeof formData) => {
+    setFormData(newFormData);
+    
+    // Re-process files if any are selected
+    const activeFiles = tab === 'single' ? selectedFiles : multiFiles.filter(Boolean) as File[];
+    if (activeFiles.length > 0) {
+      await processFilesConditionally(activeFiles, newFormData);
+    }
+  };
+
+  // Modified helper to conditionally process files
+  const processFilesConditionally = async (files: File[], currentFormData = formData) => {
     setProcessing(true);
     try {
-      const processed = await Promise.all(
-        files.map(async (file) => {
-          const blob = await removeBgFromFile(file);
-          return { name: file.name, blob };
-        })
-      );
-      setProcessedFiles(processed);
+      if (currentFormData.changeBackground === 'yes') {
+        // Remove background if user selected to change background
+        const processed = await Promise.all(
+          files.map(async (file) => {
+            const bgRemovedBlob = await removeBgFromFile(file);
+
+            // Ensure the output keeps the original image size
+            const originalImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+              const img = new window.Image();
+              img.onload = () => resolve(img);
+              img.onerror = reject;
+              img.src = URL.createObjectURL(file);
+            });
+
+            const resultImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+              const img = new window.Image();
+              img.onload = () => resolve(img);
+              img.onerror = reject;
+              img.src = URL.createObjectURL(bgRemovedBlob);
+            });
+
+            // Draw the background-removed image onto a canvas of the original size
+            const canvas = document.createElement('canvas');
+            canvas.width = originalImg.width;
+            canvas.height = originalImg.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(resultImg, 0, 0, canvas.width, canvas.height);
+            }
+            // Convert canvas back to blob
+            const finalBlob: Blob = await new Promise((resolve) =>
+              canvas.toBlob((b) => resolve(b!), 'image/png')
+            );
+
+            return { name: file.name, blob: finalBlob };
+          })
+        );
+        setProcessedFiles(processed);
+      } else {
+        // Keep original image if user doesn't want to change background
+        const processed = files.map((file) => ({
+          name: file.name,
+          blob: file
+        }));
+        setProcessedFiles(processed);
+      }
     } catch (e) {
       toast({
-        title: "Background Removal Error",
-        description: "Failed to remove background from one or more images.",
+        title: "Processing Error",
+        description: "Failed to process one or more images.",
         variant: "destructive"
       });
       setProcessedFiles([]);
@@ -95,7 +148,7 @@ export function PassportPhoto() {
     const files = Array.from(e.target.files || []);
     setSelectedFiles(files);
     if (files.length > 0) {
-      await processFilesWithBgRemoval(files);
+      await processFilesConditionally(files);
     } else {
       setProcessedFiles([]);
     }
@@ -112,7 +165,7 @@ export function PassportPhoto() {
     // Process all non-null files
     const allFiles = multiFiles.map((f, i) => (i === idx ? files[0] : f)).filter(Boolean) as File[];
     if (allFiles.length > 0) {
-      await processFilesWithBgRemoval(allFiles);
+      await processFilesConditionally(allFiles);
     } else {
       setProcessedFiles([]);
     }
@@ -327,23 +380,71 @@ export function PassportPhoto() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <Label className="text-white text-xs sm:text-sm">Name</Label>
-                      <Input placeholder="Enter name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-sm" />
+                      <Input placeholder="Enter name" value={formData.name} onChange={(e) => handleFormDataChange({...formData, name: e.target.value})} className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500 text-sm" />
                     </div>
                     <div>
                       <Label className="text-white text-xs sm:text-sm">Date</Label>
-                      <Input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="mt-1 bg-gray-800/50 border-gray-700/50 text-white text-sm" />
+                      <Input type="date" value={formData.date} onChange={(e) => handleFormDataChange({...formData, date: e.target.value})} className="mt-1 bg-gray-800/50 border-gray-700/50 text-white text-sm" />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-white text-xs sm:text-sm">Number</Label>
-                    <Input type="number" placeholder="Images range 1 to 30" min="1" max="30" value={formData.number} onChange={(e) => setFormData({...formData, number: parseInt(e.target.value)})} className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
+                    <Label className="text-white text-xs sm:text-sm">Number <span className="text-red-500">*</span></Label>
+                    <Input type="number" placeholder="Images range 1 to 30" min="1" max="30" value={formData.number} onChange={(e) => handleFormDataChange({...formData, number: parseInt(e.target.value)})} className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500" />
                   </div>
                   <div>
-                    <Label className="text-white text-xs sm:text-sm">Page Size</Label>
-                    <Select value={formData.pageSize} onValueChange={(value) => setFormData({...formData, pageSize: value})}>
-                      <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white"><SelectValue placeholder="A4-Full page (30 photos)" /></SelectTrigger>
-                      <SelectContent className="bg-gray-800 text-white border-gray-700"><SelectItem value="a4-full">A4-Full page (30 photos)</SelectItem><SelectItem value="a4-half">A4-Half page (15 photos)</SelectItem></SelectContent>
+                    <Label className="text-white text-xs sm:text-sm">Page Size <span className="text-red-500">*</span></Label>
+                    <Select value={formData.pageSize} onValueChange={(value) => handleFormDataChange({...formData, pageSize: value})}>
+                      <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
+                        <SelectValue placeholder="A4-6x5 page (30 photos)" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 text-white border-gray-700">
+                        <SelectItem value="a4-full">A4-6x5 page (30 photos)</SelectItem>
+                        <SelectItem value="a4-half">A4-Half page (15 photos)</SelectItem>
+                      </SelectContent>
                     </Select>
+                  </div>
+                  <div>
+                    <Label className="text-white text-xs sm:text-sm">Change Background</Label>
+                    <Select value={formData.changeBackground} onValueChange={(value) => handleFormDataChange({...formData, changeBackground: value})}>
+                      <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
+                        <SelectValue placeholder="No" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 text-white border-gray-700">
+                        <SelectItem value="no">No</SelectItem>
+                        <SelectItem value="yes">Yes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-white text-xs sm:text-sm">Expand Image (Recommend No)</Label>
+                    <Select value={formData.expandImage} onValueChange={(value) => handleFormDataChange({...formData, expandImage: value})}>
+                      <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
+                        <SelectValue placeholder="No" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 text-white border-gray-700">
+                        <SelectItem value="no">No</SelectItem>
+                        <SelectItem value="yes">Yes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-white text-xs sm:text-sm">Background Color</Label>
+                    <div className="mt-1 flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.backgroundColor}
+                        onChange={(e) => handleFormDataChange({...formData, backgroundColor: e.target.value})}
+                        className="w-12 h-10 rounded border border-gray-700 bg-gray-800"
+                        disabled={formData.changeBackground === 'no'}
+                      />
+                      <Input
+                        type="text"
+                        value={formData.backgroundColor}
+                        onChange={(e) => handleFormDataChange({...formData, backgroundColor: e.target.value})}
+                        className="flex-1 bg-gray-800/50 border-gray-700/50 text-white"
+                        disabled={formData.changeBackground === 'no'}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -365,14 +466,24 @@ export function PassportPhoto() {
               <CardContent>
                 <div ref={previewRef} className="aspect-[1/1.4] bg-white rounded-lg flex items-center justify-center overflow-hidden p-[10mm]">
                   {processing ? (
-                    <p className="text-gray-600 text-sm">Removing background...</p>
+                    <p className="text-gray-600 text-sm">
+                      {formData.changeBackground === 'yes' ? 'Removing background...' : 'Processing images...'}
+                    </p>
                   ) : getActiveProcessedFiles().length > 0 ? (
                     <div className="grid gap-[2mm] w-full h-full" style={{ gridTemplateColumns: `repeat(auto-fit, ${ORIGINAL_PASSPORT.width}mm)`, gridAutoRows: `${ORIGINAL_PASSPORT.height}mm`, alignContent: 'start' }}>
                       {Array.from({ length: formData.number }).map((_, index) => (
-                        <div key={index} className="bg-white rounded overflow-hidden flex items-center justify-center border border-gray-200 relative" style={{ width: `${ORIGINAL_PASSPORT.width}mm`, height: `${ORIGINAL_PASSPORT.height}mm`, backgroundColor: formData.backgroundColor }}>
+                        <div key={index} className="bg-white rounded overflow-hidden flex items-center justify-center border border-gray-200 relative" style={{ 
+                          width: `${ORIGINAL_PASSPORT.width}mm`, 
+                          height: `${ORIGINAL_PASSPORT.height}mm`, 
+                          backgroundColor: formData.changeBackground === 'yes' ? formData.backgroundColor : 'white'
+                        }}>
                           {getActiveProcessedFiles()[index % getActiveProcessedFiles().length] && (
                             <>
-                              <img src={URL.createObjectURL(getActiveProcessedFiles()[index % getActiveProcessedFiles().length].blob)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                              <img 
+                                src={URL.createObjectURL(getActiveProcessedFiles()[index % getActiveProcessedFiles().length].blob)} 
+                                alt={`Photo ${index + 1}`} 
+                                className={`w-full h-full ${formData.expandImage === 'yes' ? 'object-cover' : 'object-contain'}`}
+                              />
                               <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-20 py-0.5 px-1 flex justify-between items-center">
                                 {formData.name && <span className="text-white text-[5px] truncate max-w-[70%]">{formData.name}</span>}
                                 {formData.name && formData.date && <span className="mx-1" />}
