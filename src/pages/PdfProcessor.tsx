@@ -835,7 +835,7 @@ export function PdfProcessor() {
           width: cardWidth,
           height: cardHeight,
           borderColor: rgb(0, 0, 0),
-          borderWidth: 3, // Increased border width
+          borderWidth: 2, // Increased border width
         })
         // Draw front card
         page.drawImage(frontImage, {
@@ -852,7 +852,7 @@ export function PdfProcessor() {
           width: cardWidth,
           height: cardHeight,
           borderColor: rgb(0, 0, 0),
-          borderWidth: 3, // Increased border width
+          borderWidth: 2, // Increased border width
         })
         // Draw back card with spacing
         page.drawImage(backImage, {
