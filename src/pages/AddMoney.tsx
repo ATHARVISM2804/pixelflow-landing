@@ -42,7 +42,8 @@ export function AddMoney() {
   const [customAmount, setCustomAmount] = useState('')
   const [selectedPlan, setSelectedPlan] = useState('')
   const [testMode, setTestMode] = useState(true) // Enable test mode by default
-  
+  const [gatewayTab, setGatewayTab] = useState<'main' | 'bharatpay'>('main')
+
   const { toast } = useToast()
   const { balance, addToWallet, transactions, refreshWallet, refreshTransactions, isLoading: walletLoading, error: walletError } = useWallet()
 
@@ -142,6 +143,12 @@ export function AddMoney() {
     await initiatePayment(parseInt(amount), selectedPlanDetails)
   }
 
+  // Payment gateway options
+  const paymentGatewayTabs = [
+    { id: 'main', label: 'Paytm / PhonePe / Easebuzz', enabled: true },
+    { id: 'bharatpay', label: 'Bharat Pay', enabled: true } // Now enabled
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
@@ -176,173 +183,203 @@ export function AddMoney() {
                 <p className="text-gray-400 text-sm">Choose an amount and payment method to add money to your wallet</p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Plan Selection */}
-                <div>
-                  <Label className="text-white">Select Plan <span className="text-red-500">*</span></Label>
-                  <Select
-                    value={selectedPlan}
-                    onValueChange={val => {
-                      setSelectedPlan(val)
-                      const plan = planOptions.find(p => p.value === val)
-                      if (plan) {
-                        setAmount(plan.amount.toString())
-                        setCustomAmount('')
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
-                      <SelectValue placeholder="Select Plan" className="text-white" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                      {planOptions.map(plan => (
-                        <SelectItem key={plan.value} value={plan.value} className="text-white">
-                          {plan.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Payment Gateway Tabs */}
+                <div className="flex gap-2 mb-4">
+                  {paymentGatewayTabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors
+                        ${gatewayTab === tab.id
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'}
+                      `}
+                      onClick={() => setGatewayTab(tab.id as 'main' | 'bharatpay')}
+                      type="button"
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Test Mode Toggle */}
-                <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div>
-                    <Label className="text-white font-medium">Test Mode</Label>
-                    <p className="text-blue-300 text-sm">Use dummy APIs for testing (no real payment)</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant={testMode ? "default" : "outline"}
-                    size="sm"
-                    className={`${
-                      testMode 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
-                    }`}
-                    onClick={() => setTestMode(!testMode)}
-                  >
-                    {testMode ? '🧪 Test ON' : '💳 Live Mode'}
-                  </Button>
-                </div>
-
-                {/* Predefined Amounts */}
-                {/* <div>
-                  <Label className="text-white">Select Amount</Label>
-                  <div className="grid grid-cols-3 gap-3 mt-2">
-                    {predefinedAmounts.map((amt) => (
-                      <Button
-                        key={amt}
-                        variant={amount === amt.toString() ? "default" : "outline"}
-                        className={`${
-                          amount === amt.toString() 
-                            ? 'bg-indigo-500 text-white' 
-                            : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
-                        }`}
-                        onClick={() => handleAmountSelect(amt)}
-                      >
-                        ₹{amt}
-                      </Button>
-                    ))}
-                  </div>
-                </div> */}
-
-                {/* Custom Amount */}
-                {/* <div>
-                  <Label className="text-white">Or Enter Custom Amount</Label>
-                  <Input
-                    type="number"
-                    placeholder="Enter amount (Min: ₹10)"
-                    value={customAmount}
-                    onChange={(e) => handleCustomAmountChange(e.target.value)}
-                    className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
-                  />
-                </div> */}
-
-                {/* Payment Methods */}
-                <div>
-                  <Label className="text-white">Payment Method</Label>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                    {paymentMethods.map((method) => (
-                      <Button
-                        key={method.id}
-                        variant={paymentMethod === method.id ? "default" : "outline"}
-                        className={`${
-                          paymentMethod === method.id 
-                            ? 'bg-indigo-500 text-white' 
-                            : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
-                        } flex items-center gap-2 justify-start`}
-                        onClick={() => setPaymentMethod(method.id)}
-                      >
-                        <span>{method.icon}</span>
-                        {method.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Summary */}
-                {amount && paymentMethod && (
-                  <div className="bg-gray-800/30 rounded-lg p-4 space-y-2">
-                    {testMode && (
-                      <div className="flex justify-between text-blue-300 mb-2">
-                        <span className="flex items-center gap-1">
-                          🧪 Test Mode:
-                        </span>
-                        <span className="text-sm">No real payment will be charged</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-white">
-                      <span>Amount:</span>
-                      <span>₹{amount}</span>
-                    </div>
-                    <div className="flex justify-between text-white">
-                      <span>Payment Method:</span>
-                      <span>{paymentMethods.find(m => m.id === paymentMethod)?.name}</span>
-                    </div>
-                    <div className="flex justify-between text-white">
-                      <span>Transaction Fee:</span>
-                      <span>₹0</span>
-                    </div>
-                    <hr className="border-gray-600" />
-                    <div className="flex justify-between text-white font-semibold">
-                      <span>Total Amount:</span>
-                      <span>₹{amount}</span>
-                    </div>
+                {/* Show disabled message for Bharat Pay */}
+                {gatewayTab === 'bharatpay' && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 text-yellow-300 text-center font-semibold">
+                    This feature is disabled for now.
                   </div>
                 )}
 
-                <Button 
-                  className={`w-full ${testMode 
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700' 
-                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'
-                  } text-white`}
-                  disabled={(!amount && !selectedPlan) || !paymentMethod || isLoading}
-                  onClick={handlePayment}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {testMode ? 'Simulating Payment...' : 'Processing Payment...'}
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      {testMode ? '🧪 Test Payment' : 'Proceed to Payment'}
-                    </>
-                  )}
-                </Button>
+                {/* Main payment form only if main tab is selected */}
+                {gatewayTab === 'main' && (
+                  <>
+                    {/* Plan Selection */}
+                    <div>
+                      <Label className="text-white">Select Plan <span className="text-red-500">*</span></Label>
+                      <Select
+                        value={selectedPlan}
+                        onValueChange={val => {
+                          setSelectedPlan(val)
+                          const plan = planOptions.find(p => p.value === val)
+                          if (plan) {
+                            setAmount(plan.amount.toString())
+                            setCustomAmount('')
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="mt-1 bg-gray-800/50 border-gray-700/50 text-white">
+                          <SelectValue placeholder="Select Plan" className="text-white" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                          {planOptions.map(plan => (
+                            <SelectItem key={plan.value} value={plan.value} className="text-white">
+                              {plan.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {error && (
-                  <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                    <p className="text-red-400 text-sm">{error}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearError}
-                      className="mt-1 text-red-400 hover:text-red-300"
+                    {/* Test Mode Toggle */}
+                    <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <div>
+                        <Label className="text-white font-medium">Test Mode</Label>
+                        <p className="text-blue-300 text-sm">Use dummy APIs for testing (no real payment)</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant={testMode ? "default" : "outline"}
+                        size="sm"
+                        className={`${
+                          testMode 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
+                        }`}
+                        onClick={() => setTestMode(!testMode)}
+                      >
+                        {testMode ? '🧪 Test ON' : '💳 Live Mode'}
+                      </Button>
+                    </div>
+
+                    {/* Predefined Amounts */}
+                    {/* <div>
+                      <Label className="text-white">Select Amount</Label>
+                      <div className="grid grid-cols-3 gap-3 mt-2">
+                        {predefinedAmounts.map((amt) => (
+                          <Button
+                            key={amt}
+                            variant={amount === amt.toString() ? "default" : "outline"}
+                            className={`${
+                              amount === amt.toString() 
+                                ? 'bg-indigo-500 text-white' 
+                                : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
+                            }`}
+                            onClick={() => handleAmountSelect(amt)}
+                          >
+                            ₹{amt}
+                          </Button>
+                        ))}
+                      </div>
+                    </div> */}
+
+                    {/* Custom Amount */}
+                    {/* <div>
+                      <Label className="text-white">Or Enter Custom Amount</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount (Min: ₹10)"
+                        value={customAmount}
+                        onChange={(e) => handleCustomAmountChange(e.target.value)}
+                        className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-500"
+                      />
+                    </div> */}
+
+                    {/* Payment Methods */}
+                    <div>
+                      <Label className="text-white">Payment Method</Label>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        {paymentMethods.map((method) => (
+                          <Button
+                            key={method.id}
+                            variant={paymentMethod === method.id ? "default" : "outline"}
+                            className={`${
+                              paymentMethod === method.id 
+                                ? 'bg-indigo-500 text-white' 
+                                : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
+                            } flex items-center gap-2 justify-start`}
+                            onClick={() => setPaymentMethod(method.id)}
+                          >
+                            <span>{method.icon}</span>
+                            {method.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    {amount && paymentMethod && (
+                      <div className="bg-gray-800/30 rounded-lg p-4 space-y-2">
+                        {testMode && (
+                          <div className="flex justify-between text-blue-300 mb-2">
+                            <span className="flex items-center gap-1">
+                              🧪 Test Mode:
+                            </span>
+                            <span className="text-sm">No real payment will be charged</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-white">
+                          <span>Amount:</span>
+                          <span>₹{amount}</span>
+                        </div>
+                        <div className="flex justify-between text-white">
+                          <span>Payment Method:</span>
+                          <span>{paymentMethods.find(m => m.id === paymentMethod)?.name}</span>
+                        </div>
+                        <div className="flex justify-between text-white">
+                          <span>Transaction Fee:</span>
+                          <span>₹0</span>
+                        </div>
+                        <hr className="border-gray-600" />
+                        <div className="flex justify-between text-white font-semibold">
+                          <span>Total Amount:</span>
+                          <span>₹{amount}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button 
+                      className={`w-full ${testMode 
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700' 
+                        : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'
+                      } text-white`}
+                      disabled={(!amount && !selectedPlan) || !paymentMethod || isLoading}
+                      onClick={handlePayment}
                     >
-                      Dismiss
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {testMode ? 'Simulating Payment...' : 'Processing Payment...'}
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          {testMode ? '🧪 Test Payment' : 'Proceed to Payment'}
+                        </>
+                      )}
                     </Button>
-                  </div>
+
+                    {error && (
+                      <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <p className="text-red-400 text-sm">{error}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearError}
+                          className="mt-1 text-red-400 hover:text-red-300"
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -432,4 +469,5 @@ export function AddMoney() {
 }
 
 export default AddMoney
+
 
