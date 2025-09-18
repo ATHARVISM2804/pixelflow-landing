@@ -26,6 +26,11 @@ import * as pdfjsLib from 'pdfjs-dist'
 import axios from "axios"
 import { auth } from "../auth/firebase"
 
+// Configure PDF.js worker
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+}
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface ApaarCardData {
@@ -128,9 +133,12 @@ export function Apaar() {
     }
 
     setIsProcessing(true)
+    console.log('Starting PDF processing...')
 
     try {
       const arrayBuffer = await selectedPdf.arrayBuffer()
+      console.log(`PDF file size: ${arrayBuffer.byteLength} bytes`)
+      
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
         password: password || undefined
@@ -139,13 +147,15 @@ export function Apaar() {
       let pdf
       try {
         pdf = await loadingTask.promise
+        console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`)
         setIsPasswordProtected(password ? true : false)
         setNeedsPassword(false)
         toast({
           title: "PDF loaded successfully",
-          description: "Extracting APAAR card region from all pages...",
+          description: `Processing ${pdf.numPages} pages for APAAR cards...`,
         })
       } catch (error: any) {
+        console.error('PDF loading error:', error)
         if (error.name === 'PasswordException') {
           setIsPasswordProtected(true)
           setNeedsPassword(true)
@@ -163,35 +173,50 @@ export function Apaar() {
       const extractedCards: ApaarCardData[] = []
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum)
-        const pageImage = await renderPageToCanvas(page)
+        console.log(`Processing page ${pageNum}...`)
+        try {
+          const page = await pdf.getPage(pageNum)
+          const pageImage = await renderPageToCanvas(page)
 
-        // Only extract front card from every page
-        const front = await extractApaarFrontFromFullPage(pageImage)
+          // Only extract front card from every page
+          const front = await extractApaarFrontFromFullPage(pageImage)
 
-        extractedCards.push({
-          image: front,
-          originalPage: pageNum
-        })
+          extractedCards.push({
+            image: front,
+            originalPage: pageNum
+          })
+          
+          console.log(`Successfully extracted card from page ${pageNum}`)
+        } catch (error) {
+          console.error(`Error processing page ${pageNum}:`, error)
+          toast({
+            title: "Warning",
+            description: `Failed to process page ${pageNum}. Continuing with other pages.`,
+            variant: "destructive"
+          })
+        }
       }
+
+      console.log(`Total extracted cards: ${extractedCards.length}`)
 
       if (extractedCards.length === 0) {
         toast({
           title: "No APAAR cards found",
-          description: "No card regions extracted from the PDF.",
+          description: "No card regions could be extracted from the PDF. Check if the PDF contains APAAR cards in the expected format.",
           variant: "destructive"
         })
       } else {
         setApaarCards(extractedCards)
         toast({
           title: "APAAR cards extracted successfully",
-          description: `Extracted ${extractedCards.length} card images from the PDF.`,
+          description: `Extracted ${extractedCards.length} card images from ${pdf.numPages} pages.`,
         })
       }
     } catch (error: any) {
+      console.error('PDF processing error:', error)
       toast({
         title: "Processing failed",
-        description: "An error occurred while processing the PDF.",
+        description: `Error: ${error.message || 'An error occurred while processing the PDF.'}`,
         variant: "destructive"
       })
     } finally {
