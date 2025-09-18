@@ -64,7 +64,7 @@ export function Dashboard() {
     balance: 0,
     cards: 0,
     transactionCount: 0,
-    payments: 0
+    // payments: 0
   });
 
   const { user } = useAuth();
@@ -89,7 +89,7 @@ export function Dashboard() {
       balance: totalDebits,
       cards: cardTransactions.length,
       transactionCount: transactions.length,
-      payments: rechargeTransactions.length
+      // payments: rechargeTransactions.length
     };
   }
 
@@ -168,12 +168,6 @@ export function Dashboard() {
     value: stats.transactionCount.toString(),
     icon: Activity,
     color: 'from-blue-500 to-cyan-600'
-  },
-  {
-    label: 'Payments',
-    value: stats.payments.toString(),
-    icon: TrendingUp,
-    color: 'from-pink-500 to-rose-600'
   }];
 
   const totalPages = Math.ceil(transactions.length / pageSize);
@@ -324,7 +318,62 @@ export function Dashboard() {
           </Card>
           */}
 
-          {/* Wallet Transactions */}
+        
+
+          {/* Transaction History */}
+          <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                Transaction History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-gray-800/50 hover:bg-gray-800/20">
+                      {/* <TableHead className="text-slate-300 text-xs sm:text-sm">Ref ID</TableHead> */}
+                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden sm:table-cell">Name</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm">Description</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Credit</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Debit</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm">Amount</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden lg:table-cell">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  {renderTransactionHistory()}
+                </Table>
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 text-xs sm:text-sm text-slate-400 gap-2">
+                  <span>
+                    Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, transactions.length)} of {transactions.length} entries
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs"
+                      onClick={handlePrev}
+                      disabled={page === 1}
+                    >
+                      ← Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs"
+                      onClick={handleNext}
+                      disabled={page === totalPages || transactions.length === 0}
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+            {/* Wallet Transactions */}
           <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
             <CardHeader className="pb-2 sm:pb-4">
               <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
@@ -398,61 +447,8 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Transaction History */}
-          <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-            <CardHeader className="pb-2 sm:pb-4">
-              <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
-                <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
-                Transaction History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-gray-800/50 hover:bg-gray-800/20">
-                      {/* <TableHead className="text-slate-300 text-xs sm:text-sm">Ref ID</TableHead> */}
-                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden sm:table-cell">Name</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm">Description</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Credit</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden md:table-cell">Debit</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm">Amount</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm hidden lg:table-cell">Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  {renderTransactionHistory()}
-                </Table>
-                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 text-xs sm:text-sm text-slate-400 gap-2">
-                  <span>
-                    Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, transactions.length)} of {transactions.length} entries
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs"
-                      onClick={handlePrev}
-                      disabled={page === 1}
-                    >
-                      ← Prev
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs"
-                      onClick={handleNext}
-                      disabled={page === totalPages || transactions.length === 0}
-                    >
-                      Next →
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Payment History */}
-          <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+          {/* <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
             <CardHeader className="pb-2 sm:pb-4">
               <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
@@ -496,7 +492,7 @@ export function Dashboard() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </main>
       </div>
     </div>
