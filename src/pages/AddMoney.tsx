@@ -26,16 +26,72 @@ import {
   Wallet,
   Plus,
   History,
-  CheckCircle
+  CheckCircle,
+  Loader2,
+  XCircle
 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
+import { useRazorpay } from "@/hooks/useRazorpay"
+import { useToast } from "@/hooks/use-toast"
+import { useWallet } from "@/context/WalletContext"
 
 export function AddMoney() {
   const [amount, setAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
   const [customAmount, setCustomAmount] = useState('')
   const [selectedPlan, setSelectedPlan] = useState('')
+  
+  const { toast } = useToast()
+  const { balance, addToWallet, addTransaction, transactions } = useWallet()
+
+  const { initiatePayment, isLoading, error, clearError } = useRazorpay({
+    onSuccess: (paymentData) => {
+      const paymentAmount = paymentData?.amount || parseInt(amount)
+      
+      // Add money to wallet
+      addToWallet(paymentAmount)
+      
+      // Add transaction record
+      addTransaction({
+        amount: paymentAmount,
+        type: 'credit',
+        description: `Wallet recharge - ${planOptions.find(p => p.value === selectedPlan)?.label || 'Custom amount'}`,
+        date: new Date().toISOString(),
+        status: 'success',
+        paymentId: paymentData?.paymentId,
+        orderId: paymentData?.orderId
+      })
+      
+      toast({
+        title: "Payment Successful!",
+        description: `₹${paymentAmount} has been added to your wallet.`,
+        variant: "default",
+      })
+      
+      // Reset form
+      setSelectedPlan('')
+      setAmount('')
+      setPaymentMethod('')
+      setCustomAmount('')
+    },
+    onFailure: (error) => {
+      // Add failed transaction record
+      addTransaction({
+        amount: parseInt(amount) || 0,
+        type: 'credit',
+        description: `Failed wallet recharge - ${planOptions.find(p => p.value === selectedPlan)?.label || 'Custom amount'}`,
+        date: new Date().toISOString(),
+        status: 'failed'
+      })
+      
+      toast({
+        title: "Payment Failed",
+        description: "There was an issue processing your payment. Please try again.",
+        variant: "destructive",
+      })
+    }
+  })
 
   const predefinedAmounts = [50, 100, 200, 500, 1000, 2000]
 
@@ -57,11 +113,7 @@ export function AddMoney() {
     { id: 'wallet', name: 'Digital Wallet', icon: '💰' }
   ]
 
-  const recentTransactions = [
-    { id: 1, amount: 500, method: 'UPI', date: '2024-01-15', status: 'Success' },
-    { id: 2, amount: 200, method: 'Card', date: '2024-01-14', status: 'Success' },
-    { id: 3, amount: 1000, method: 'Net Banking', date: '2024-01-13', status: 'Success' }
-  ]
+  const recentTransactions = transactions.slice(0, 5) // Show only last 5 transactions
 
   const handleAmountSelect = (selectedAmount: number) => {
     setAmount(selectedAmount.toString())
@@ -71,6 +123,21 @@ export function AddMoney() {
   const handleCustomAmountChange = (value: string) => {
     setCustomAmount(value)
     setAmount(value)
+  }
+
+  const handlePayment = async () => {
+    if (!amount || !selectedPlan || !paymentMethod) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a plan and payment method.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const selectedPlanDetails = planOptions.find(p => p.value === selectedPlan)
+    
+    await initiatePayment(parseInt(amount), selectedPlanDetails)
   }
 
   return (
@@ -88,7 +155,7 @@ export function AddMoney() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-indigo-100 text-sm mb-1">Current Balance</p>
-                    <p className="text-3xl font-bold">₹0.00</p>
+                    <p className="text-3xl font-bold">₹{balance.toFixed(2)}</p>
                   </div>
                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                     <Wallet className="h-6 w-6" />
@@ -214,11 +281,35 @@ export function AddMoney() {
 
                 <Button 
                   className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
-                  disabled={(!amount && !selectedPlan) || !paymentMethod}
+                  disabled={(!amount && !selectedPlan) || !paymentMethod || isLoading}
+                  onClick={handlePayment}
                 >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Proceed to Payment
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing Payment...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Proceed to Payment
+                    </>
+                  )}
                 </Button>
+
+                {error && (
+                  <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <p className="text-red-400 text-sm">{error}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearError}
+                      className="mt-1 text-red-400 hover:text-red-300"
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -235,17 +326,45 @@ export function AddMoney() {
                   {recentTransactions.map((transaction) => (
                     <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                          <Plus className="h-5 w-5 text-green-400" />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          transaction.type === 'credit' 
+                            ? 'bg-green-500/20' 
+                            : 'bg-red-500/20'
+                        }`}>
+                          {transaction.type === 'credit' ? (
+                            <Plus className="h-5 w-5 text-green-400" />
+                          ) : (
+                            <CreditCard className="h-5 w-5 text-red-400" />
+                          )}
                         </div>
                         <div>
-                          <p className="text-white font-medium">₹{transaction.amount}</p>
-                          <p className="text-gray-400 text-sm">{transaction.method} • {transaction.date}</p>
+                          <p className="text-white font-medium">
+                            {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {transaction.description} • {new Date(transaction.date).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-400" />
-                        <span className="text-green-400 text-sm">{transaction.status}</span>
+                        {transaction.status === 'success' && (
+                          <>
+                            <CheckCircle className="h-4 w-4 text-green-400" />
+                            <span className="text-green-400 text-sm capitalize">{transaction.status}</span>
+                          </>
+                        )}
+                        {transaction.status === 'failed' && (
+                          <>
+                            <XCircle className="h-4 w-4 text-red-400" />
+                            <span className="text-red-400 text-sm capitalize">{transaction.status}</span>
+                          </>
+                        )}
+                        {transaction.status === 'pending' && (
+                          <>
+                            <Loader2 className="h-4 w-4 text-yellow-400 animate-spin" />
+                            <span className="text-yellow-400 text-sm capitalize">{transaction.status}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
