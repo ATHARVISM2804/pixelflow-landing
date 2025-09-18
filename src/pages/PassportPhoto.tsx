@@ -319,6 +319,7 @@ export function PassportPhoto() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+      {termsModal}
       <Sidebar />
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
         <DashboardHeader title="Passport Size Photo" icon={CreditCard} />
@@ -498,7 +499,6 @@ export function PassportPhoto() {
                     <p className="text-gray-600 text-sm">Preview will appear here</p>
                   )}
                 </div>
-                {termsModal}
                 <Button className="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm" onClick={handleDownload} disabled={getActiveProcessedFiles().length === 0 || processing}>
                   <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />Download
                 </Button>
