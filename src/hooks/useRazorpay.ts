@@ -1,5 +1,11 @@
 import { useState, useCallback } from 'react';
-import { createRazorpayOrder, verifyRazorpayPayment } from '@/services/paymentApi';
+import { 
+  createRazorpayOrder, 
+  verifyRazorpayPayment,
+  createDummyOrder,
+  verifyDummyPayment,
+  testRazorpayConfig
+} from '@/services/paymentApi';
 
 declare global {
   interface Window {
@@ -10,9 +16,10 @@ declare global {
 interface UseRazorpayOptions {
   onSuccess?: (paymentData: any) => void;
   onFailure?: (error: any) => void;
+  testMode?: boolean; // Add test mode option
 }
 
-export const useRazorpay = ({ onSuccess, onFailure }: UseRazorpayOptions = {}) => {
+export const useRazorpay = ({ onSuccess, onFailure, testMode = false }: UseRazorpayOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,12 +38,71 @@ export const useRazorpay = ({ onSuccess, onFailure }: UseRazorpayOptions = {}) =
     });
   }, []);
 
+  const handleTestPayment = useCallback(async (amount: number, planDetails?: any) => {
+    try {
+      console.log('🧪 TEST MODE: Simulating Razorpay payment flow');
+      
+      // Test Razorpay configuration first
+      const configTest = await testRazorpayConfig();
+      console.log('Config test result:', configTest);
+
+      // Create dummy order
+      const orderResponse = await createDummyOrder({
+        amount,
+        currency: 'INR',
+        receipt: `test_receipt_${Date.now()}`
+      });
+
+      if (!orderResponse.success || !orderResponse.order) {
+        throw new Error(orderResponse.message || 'Failed to create dummy order');
+      }
+
+      const { order } = orderResponse;
+
+      // Simulate payment processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Generate dummy payment data
+      const dummyPaymentData = {
+        razorpay_order_id: order.id,
+        razorpay_payment_id: `dummy_pay_${Date.now()}`,
+        razorpay_signature: `dummy_signature_${Date.now()}`
+      };
+
+      // Verify dummy payment
+      const verificationResponse = await verifyDummyPayment({
+        ...dummyPaymentData,
+        amount: amount,
+      });
+
+      if (verificationResponse.success) {
+        console.log('🎉 TEST MODE: Payment simulation successful');
+        onSuccess?.({
+          ...verificationResponse.payment,
+          amount: amount,
+          orderId: order.id,
+          paymentId: dummyPaymentData.razorpay_payment_id
+        });
+      } else {
+        throw new Error(verificationResponse.message || 'Dummy payment verification failed');
+      }
+    } catch (error) {
+      console.error('Test payment error:', error);
+      throw error;
+    }
+  }, [onSuccess]);
+
   const initiatePayment = useCallback(async (amount: number, planDetails?: any) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Load Razorpay script
+      // If in test mode, handle dummy payment flow
+      if (testMode) {
+        return await handleTestPayment(amount, planDetails);
+      }
+
+      // Load Razorpay script for real payments
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         throw new Error('Failed to load Razorpay script');
@@ -114,7 +180,7 @@ export const useRazorpay = ({ onSuccess, onFailure }: UseRazorpayOptions = {}) =
     } finally {
       setIsLoading(false);
     }
-  }, [loadRazorpayScript, onSuccess, onFailure]);
+  }, [loadRazorpayScript, handleTestPayment, testMode, onSuccess, onFailure]);
 
   return {
     initiatePayment,

@@ -41,50 +41,52 @@ export function AddMoney() {
   const [paymentMethod, setPaymentMethod] = useState('')
   const [customAmount, setCustomAmount] = useState('')
   const [selectedPlan, setSelectedPlan] = useState('')
+  const [testMode, setTestMode] = useState(true) // Enable test mode by default
   
   const { toast } = useToast()
-  const { balance, addToWallet, addTransaction, transactions } = useWallet()
+  const { balance, addToWallet, transactions, refreshWallet, refreshTransactions, isLoading: walletLoading, error: walletError } = useWallet()
 
   const { initiatePayment, isLoading, error, clearError } = useRazorpay({
-    onSuccess: (paymentData) => {
+    testMode, // Pass test mode to hook
+    onSuccess: async (paymentData) => {
       const paymentAmount = paymentData?.amount || parseInt(amount)
       
-      // Add money to wallet
-      addToWallet(paymentAmount)
-      
-      // Add transaction record
-      addTransaction({
-        amount: paymentAmount,
-        type: 'credit',
-        description: `Wallet recharge - ${planOptions.find(p => p.value === selectedPlan)?.label || 'Custom amount'}`,
-        date: new Date().toISOString(),
-        status: 'success',
+      // Add money to wallet using backend API
+      const success = await addToWallet(paymentAmount, {
+        description: `${testMode ? '🧪 Test ' : ''}Wallet recharge - ${planOptions.find(p => p.value === selectedPlan)?.label || 'Custom amount'}`,
+        paymentGateway: testMode ? 'dummy' : 'razorpay',
+        orderId: paymentData?.orderId,
         paymentId: paymentData?.paymentId,
-        orderId: paymentData?.orderId
+        signature: paymentData?.signature,
+        planDetails: planOptions.find(p => p.value === selectedPlan)
       })
       
-      toast({
-        title: "Payment Successful!",
-        description: `₹${paymentAmount} has been added to your wallet.`,
-        variant: "default",
-      })
-      
-      // Reset form
-      setSelectedPlan('')
-      setAmount('')
-      setPaymentMethod('')
-      setCustomAmount('')
+      if (success) {
+        toast({
+          title: testMode ? "Test Payment Successful! 🧪" : "Payment Successful!",
+          description: testMode 
+            ? `₹${paymentAmount} has been added to your wallet (Test Mode - No real charge)`
+            : `₹${paymentAmount} has been added to your wallet.`,
+          variant: "default",
+        })
+        
+        // Reset form
+        setSelectedPlan('')
+        setAmount('')
+        setPaymentMethod('')
+        setCustomAmount('')
+        
+        // Refresh transactions to show the latest
+        await refreshTransactions()
+      } else {
+        toast({
+          title: "Wallet Update Failed",
+          description: "Payment was successful but failed to update wallet. Please contact support.",
+          variant: "destructive",
+        })
+      }
     },
-    onFailure: (error) => {
-      // Add failed transaction record
-      addTransaction({
-        amount: parseInt(amount) || 0,
-        type: 'credit',
-        description: `Failed wallet recharge - ${planOptions.find(p => p.value === selectedPlan)?.label || 'Custom amount'}`,
-        date: new Date().toISOString(),
-        status: 'failed'
-      })
-      
+    onFailure: async (error) => {
       toast({
         title: "Payment Failed",
         description: "There was an issue processing your payment. Please try again.",
@@ -201,6 +203,27 @@ export function AddMoney() {
                   </Select>
                 </div>
 
+                {/* Test Mode Toggle */}
+                <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div>
+                    <Label className="text-white font-medium">Test Mode</Label>
+                    <p className="text-blue-300 text-sm">Use dummy APIs for testing (no real payment)</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={testMode ? "default" : "outline"}
+                    size="sm"
+                    className={`${
+                      testMode 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50'
+                    }`}
+                    onClick={() => setTestMode(!testMode)}
+                  >
+                    {testMode ? '🧪 Test ON' : '💳 Live Mode'}
+                  </Button>
+                </div>
+
                 {/* Predefined Amounts */}
                 {/* <div>
                   <Label className="text-white">Select Amount</Label>
@@ -259,6 +282,14 @@ export function AddMoney() {
                 {/* Summary */}
                 {amount && paymentMethod && (
                   <div className="bg-gray-800/30 rounded-lg p-4 space-y-2">
+                    {testMode && (
+                      <div className="flex justify-between text-blue-300 mb-2">
+                        <span className="flex items-center gap-1">
+                          🧪 Test Mode:
+                        </span>
+                        <span className="text-sm">No real payment will be charged</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-white">
                       <span>Amount:</span>
                       <span>₹{amount}</span>
@@ -280,19 +311,22 @@ export function AddMoney() {
                 )}
 
                 <Button 
-                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
+                  className={`w-full ${testMode 
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700' 
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'
+                  } text-white`}
                   disabled={(!amount && !selectedPlan) || !paymentMethod || isLoading}
                   onClick={handlePayment}
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing Payment...
+                      {testMode ? 'Simulating Payment...' : 'Processing Payment...'}
                     </>
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" />
-                      Proceed to Payment
+                      {testMode ? '🧪 Test Payment' : 'Proceed to Payment'}
                     </>
                   )}
                 </Button>
@@ -319,7 +353,13 @@ export function AddMoney() {
                 <CardTitle className="text-white flex items-center gap-2">
                   <History className="h-5 w-5 text-indigo-400" />
                   Recent Transactions
+                  {walletLoading && (
+                    <Loader2 className="h-4 w-4 ml-auto animate-spin text-indigo-400" />
+                  )}
                 </CardTitle>
+                {walletError && (
+                  <p className="text-red-400 text-sm">{walletError}</p>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -344,6 +384,11 @@ export function AddMoney() {
                           <p className="text-gray-400 text-sm">
                             {transaction.description} • {new Date(transaction.date).toLocaleDateString()}
                           </p>
+                          {transaction.originalType && transaction.originalType !== transaction.type && (
+                            <p className="text-gray-500 text-xs">
+                              Type: {transaction.originalType}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

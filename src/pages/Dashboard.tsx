@@ -35,6 +35,7 @@ import axios from "axios";
 import { auth } from "../auth/firebase.ts";
 import { useAuth } from '../auth/AuthContext';
 import { fetchCardPrices } from '../services/cardPrice';
+import { useWallet } from '@/context/WalletContext';
 
 // import { User } from 'firebase/auth'
 
@@ -72,6 +73,9 @@ export function Dashboard() {
   const [page, setPage] = useState(1);
   const pageSize = 5;
   const [prices, setPrices] = useState<Record<string, number>>({});
+  
+  // Wallet integration
+  const { balance: walletBalance, transactions: walletTransactions, refreshWallet, refreshTransactions } = useWallet();
 
   // Remove the stats calculation useEffect and instead use a function to calculate stats
   function calculateStats(transactions: Transaction[]) {
@@ -142,6 +146,12 @@ export function Dashboard() {
 
   // Update the stats array in the render
   const statsData = [{
+    label: 'Wallet Balance',
+    value: `₹${walletBalance.toFixed(2)}`,
+    icon: DollarSign,
+    color: 'from-green-500 to-green-600'
+  },
+  {
     label: 'Total Spent',
     value: `₹${stats.balance}`,
     icon: DollarSign,
@@ -313,6 +323,80 @@ export function Dashboard() {
             </CardContent>
           </Card>
           */}
+
+          {/* Wallet Transactions */}
+          <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+                Recent Wallet Transactions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {walletTransactions.slice(0, 5).map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                        transaction.type === 'credit' 
+                          ? 'bg-green-500/20' 
+                          : 'bg-red-500/20'
+                      }`}>
+                        {transaction.type === 'credit' ? (
+                          <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
+                        ) : (
+                          <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm sm:text-base">
+                          {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount}
+                        </p>
+                        <p className="text-gray-400 text-xs sm:text-sm">
+                          {transaction.description}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {transaction.status === 'success' && (
+                        <span className="text-green-400 text-xs sm:text-sm font-medium">Success</span>
+                      )}
+                      {transaction.status === 'failed' && (
+                        <span className="text-red-400 text-xs sm:text-sm font-medium">Failed</span>
+                      )}
+                      {transaction.status === 'pending' && (
+                        <span className="text-yellow-400 text-xs sm:text-sm font-medium">Pending</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                {walletTransactions.length === 0 && (
+                  <div className="text-center py-8">
+                    <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+                    <p className="text-gray-400">No wallet transactions yet</p>
+                    <p className="text-gray-500 text-sm">Your wallet transaction history will appear here</p>
+                  </div>
+                )}
+                
+                {walletTransactions.length > 5 && (
+                  <div className="text-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                      onClick={() => {/* Navigate to AddMoney page */}}
+                    >
+                      View All Transactions
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Transaction History */}
           <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
