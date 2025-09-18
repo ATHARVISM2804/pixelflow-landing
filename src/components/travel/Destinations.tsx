@@ -59,25 +59,37 @@ const Destinations = () => {
 				breakpoint: 1024,
 				settings: {
 					slidesToShow: 2,
+					slidesToScroll: 1,
 				},
 			},
 			{
 				breakpoint: 768,
 				settings: {
 					slidesToShow: 1,
+					slidesToScroll: 1,
+					dots: true,
+				},
+			},
+			{
+				breakpoint: 480,
+				settings: {
+					slidesToShow: 1,
+					slidesToScroll: 1,
+					dots: false,
+					arrows: false,
 				},
 			},
 		],
 	};
 
 	return (
-		<section className="py-20 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
-			<div className="container mx-auto px-4">
-				<div className="text-center mb-16">
-					<h2 className="text-4xl font-bold text-white mb-4">
+		<section className="py-10 sm:py-16 lg:py-20 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
+			<div className="container mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="text-center mb-8 sm:mb-12 lg:mb-16">
+					<h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 leading-tight">
 						All Your ID Cards in One Place — Fast, Easy, Professional.
 					</h2>
-					<p className="text-lg text-gray-300 max-w-2xl mx-auto">
+					<p className="text-sm sm:text-base lg:text-lg text-gray-300 max-w-xs sm:max-w-lg lg:max-w-2xl mx-auto px-2 sm:px-0">
 						Generate Aadhaar, PAN, Voter, Ayushman, and other government-style
 						cards in just a few clicks.
 					</p>
@@ -85,9 +97,9 @@ const Destinations = () => {
 
 				<Slider {...sliderSettings}>
 					{destinations.map((destination) => (
-						<div key={destination.id} className="px-3 group">
-							<Card className="rounded-2xl overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-[100%] min-h-[400px] flex flex-col justify-between bg-gray-900">
-								<div className="relative h-48 overflow-hidden rounded-t-2xl">
+						<div key={destination.id} className="px-2 sm:px-3 group">
+							<Card className="rounded-xl sm:rounded-2xl overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full min-h-[350px] sm:min-h-[400px] flex flex-col justify-between bg-gray-900 mx-1 sm:mx-0">
+								<div className="relative h-40 sm:h-48 overflow-hidden rounded-t-xl sm:rounded-t-2xl">
 									<Image
 										src={destination.image}
 										alt={destination.title}
@@ -97,11 +109,11 @@ const Destinations = () => {
 									/>
 								</div>
 
-								<div className="p-6 space-y-4 flex flex-col justify-between flex-grow">
-									<h3 className="text-xl font-semibold text-indigo-200 capitalize">
+								<div className="p-4 sm:p-6 space-y-3 sm:space-y-4 flex flex-col justify-between flex-grow">
+									<h3 className="text-lg sm:text-xl font-semibold text-indigo-200 capitalize leading-tight">
 										{destination.title}
 									</h3>
-									<p className="text-gray-400 text-sm">
+									<p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
 										{destination.description}
 									</p>
 								</div>
