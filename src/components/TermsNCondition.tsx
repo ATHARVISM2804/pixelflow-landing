@@ -26,7 +26,15 @@ Users understand and agree that their personal data may be collected and process
 By continuing to use our service, you agree to these terms and conditions, including but not limited to: Terms and Conditions, Privacy Policy, and Refund Policy.
 `;
 
-export function TermsNConditionModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function TermsNConditionModal({
+  open,
+  onClose,
+  onCancel,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCancel?: () => void;
+}) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -62,7 +70,10 @@ export function TermsNConditionModal({ open, onClose }: { open: boolean; onClose
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               className="flex-1 bg-gray-700/50 text-gray-300 py-3 px-4 rounded-lg hover:bg-gray-600/50 transition-colors border border-gray-700/50"
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                if (onCancel) onCancel();
+              }}
             >
               Cancel
             </button>
@@ -85,9 +96,16 @@ export function TermsNConditionModal({ open, onClose }: { open: boolean; onClose
 // Custom hook for easy usage
 export function useTermsNCondition() {
   const [open, setOpen] = useState(false);
-  const openModal = useCallback(() => setOpen(true), []);
+  const [onCancel, setOnCancel] = useState<(() => void) | undefined>(undefined);
+
+  const openModal = useCallback((cancelHandler?: () => void) => {
+    setOnCancel(() => cancelHandler);
+    setOpen(true);
+  }, []);
   const closeModal = useCallback(() => setOpen(false), []);
-  const modal = <TermsNConditionModal open={open} onClose={closeModal} />;
+  const modal = (
+    <TermsNConditionModal open={open} onClose={closeModal} onCancel={onCancel} />
+  );
   return { open, openModal, closeModal, modal };
 }
 
