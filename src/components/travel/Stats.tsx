@@ -10,10 +10,10 @@ const Stats = () => {
             <div className="relative w-[350px] h-[350px] rounded-full bg-indigo-900 flex items-center justify-center">
               {/* Overflowing Image */}
               <img
-                src="https://res.cloudinary.com/dmhabztbf/image/upload/v1753871472/ladki-removebg-preview_gb5bqp.png"
+                src="./assets/home2.png"
                 alt="Traveler"
                 className="absolute w-[600px] h-[400px] object-cover z-10"
-                style={{ bottom: '40px', left: '20px' }}
+                style={{ bottom: '0', left: '0' }}
               />
 
               {/* Floating Stat Card */}
