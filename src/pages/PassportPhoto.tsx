@@ -191,6 +191,7 @@ export function PassportPhoto() {
         amount: formData.number,
         type: 'CARD_CREATION',
         date: new Date().toISOString(),
+        description: `Generated ${formData.number} passport size photo(s)${formData.name ? ` for ${formData.name}` : ''}`,
         metadata: { fileName: file.name }
       };
       await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);

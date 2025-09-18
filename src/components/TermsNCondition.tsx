@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { X } from "lucide-react";
 
 const termsText = `
 1. Ownership Confirmation
@@ -28,25 +29,54 @@ By continuing to use our service, you agree to these terms and conditions, inclu
 export function TermsNConditionModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white max-w-lg w-full rounded-lg shadow-lg p-6 relative">
-        <h2 className="text-xl font-bold mb-4">User Agreement</h2>
-        <div className="overflow-y-auto max-h-[60vh] whitespace-pre-line text-gray-800 text-sm mb-6">
-          {termsText}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="bg-gray-900/90 backdrop-blur-xl border border-gray-800/50 max-w-2xl w-full rounded-xl shadow-2xl relative max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-800/50">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            User Agreement & Terms
+          </h2>
+          <button
+            className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <button
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          ×
-        </button>
-        <button
-          className="mt-2 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-          onClick={onClose}
-        >
-          I Agree
-        </button>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-4 text-gray-300 text-sm leading-relaxed">
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+              <p className="text-blue-300 font-medium">
+                Please read and understand these terms before using our services.
+              </p>
+            </div>
+            <div className="whitespace-pre-line">{termsText}</div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-800/50 bg-gray-900/50">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              className="flex-1 bg-gray-700/50 text-gray-300 py-3 px-4 rounded-lg hover:bg-gray-600/50 transition-colors border border-gray-700/50"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg font-medium"
+              onClick={onClose}
+            >
+              I Agree & Continue
+            </button>
+          </div>
+          <p className="text-gray-500 text-xs text-center mt-3">
+            By clicking "I Agree & Continue", you accept our terms and conditions.
+          </p>
+        </div>
       </div>
     </div>
   );
