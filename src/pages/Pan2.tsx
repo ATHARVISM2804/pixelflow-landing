@@ -39,7 +39,7 @@ interface PanCardData {
   originalPage: number
 }
 
-export function PanCard() {
+export function Pan2() {
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [panCards, setPanCards] = useState<PanCardData[]>([])
@@ -140,15 +140,15 @@ export function PanCard() {
     // cardHeight: height of the card region (from cutY to bottom)
 
     // Example: To move the cut higher/lower, change 0.875 to a different value (e.g., 0.85 or 0.90)
-    const cutY = (Math.round(canvas.height * 0.78))+8; // 78% down the image
-    const cutX = (Math.round(canvas.width * 0.07)); 
-    const cutXBack = (Math.round(canvas.width * 0.53)); 
+    const cutY = (Math.round(canvas.height * 0.78))+6; // 78% down the image
+    const cutX = (Math.round(canvas.width * 0.1161)); 
+    const cutXBack = (Math.round(canvas.width * 0.52)); 
 
     // Example: To make each card wider/narrower, change the division (e.g., /2 for half, /2.2 for less)
-    const cardWidth = Math.round(canvas.width / 2.5);
+    const cardWidth = Math.round(canvas.width / 2.57);
 
     // cardHeight is the region below cutY
-    const cardHeight = canvas.height - cutY - 120;
+    const cardHeight = canvas.height - cutY - 178;
 
     // Front card (left side)
     const frontCanvas = document.createElement('canvas');
@@ -401,34 +401,6 @@ export function PanCard() {
         description: "Failed to create combined PDF.",
         variant: "destructive"
       })
-    }
-  }
-
-  const handleSubmit = async (card: PanCardData, index: number) => {
-    // Confirmation popup
-    if (!window.confirm("Are you sure you want to download this PAN card?")) return;
-    try {
-      const transaction = {
-        uid: uid,
-        cardName: 'PanCard',
-        amount: 2,
-        type: 'CARD_CREATION',
-        description: `PAN Card creation for page ${card.originalPage}`, // <-- Add description
-        date: new Date().toISOString(),
-        metadata: { page: card.originalPage }
-      };
-      await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
-      toast({
-        title: "Transaction Success",
-        description: "Transaction and download started.",
-      });
-      downloadImage(card.image, `pan_${index + 1}.png`)
-    } catch (err: any) {
-      toast({
-        title: "API Error",
-        description: err?.response?.data?.message || err.message || "Failed to create transaction.",
-        variant: "destructive"
-      });
     }
   }
 
@@ -832,4 +804,4 @@ export function PanCard() {
   )
 }
 
-export default PanCard;
+export default Pan2;
