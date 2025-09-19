@@ -1,12 +1,7 @@
 'use client'
 
-import ProfileCheckRoute from "@/auth/ProfileCheckRoute";
-import Apaar from "@/pages/Apaar";
+import CardTextExtractor from "@/pages/TextExtraction";
 
-export default function ApaarPage() {
-  return (
-    <ProfileCheckRoute>
-      <Apaar />
-    </ProfileCheckRoute>
-  );
+export default function PanCardPage() {
+  return <CardTextExtractor />;
 }
