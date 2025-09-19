@@ -26,22 +26,12 @@ import Link from "next/link"
 export function RefundPolicy() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
-      <Sidebar />
 
       {/* Main Content */}
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
-        <DashboardHeader title="Refund & Cancellation Policy" icon={Shield} showNewServiceButton={false} />
 
         <main className="flex-1 p-3 sm:p-6 space-y-4 sm:space-y-6">
-          {/* Back Navigation */}
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/dashboard">
-              <Button variant="outline" className="bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-700/50">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
+         
 
           {/* Header Card */}
           <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
@@ -346,8 +336,8 @@ export function RefundPolicy() {
           {/* Contact CTA */}
           <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-blue-500/30">
             <CardContent className="p-6 text-center">
-              <h3 className="text-xl font-bold text-white mb-2">Need Help?</h3>
-              <p className="text-gray-300 mb-4">
+              <h3 className="text-xl font-bold text-black mb-2">Need Help?</h3>
+              <p className="text-black mb-4">
                 If you have any questions about our refund and cancellation policy, we're here to help.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
