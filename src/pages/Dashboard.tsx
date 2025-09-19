@@ -436,7 +436,7 @@ export function Dashboard() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                      className="border border-blue-600 bg-blue-900/60 text-white transition-colors"
                       onClick={() => {/* Navigate to AddMoney page */}}
                     >
                       View All Transactions
