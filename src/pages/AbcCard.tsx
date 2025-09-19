@@ -32,6 +32,7 @@ import * as pdfjsLib from 'pdfjs-dist'
 import axios from "axios"
 import { auth } from "../auth/firebase"
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import dynamic from "next/dynamic"
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface AbcCardData {
@@ -55,6 +56,7 @@ function AbcCard() {
   const [copies, setCopies] = useState(1)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [rawLines, setRawLines] = useState<string[]>([])
+  const [a4PdfUrl, setA4PdfUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null)
   const frontRef = useRef<HTMLDivElement>(null)
   const backRef = useRef<HTMLDivElement>(null)
@@ -395,6 +397,25 @@ function AbcCard() {
     return await pdfDoc.save();
   };
 
+  // Generate and set A4 PDF preview URL
+  const generateA4PdfPreview = async (card: AbcCardData) => {
+    if (!card.photoUrl) return;
+    const pdfBytes = await createCombinedPdf(card.photoUrl);
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    setA4PdfUrl(url);
+  };
+
+  // When abcCards is updated, generate A4 preview
+  useEffect(() => {
+    if (abcCards.length > 0 && abcCards[0].photoUrl) {
+      generateA4PdfPreview(abcCards[0]);
+    } else {
+      setA4PdfUrl(null);
+    }
+    // eslint-disable-next-line
+  }, [abcCards]);
+
   // Modified download function to show terms modal
   const handleDownloadAction = async (card: AbcCardData, index: number) => {
     setPendingAction({ type: "download", card, index });
@@ -567,264 +588,173 @@ function AbcCard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
       <Sidebar />
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
-        <DashboardHeader title="ABC Card Extractor" icon={CreditCard} showNewServiceButton={false} />
+        <DashboardHeader title="Make ABC Card (Cards)" icon={CreditCard} showNewServiceButton={false} />
         <main className="flex-1 p-3 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
-            {/* Upload Section */}
-            <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                  <Upload className="h-5 w-5 text-blue-500" />
-                  Upload ABC PDF
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center">
-                  {selectedPdf ? (
-                    <div className="space-y-3">
-                      <FileText className="h-16 w-16 mx-auto text-blue-500" />
-                      <p className="text-white font-medium">{selectedPdf.name}</p>
-                      <p className="text-gray-400 text-sm">
-                        Size: {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={triggerFileUpload}
-                        className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
-                      >
-                        Choose Different File
-                      </Button>
+            {/* Notice */}
+            <div className="w-full flex justify-center">
+              <div className="bg-green-900/90 text-green-200 font-semibold rounded-lg px-8 py-4 mb-4 text-center max-w-2xl">
+                <span className="text-lg font-bold">Notice</span>
+                <br />
+                We only support original ABC PDF files. Please do not upload any other file.
+              </div>
+            </div>
+            {/* Main two-column layout */}
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Left: Upload/Form */}
+              <div className="flex-1 min-w-[320px]">
+                <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                      <Upload className="h-5 w-5 text-blue-500" />
+                      Make ABC Card (Cards)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center">
+                      {selectedPdf ? (
+                        <div className="space-y-3">
+                          <FileText className="h-16 w-16 mx-auto text-blue-500" />
+                          <p className="text-white font-medium">{selectedPdf.name}</p>
+                          <p className="text-gray-400 text-sm">
+                            Size: {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                          <Button
+                            variant="outline"
+                            onClick={triggerFileUpload}
+                            className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
+                          >
+                            Choose Different File
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Upload className="h-16 w-16 mx-auto text-gray-500" />
+                          <div>
+                            <p className="text-white font-medium">
+                              Select ABC Card <span className="text-red-400">*</span>
+                            </p>
+                            <p className="text-gray-400 text-sm">Supports PDF files up to 50MB</p>
+                          </div>
+                          <Button onClick={triggerFileUpload} className="bg-indigo-500 text-white hover:bg-indigo-600">
+                            Choose PDF File
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <Upload className="h-16 w-16 mx-auto text-gray-500" />
-                      <div>
-                        <p className="text-white font-medium">
-                          Drop your ABC PDF here or click to browse
-                        </p>
-                        <p className="text-gray-400 text-sm">Supports PDF files up to 50MB</p>
-                      </div>
-                      <Button onClick={triggerFileUpload} className="bg-indigo-500 text-white hover:bg-indigo-600">
-                        Choose PDF File
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={handlePdfUpload}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Processing Section */}
-            {selectedPdf && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 mb-6">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-green-500" />
-                    Extract ABC Card
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button
-                    onClick={processPdf}
-                    disabled={isProcessing}
-                    className="bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Extracting Card...
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Extract ABC Card
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Results Section */}
-            {abcCards.length > 0 && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-purple-500" />
-                    Extracted ABC Card
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {abcCards.map((card, index) => (
-                    <div key={index} className="bg-gray-800/30 rounded-lg p-6 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-white">
-                          ABC Card (Page {card.originalPage})
-                        </h3>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="hidden"
+                      onChange={handlePdfUpload}
+                    />
+                    {selectedPdf && (
+                      <div className="pt-4 flex flex-col gap-2">
                         <Button
-                          onClick={() => previewCard(index)}
-                          variant="outline"
-                          className="bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-600/50"
+                          onClick={processPdf}
+                          disabled={isProcessing}
+                          className="bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Extracting Card...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Submit
+                            </>
+                          )}
                         </Button>
                       </div>
-
-                      {/* Single Card Display */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-5 w-5 text-red-500" />
-                          <h4 className="font-medium text-white">ABC Card with Red Overlays</h4>
-                        </div>
-                        <div className="bg-gray-700/30 rounded-lg p-4 space-y-3">
-                          <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden">
-                            <img
-                              src={card.photoUrl}
-                              alt="ABC Card with Overlays"
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => downloadImage(card.photoUrl || "", `abc_card_${index + 1}.png`)}
-                              className="flex-1 bg-red-500 text-white hover:bg-red-600"
-                              size="sm"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              PNG
-                            </Button>
-                            <Button
-                              onClick={() => handleDownloadAction(card, index)}
-                              className="flex-1 bg-red-600 text-white hover:bg-red-700"
-                              size="sm"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              PDF
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Download Section */}
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-red-300 mb-1">Download ABC Card</h4>
-                            <p className="text-red-200 text-sm">Download ABC card with red overlays</p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleDownload(card, index)}
-                            className="flex-1 bg-red-500 text-white hover:bg-red-600"
-                            size="sm"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download PDF
-                          </Button>
-                          <Button
-                            onClick={() => handlePrintAction(card, index)}
-                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                            size="sm"
-                          >
-                            <Printer className="h-4 w-4 mr-2" />
-                            Print Card
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Print Info */}
-                      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
-                        <p className="text-indigo-300 text-sm">
-                          <strong>ABC Card:</strong> Original card with red Academic Bank of Credits overlays
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Preview Modal */}
-            {selectedCardIndex !== null && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              {/* Right: Card Preview */}
+              <div className="flex-1 min-w-[320px]">
+                <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+                  <CardHeader>
                     <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                      <ZoomIn className="h-5 w-5 text-yellow-500" />
-                      Card Preview - ABC {selectedCardIndex + 1}
+                      Front and Back
                     </CardTitle>
-                    <Button
-                      onClick={() => setSelectedCardIndex(null)}
-                      variant="outline"
-                      size="sm"
-                      className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
-                    >
-                      Close
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-white text-center">ABC Card with Red Overlays</h4>
-                      <div className="bg-gray-800 rounded-lg p-4 relative">
-                        <img
-                          src={abcCards[selectedCardIndex].photoUrl || ""}
-                          alt="ABC Card Preview"
-                          className="w-full h-auto rounded-lg"
-                        />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center mb-4">
+                        {abcCards.length > 0 && abcCards[0].photoUrl ? (
+                          <img
+                            src={abcCards[0].photoUrl}
+                            alt="ABC Card Preview"
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="text-gray-500 text-center w-full">Card preview will appear here</div>
+                        )}
                       </div>
+                      <Button
+                        onClick={() => {
+                          if (abcCards.length > 0 && abcCards[0].photoUrl) {
+                            downloadImage(abcCards[0].photoUrl, "abc_card.png");
+                          }
+                        }}
+                        className="bg-indigo-500 text-white hover:bg-indigo-600"
+                        disabled={!(abcCards.length > 0 && abcCards[0].photoUrl)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Debug extracted text */}
-            {rawLines.length > 0 && (
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            {/* A4 PDF Preview */}
+            <div>
               <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 mt-6">
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold text-white">Extracted Text (Debug)</CardTitle>
+                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                    A4 size PDF.
+                  </CardTitle>
+                  <div className="text-gray-400 text-xs mt-1">
+                    This is A4 size page. This page might not work for PVC card.
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="w-full max-h-[200px] overflow-y-scroll border rounded-md p-2 bg-gray-900 text-xs font-mono text-white">
-                    {rawLines.map((line, i) => (
-                      <div key={i}>
-                        {i + 1}. {line}
-                      </div>
-                    ))}
+                  <div className="w-full bg-black rounded-lg overflow-hidden border border-gray-800">
+                    {a4PdfUrl ? (
+                      <iframe
+                        src={a4PdfUrl}
+                        title="A4 PDF Preview"
+                        className="w-full min-h-[400px] rounded-lg"
+                      />
+                    ) : (
+                      <div className="text-gray-500 text-center py-16">A4 PDF preview will appear here</div>
+                    )}
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={() => {
+                        if (a4PdfUrl) {
+                          const link = document.createElement('a');
+                          link.href = a4PdfUrl;
+                          link.download = "abc_card_a4.pdf";
+                          link.click();
+                        }
+                      }}
+                      className="bg-indigo-500 text-white hover:bg-indigo-600"
+                      disabled={!a4PdfUrl}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-            )}
-
-            {/* Development: Extraction Coordinates Input */}
-            {/* <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-base font-bold">🛠️ Dev: Extract Card Region (Custom Coordinates)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-4 items-center">
-                  <Label>X: <Input type="number" value={devPhotoX} onChange={e => setDevPhotoX(Number(e.target.value))} className="w-20" /></Label>
-                  <Label>Y: <Input type="number" value={devPhotoY} onChange={e => setDevPhotoY(Number(e.target.value))} className="w-20" /></Label>
-                  <Label>W: <Input type="number" value={devPhotoW} onChange={e => setDevPhotoW(Number(e.target.value))} className="w-20" /></Label>
-                  <Label>H: <Input type="number" value={devPhotoH} onChange={e => setDevPhotoH(Number(e.target.value))} className="w-20" /></Label>
-                  <Button className="ml-4" onClick={extractDevCardRegion} disabled={isProcessing || !selectedPdf}>
-                    Extract Card Region + Apply ABC Overlays
-                  </Button>
-                </div>
-                <p className="text-gray-400 text-xs mt-2">Current coordinates: X=198, Y=57, W=565, H=189. Extract the APAAR card region and apply ABC red overlays.</p>
-              </CardContent>
-            </Card> */}
+            </div>
+            {/* ...existing debug/dev sections if needed... */}
           </div>
         </main>
         {modal}
@@ -834,3 +764,4 @@ function AbcCard() {
 }
 
 export default AbcCard;
+                     
