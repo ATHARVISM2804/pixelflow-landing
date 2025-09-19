@@ -64,6 +64,8 @@ export function PdfProcessor() {
   const { toast } = useToast()
   const { open: termsOpen, openModal: openTermsModal, closeModal: closeTermsModal, modal: termsModal } = useTermsNCondition();
   const [pendingAction, setPendingAction] = useState<null | { type: "download" | "print", card: AadhaarCardData, index: number }>(null);
+  const [previewSide, setPreviewSide] = useState<'front' | 'back'>('front');
+  const [a4PdfUrl, setA4PdfUrl] = useState<string | null>(null);
 
   // Aadhaar card dimensions (in mm) - standard size
   const AADHAAR_DIMENSIONS = {
@@ -1044,545 +1046,228 @@ export function PdfProcessor() {
     })
   }
 
-  // Add this component before the download buttons
-  const CopySelector = () => (
-    <div className="bg-gray-700/30 rounded-lg p-4 mb-4">
-      <Label htmlFor="copies" className="text-white mb-2">Number of Copies per Page</Label>
-      <div className="flex items-center gap-2">
-        <Input
-          id="copies"
-          type="number"
-          min="1"
-          max="4"
-          value={copies}
-          onChange={(e) => setCopies(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))}
-          className="w-20 bg-gray-800/50 border-gray-700 text-white"
-        />
-        <span className="text-purple-200 text-sm">(Max 4 per page)</span>
-      </div>
-    </div>
-  )
+  // Fix phone number input: use a real input field
+  // ...existing code...
 
-  // Add after the copies selector component
-  const PhoneNumberInput = () => (
-    <div className="bg-gray-700/30 rounded-lg p-4 mb-4">
-      <Label htmlFor="phone" className="text-white mb-2">Phone Number (Optional)</Label>
-      <div className="flex items-center gap-2">
-        <Input
-          id="phone"
-          type="tel"
-          pattern="[0-9]*"
-          maxLength={10}
-          placeholder="Enter phone number"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-          className="w-40 bg-gray-800/50 border-gray-700 text-white"
-        />
-        <span className="text-purple-200 text-sm">(Will be printed on front card)</span>
-      </div>
-    </div>
-  )
+  // Generate and preview the A4 PDF when aadhaarCards or phoneNumber/copies changes
+  React.useEffect(() => {
+    const generateA4PdfPreview = async () => {
+      if (aadhaarCards.length === 0) {
+        setA4PdfUrl(null);
+        return;
+      }
+      const card = aadhaarCards[0];
+      const frontCanvas = await dataURLToCanvas(card.frontImage);
+      const backCanvas = await dataURLToCanvas(card.backImage);
+      const pdfBytes = await createCombinedPdf(frontCanvas, backCanvas);
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setA4PdfUrl(url);
+      // Clean up old URLs
+      return () => URL.revokeObjectURL(url);
+    };
+    generateA4PdfPreview();
+    // eslint-disable-next-line
+  }, [aadhaarCards, phoneNumber, copies]);
 
-  // Add uid state
-  // const uid = "user123"; // Replace with actual user auth ID
-
-  // Add this function to handle transaction creation
-  // const createCardTransaction = async (cardIndex: number) => {
-  //   try {
-  //     await cardApi.createAadhaarCard({
-  //       uid,
-  //       cardName: `Aadhaar_Card_${cardIndex + 1}`,
-  //       metadata: { page: aadhaarCards[cardIndex].originalPage }
-  //     });
-
-  //     toast({
-  //       title: "Transaction created",
-  //       description: "Successfully charged for Aadhaar card creation",
-  //     });
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Transaction failed",
-  //       description: error.message,
-  //       variant: "destructive"
-  //     });
-  //   }
-  // };
+  // Download the A4 PDF (combined) directly
+  const downloadA4Pdf = async () => {
+    if (aadhaarCards.length === 0) return;
+    const card = aadhaarCards[0];
+    const frontCanvas = await dataURLToCanvas(card.frontImage);
+    const backCanvas = await dataURLToCanvas(card.backImage);
+    const pdfBytes = await createCombinedPdf(frontCanvas, backCanvas);
+    await downloadPdf(pdfBytes, `aadhaar_combined_a4.pdf`);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900">
+    <div className="min-h-screen bg-[#181A20]">
       <Sidebar />
-
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
-        <DashboardHeader title="Aadhaar Card Extractor" icon={CreditCard} showNewServiceButton={false} />
+        {/* Header */}
+        <DashboardHeader title="Make Aadhaar (Cards)" icon={CreditCard} showNewServiceButton={false} />
 
         <main className="flex-1 p-3 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
-            {/* Upload Section */}
-            <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                  <Upload className="h-5 w-5 text-blue-500" />
-                  Upload Aadhaar PDF
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center">
-                  {selectedPdf ? (
-                    <div className="space-y-3">
-                      <FileText className="h-16 w-16 mx-auto text-blue-500" />
-                      <p className="text-white font-medium">{selectedPdf.name}</p>
-                      <p className="text-gray-400 text-sm">
-                        Size: {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={triggerFileUpload}
-                        className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
-                      >
-                        Choose Different File
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <Upload className="h-16 w-16 mx-auto text-gray-500" />
-                      <div>
-                        <p className="text-white font-medium">Drop your Aadhaar PDF here or click to browse</p>
-                        <p className="text-gray-400 text-sm">Supports PDF files with Aadhaar cards up to 50MB</p>
-                      </div>
-                      <Button
-                        onClick={triggerFileUpload}
-                        className="bg-indigo-500 text-white hover:bg-indigo-600"
-                      >
-                        Choose PDF File
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={handlePdfUpload}
-                />
-              </CardContent>
-            </Card>
+            {/* Notice Bar */}
+            <div className="w-full flex justify-center mb-6">
+              <div className="bg-green-900/90 text-green-200 px-8 py-4 rounded-xl font-semibold text-lg shadow border border-green-700 max-w-2xl w-full text-center">
+                Notice<br />
+                <span className="text-green-300 text-base font-normal">
+                  We only support original aadhaar PDF files downloaded from UIDAI with valid signature.
+                </span>
+              </div>
+            </div>
 
-            {/* Processing Section */}
-            {selectedPdf && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-green-500" />
-                    Extract Aadhaar Cards
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Password Input Section - Always show when PDF is selected */}
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-5 w-5 text-blue-500" />
-                      <h4 className="font-medium text-blue-300">PDF Password (if required)</h4>
-                    </div>
-                    <p className="text-blue-200 text-sm">
-                      If your PDF is password-protected, enter the password below. Leave empty if no password is required.
-                    </p>
-                    <div className="space-y-3">
-                      <Label htmlFor="pdf-password" className="text-white font-medium">
-                        PDF Password (Optional)
-                      </Label>
+            {/* Main Card Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left: Form */}
+              <div className="bg-[#23242A] rounded-xl p-6 shadow border border-gray-800/60 flex flex-col justify-between min-h-[370px]">
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4">Make Aadhaar (Cards)</h2>
+                  <div className="space-y-4">
+                    {/* Password */}
+                    <div>
+                      <Label htmlFor="pdf-password" className="text-white font-medium">Password</Label>
                       <Input
                         id="pdf-password"
                         type="password"
-                        placeholder="Enter PDF password if required"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            processPdf()
-                          }
-                        }}
+                        className="bg-[#23242A] border-gray-700 text-white placeholder:text-gray-500 mt-1"
                       />
-                      <p className="text-gray-400 text-xs">
-                        Common Aadhaar PDF passwords: Date of birth (DDMMYYYY), Name (first 4 letters + YYYY)
-                      </p>
-                      <div className="flex gap-2">
+                    </div>
+                    {/* File Upload */}
+                    <div>
+                      <Label className="text-white font-medium">Select Aadhaar</Label>
+                      <div className="flex gap-2 mt-1">
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={tryCommonPasswords}
-                          disabled={isProcessing}
-                          className="bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
+                          onClick={triggerFileUpload}
+                          className="bg-[#23242A] border border-gray-700 text-gray-300 hover:bg-gray-700/50"
                         >
-                          {isProcessing ? (
-                            <>
-                              <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                              Trying...
-                            </>
-                          ) : (
-                            <>
-                              <Key className="h-3 w-3 mr-2" />
-                              Try Common Passwords
-                            </>
-                          )}
+                          Choose File
                         </Button>
-                        {password && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPassword('')}
-                            className="bg-gray-500/20 text-gray-300 border-gray-500/30 hover:bg-gray-500/30"
-                          >
-                            Clear
-                          </Button>
-                        )}
+                        <span className="text-gray-400 text-sm truncate max-w-[120px]">
+                          {selectedPdf ? selectedPdf.name : "No file chosen"}
+                        </span>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".pdf,application/pdf"
+                          className="hidden"
+                          onChange={handlePdfUpload}
+                        />
                       </div>
+                    </div>
+                    {/* Phone Number */}
+                    <div>
+                      <Label htmlFor="phone" className="text-white font-medium">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        pattern="[0-9]*"
+                        maxLength={10}
+                        placeholder="Enter phone number (optional)"
+                        value={phoneNumber}
+                        onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                        className="bg-[#23242A] border-gray-700 text-white placeholder:text-gray-500 mt-1"
+                      />
+                      <span className="text-gray-400 text-xs">Will be printed on front card (optional)</span>
+                    </div>
+                    {/* Copies */}
+                    <div>
+                      <Label htmlFor="copies" className="text-white font-medium">Number of Copies</Label>
+                      <Input
+                        id="copies"
+                        type="number"
+                        min={1}
+                        max={4}
+                        value={copies}
+                        onChange={e => setCopies(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))}
+                        className="bg-[#23242A] border-gray-700 text-white placeholder:text-gray-500 mt-1 w-24"
+                      />
+                      <span className="text-gray-400 text-xs">Max 4 per page</span>
                     </div>
                   </div>
+                </div>
+                <Button
+                  onClick={processPdf}
+                  disabled={isProcessing}
+                  className="w-full mt-6 bg-[#A78BFA] text-white hover:bg-[#8B5CF6] font-bold text-lg py-2"
+                >
+                  Submit
+                </Button>
+              </div>
 
-                  {/* Error message for wrong password */}
-                  {needsPassword && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-5 w-5 text-red-500" />
-                        <h4 className="font-medium text-red-300">Password Required</h4>
+              {/* Right: Preview */}
+              <div className="bg-[#23242A] rounded-xl p-6 shadow border border-gray-800/60 flex flex-col min-h-[370px]">
+                <h2 className="text-xl font-bold text-white mb-4">Front and Back</h2>
+                <p className="text-gray-400 text-sm mb-2">Please click on the card to slide the Images.</p>
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <div className="bg-[#F3F4F6] rounded-lg w-full max-w-xs aspect-[85.6/53.98] flex items-center justify-center cursor-pointer"
+                    onClick={() => setPreviewSide(previewSide === 'front' ? 'back' : 'front')}
+                  >
+                    {aadhaarCards.length > 0 ? (
+                      <img
+                        src={previewSide === 'front' ? aadhaarCards[0].frontImage : aadhaarCards[0].backImage}
+                        alt={previewSide === 'front' ? "Front" : "Back"}
+                        className="object-contain w-full h-full"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full h-full">
+                        <span className="text-gray-400">No preview</span>
                       </div>
-                      <p className="text-red-200 text-sm mt-2">
-                        This PDF is password-protected. Please enter the correct password above and try again.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                      onClick={processPdf}
-                      disabled={isProcessing}
-                      className="bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Extracting Cards...
-                        </>
-                      ) : (
-                        <>
-                          <Scissors className="h-4 w-4 mr-2" />
-                          Extract Aadhaar Cards
-                        </>
-                      )}
-                    </Button>
-
-                    {isPasswordProtected && (
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setPassword('')
-                          setNeedsPassword(false)
-                        }}
-                        className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
-                      >
-                        Reset Password
-                      </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Results Section */}
-            {aadhaarCards.length > 0 && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-purple-500" />
-                    Extracted Aadhaar Cards ({aadhaarCards.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {aadhaarCards.map((card, index) => (
-                    <div key={index} className="bg-gray-800/30 rounded-lg p-6 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-white">
-                          Aadhaar Card {index + 1} (Page {card.originalPage})
-                        </h3>
-                        <Button
-                          onClick={() => previewCard(index)}
-                          variant="outline"
-                          className="bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-600/50"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Front Card */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-5 w-5 text-blue-500" />
-                            <h4 className="font-medium text-white">Front Side</h4>
-                          </div>
-                          <div className="bg-gray-700/30 rounded-lg p-4 space-y-3">
-                            <div className="aspect-[85.6/53.98] bg-gray-800 rounded-lg overflow-hidden">
-                              <img
-                                src={card.frontImage}
-                                alt="Aadhaar Front"
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => downloadImage(card.frontImage, `aadhaar_${index + 1}_front.png`)}
-                                className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
-                                size="sm"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                PNG
-                              </Button>
-                              <Button
-                                onClick={() => downloadFrontPdf(card, index)}
-                                className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-                                size="sm"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                PDF
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Back Card */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <RotateCcw className="h-5 w-5 text-green-500" />
-                            <h4 className="font-medium text-white">Back Side</h4>
-                          </div>
-                          <div className="bg-gray-700/30 rounded-lg p-4 space-y-3">
-                            <div className="aspect-[85.6/53.98] bg-gray-800 rounded-lg overflow-hidden">
-                              <img
-                                src={card.backImage}
-                                alt="Aadhaar Back"
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => downloadImage(card.backImage, `aadhaar_${index + 1}_back.png`)}
-                                className="flex-1 bg-green-500 text-white hover:bg-green-600"
-                                size="sm"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                PNG
-                              </Button>
-                              <Button
-                                onClick={() => downloadBackPdf(card, index)}
-                                className="flex-1 bg-green-600 text-white hover:bg-green-700"
-                                size="sm"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                PDF
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Combined Download Section */}
-                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-purple-300 mb-1">Download Both Cards</h4>
-                            <p className="text-purple-200 text-sm">Download front and back cards together on one page</p>
-                          </div>
-                        </div>
-
-                        {/* Add Copy Selector here */}
-                        <div className="flex items-center gap-2">
-                          <Label className="text-purple-200 whitespace-nowrap">Number of Copies:</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="20"
-                            value={copies}
-                            onChange={(e) => setCopies(Math.min(20, Math.max(1, parseInt(e.target.value) || 1)))}
-                            className="w-20 bg-gray-800/50 border-gray-700 text-white"
-                          />
-                          <span className="text-purple-200 text-sm">(Max 4 per page, 20 total)</span>
-                        </div>
-
-                        {/* Phone Number Input */}
-                        <div className="flex items-center gap-2">
-                          <Label className="text-purple-200 whitespace-nowrap">Phone Number:</Label>
-                          <Input
-                            type="tel"
-                            pattern="[0-9]*"
-                            maxLength={10}
-                            placeholder="Enter phone number (optional)"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                            className="w-40 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-400"
-                          />
-                          <span className="text-purple-200 text-sm">(Will be printed on front card)</span>
-                        </div>
-
-                        <Button
-                          onClick={() => handleSubmit(card, index)}
-                          className="w-full bg-purple-500 text-white hover:bg-purple-600"
-                          size="sm"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download {copies} {copies === 1 ? 'Copy' : 'Copies'} as PDF
-                        </Button>
-                        {/* Print Button */}
-                        <Button
-                          onClick={() => handlePrint(card, index)}
-                          className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
-                          size="sm"
-                        >
-                          <Printer className="h-4 w-4 mr-2" />
-                          Print {copies} {copies === 1 ? 'Copy' : 'Copies'}
-                        </Button>
-                      </div>
-
-                      {/* Print Info */}
-                      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
-                        <p className="text-indigo-300 text-sm">
-                          <strong>Print Size:</strong> {AADHAAR_DIMENSIONS.width}mm × {AADHAAR_DIMENSIONS.height}mm
-                          (3.37" × 2.125") - Standard Aadhaar card size
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Preview Modal */}
-            {selectedCardIndex !== null && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                      <ZoomIn className="h-5 w-5 text-yellow-500" />
-                      Card Preview - Aadhaar {selectedCardIndex + 1}
-                    </CardTitle>
+                  <div className="flex gap-4 mt-4">
                     <Button
-                      onClick={() => setSelectedCardIndex(null)}
                       variant="outline"
-                      size="sm"
-                      className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
+                      size="icon"
+                      className="bg-white border border-gray-300"
+                      onClick={() => setPreviewSide('front')}
                     >
-                      Close
+                      <span className="text-gray-700 font-bold">&lt;</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-white border border-gray-300"
+                      onClick={() => setPreviewSide('back')}
+                    >
+                      <span className="text-gray-700 font-bold">&gt;</span>
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <h4 className="font-medium text-white text-center">Front Side</h4>
-                        <div className="bg-gray-800 rounded-lg p-4 relative">
-                          <img
-                            src={aadhaarCards[selectedCardIndex].frontImage}
-                            alt="Aadhaar Front Preview"
-                            className="w-full h-auto rounded-lg"
-                          />
-                          {/* No need for overlay here as it's already embedded in the frontImage */}
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <h4 className="font-medium text-white text-center">Back Side</h4>
-                        <div className="bg-gray-800 rounded-lg p-4">
-                          <img
-                            src={aadhaarCards[selectedCardIndex].backImage}
-                            alt="Aadhaar Back Preview"
-                            className="w-full h-auto rounded-lg"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Instructions */}
-            <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold text-white">How to Use Aadhaar Card Extractor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-gray-300 text-sm">
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                    <p>Upload your PDF file containing Aadhaar cards using the upload area above</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-                    <p>If the PDF is password-protected, enter the password when prompted</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-                    <p>Click "Extract Aadhaar Cards" to automatically detect and extract cards from the PDF</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
-                    <p>Preview extracted cards to ensure they are correctly separated</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">5</span>
-                    <p>Download the front and back images in PNG or PDF format for printing</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">6</span>
-                    <p>Use "Combined PDF" to download both cards on the same page</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <span className="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">7</span>
-                    <p>Print at standard Aadhaar card size: 85.6mm  × 53.98mm (3.37" × 2.125")</p>
-                  </div>
                 </div>
+                <Button
+                  onClick={() => aadhaarCards.length > 0 && handleSubmit(aadhaarCards[0], 0)}
+                  className="w-full mt-6 bg-[#A78BFA] text-white hover:bg-[#8B5CF6] font-bold text-lg py-2"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
 
-                <Separator className="bg-gray-700/50 my-4" />
-
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
-                  <h4 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
-                    <Key className="h-4 w-4" />
-                    Common Aadhaar PDF Passwords:
-                  </h4>
-                  <ul className="text-blue-200 text-sm space-y-1">
-                    <li>• <strong>Date of Birth:</strong> DDMMYYYY format (e.g., 15031990)</li>
-                    <li>• <strong>Name + Year:</strong> First 4 letters of name + birth year (e.g., AMIT1990)</li>
-                    <li>• <strong>Full Name:</strong> Complete name in lowercase or uppercase</li>
-                    <li>• <strong>Aadhaar Number:</strong> Last 4 digits of Aadhaar number</li>
-                    <li>• <strong>Default:</strong> Sometimes "password" or "123456"</li>
-                  </ul>
+            {/* A4 size PDF Section */}
+            <div className="bg-[#23242A] rounded-xl shadow border border-gray-800/60 mt-8">
+              <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                <div>
+                  <span className="text-white font-semibold">A4 size PDF.</span>
+                  <span className="text-gray-400 text-xs ml-2">This is A4 size page. This page might not work for PVC card.</span>
                 </div>
-
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                  <h4 className="text-yellow-300 font-medium mb-2">Important Notes:</h4>
-                  <ul className="text-yellow-200 text-sm space-y-1">
-                    <li>• The extractor automatically detects Aadhaar cards in PDF pages</li>
-                    <li>• Cards are extracted from the bottom portion of the page using precise cropping</li>
-                    <li>• Download options include PNG images and PDF files with proper dimensions</li>
-                    <li>• Combined PDF places both cards side by side for easy printing</li>
-                    <li>• All downloaded files are ready for standard card printing</li>
-                    <li>• Password is only used for PDF decryption and is not stored</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+                <div className="text-gray-400 text-xs">aadhaar_combined_a4.pdf</div>
+              </div>
+              <div className="bg-[#F3F4F6] rounded-lg m-6 p-6 flex items-center justify-center min-h-[350px]">
+                {/* PDF Preview */}
+                {a4PdfUrl ? (
+                  <embed
+                    src={a4PdfUrl}
+                    type="application/pdf"
+                    className="w-full h-[400px] rounded shadow"
+                  />
+                ) : (
+                  <div className="w-full flex flex-col items-center justify-center h-[350px]">
+                    <span className="text-gray-400">No PDF preview</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-center pb-6">
+                <Button
+                  onClick={downloadA4Pdf}
+                  className="bg-[#A78BFA] text-white hover:bg-[#8B5CF6] font-bold text-lg py-2 px-8"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
           </div>
         </main>
       </div>
-
       {termsModal}
     </div>
   )
 }
 
 export default PdfProcessor;
-
-
-
