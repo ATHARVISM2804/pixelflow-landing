@@ -172,11 +172,15 @@ export function Dashboard() {
   //   }
   // };
 
+  // Add currency formatting function
+  const formatCurrency = (amount: number) => {
+    return amount % 1 === 0 ? `₹${amount}` : `₹${amount.toFixed(2)}`;
+  };
 
   // Update the stats array in the render
   const statsData = [{
     label: 'Wallet Balance',
-    value: `₹${walletBalance.toFixed(2)}`,
+    value: formatCurrency(walletBalance),
     icon: DollarSign,
     color: 'from-green-500 to-green-600'
   },
