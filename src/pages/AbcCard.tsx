@@ -355,11 +355,22 @@ export function AbcCard() {
       cardWidth = cardHeight * cardAspectRatio;
     }
 
-    // Place card a bit lower for better print layout
+    // Place card at the top of the page with margin
     const x = (A4_WIDTH - cardWidth) / 2;
-    const y = (A4_HEIGHT - cardHeight) / 2 + 10;
+    const y = A4_HEIGHT - cardHeight - margin; // Top of page with margin
 
     const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+    
+    // Add border around the card
+    page.drawRectangle({
+      x: x - 2,
+      y: y - 2,
+      width: cardWidth + 4,
+      height: cardHeight + 4,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 2,
+    });
+
     page.drawImage(cardImage, {
       x,
       y,
