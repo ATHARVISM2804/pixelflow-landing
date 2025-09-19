@@ -31,7 +31,7 @@ import { useTermsNCondition } from "@/components/TermsNCondition"
 import * as pdfjsLib from 'pdfjs-dist'
 import axios from "axios"
 import { auth } from "../auth/firebase"
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, rgb } from 'pdf-lib'
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface PanCardData {
@@ -53,6 +53,8 @@ export function Pan2() {
 
   const uid = auth.currentUser?.uid;
   const [pendingAction, setPendingAction] = useState<null | { type: "download" | "downloadCombined" | "print" | "printCombined", card: PanCardData, index: number, backImage?: string }>(null);
+  const [a4PdfUrl, setA4PdfUrl] = useState<string | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0); // 0: front, 1: back
 
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -330,20 +332,17 @@ export function Pan2() {
     })
   }
 
-  // Helper: Create combined PDF (front+back on A4)
+  // Helper: Create combined PDF (front+back on A4) with border
   const createCombinedPdf = async (frontDataUrl: string, backDataUrl: string): Promise<Uint8Array> => {
     const pdfDoc = await PDFDocument.create()
-    // A4 size in points
     const A4_WIDTH = 595.28
     const A4_HEIGHT = 841.89
     const margin = 40
     const spacing = 20
 
-    // Convert images to canvas
     const frontCanvas = await dataURLToCanvas(frontDataUrl)
     const backCanvas = await dataURLToCanvas(backDataUrl)
 
-    // Embed images
     function getPngBytes(dataUrl: string) {
       const base64 = dataUrl.split(',')[1]
       const binary = atob(base64)
@@ -356,13 +355,30 @@ export function Pan2() {
     const frontImage = await pdfDoc.embedPng(getPngBytes(frontCanvas.toDataURL('image/png', 1.0)))
     const backImage = await pdfDoc.embedPng(getPngBytes(backCanvas.toDataURL('image/png', 1.0)))
 
-    // Calculate card size to fit two cards side by side
     const availableWidth = A4_WIDTH - (2 * margin) - spacing
     const cardWidth = availableWidth / 2
     const cardHeight = cardWidth * (frontCanvas.height / frontCanvas.width)
     const y = A4_HEIGHT - cardHeight - margin
 
     const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT])
+    // Draw black border for front card
+    page.drawRectangle({
+      x: margin - 2,
+      y: y - 2,
+      width: cardWidth + 4,
+      height: cardHeight + 4,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 2,
+    })
+    // Draw black border for back card
+    page.drawRectangle({
+      x: margin + cardWidth + spacing - 2,
+      y: y - 2,
+      width: cardWidth + 4,
+      height: cardHeight + 4,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 2,
+    })
     page.drawImage(frontImage, {
       x: margin,
       y,
@@ -379,91 +395,22 @@ export function Pan2() {
     return await pdfDoc.save()
   }
 
-  const downloadCombinedPdf = async (front: string, back: string, index: number) => {
-    // Confirmation popup
-    if (!window.confirm("Are you sure you want to download the combined PAN card PDF?")) return;
-    try {
-      const pdfBytes = await createCombinedPdf(front, back)
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `pan_${index + 1}_combined.pdf`
-      link.click()
-      setTimeout(() => URL.revokeObjectURL(url), 100)
-      toast({
-        title: "PDF downloaded",
-        description: "Combined PAN card PDF downloaded.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create combined PDF.",
-        variant: "destructive"
-      })
-    }
-  }
+  // Generate and set A4 PDF preview URL
+  const generateA4PdfPreview = async (front: string, back: string) => {
+    const pdfBytes = await createCombinedPdf(front, back);
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    setA4PdfUrl(url);
+  };
 
-  // Print helpers
-  const printImage = async (imageData: string, filename: string) => {
-    try {
-      const printWindow = window.open('', '_blank')
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Print ${filename}</title>
-              <style>
-                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                img { max-width: 100%; max-height: 100%; object-fit: contain; }
-                @media print { body { margin: 0; } img { max-width: 100%; height: auto; } }
-              </style>
-            </head>
-            <body>
-              <img src="${imageData}" alt="${filename}" />
-            </body>
-          </html>
-        `)
-        printWindow.document.close()
-        printWindow.onload = function() {
-          printWindow.focus()
-          printWindow.print()
-        }
-      }
-    } catch (error) {
-      toast({
-        title: "Print Error",
-        description: "Failed to open print dialog.",
-        variant: "destructive"
-      })
+  React.useEffect(() => {
+    if (panCards.length > 1 && panCards[0].image && panCards[1].image) {
+      generateA4PdfPreview(panCards[0].image, panCards[1].image);
+    } else {
+      setA4PdfUrl(null);
     }
-  }
-
-  const printCombinedPdf = async (front: string, back: string, index: number) => {
-    try {
-      const pdfBytes = await createCombinedPdf(front, back)
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
-      const pdfUrl = URL.createObjectURL(blob)
-      const printWindow = window.open(pdfUrl, '_blank')
-      if (printWindow) {
-        printWindow.onload = function() {
-          printWindow.focus()
-          printWindow.print()
-        }
-      }
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000)
-      toast({
-        title: "Print started",
-        description: "Combined PAN card sent to printer.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF for printing.",
-        variant: "destructive"
-      })
-    }
-  }
+    // eslint-disable-next-line
+  }, [panCards]);
 
   // TnC-wrapped download/print
   const handleDownload = (card: PanCardData, index: number) => {
@@ -510,262 +457,290 @@ export function Pan2() {
         <DashboardHeader title="PAN Card Extractor" icon={CreditCard} showNewServiceButton={false} />
         <main className="flex-1 p-3 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
-            {/* Upload Section */}
-            <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                  <Upload className="h-5 w-5 text-blue-500" />
-                  Upload PAN PDF
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center">
-                  {selectedPdf ? (
-                    <div className="space-y-3">
-                      <FileText className="h-16 w-16 mx-auto text-blue-500" />
-                      <p className="text-white font-medium">{selectedPdf.name}</p>
-                      <p className="text-gray-400 text-sm">
-                        Size: {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={triggerFileUpload}
-                        className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
-                      >
-                        Choose Different File
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <Upload className="h-16 w-16 mx-auto text-gray-500" />
-                      <div>
-                        <p className="text-white font-medium">Drop your PAN PDF here or click to browse</p>
-                        <p className="text-gray-400 text-sm">Supports PDF files with PAN cards up to 50MB</p>
-                      </div>
-                      <Button
-                        onClick={triggerFileUpload}
-                        className="bg-indigo-500 text-white hover:bg-indigo-600"
-                      >
-                        Choose PDF File
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={handlePdfUpload}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Processing Section */}
-            {selectedPdf && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-green-500" />
-                    Extract PAN Cards
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Password Input Section */}
-                  {selectedPdf && (
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-5 w-5 text-blue-500" />
-                        <h4 className="font-medium text-blue-300">PDF Password (if required)</h4>
-                      </div>
-                      <p className="text-blue-200 text-sm">
-                        If your PDF is password-protected, enter the password below. Leave empty if no password is required.
-                      </p>
-                      <div className="space-y-3">
-                        <Label htmlFor="pdf-password" className="text-white font-medium">
-                          PDF Password (Optional)
-                        </Label>
-                        <Input
-                          id="pdf-password"
-                          type="password"
-                          placeholder="Enter PDF password if required"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              processPdf()
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Error message for wrong password */}
-                  {needsPassword && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-5 w-5 text-red-500" />
-                        <h4 className="font-medium text-red-300">Password Required</h4>
-                      </div>
-                      <p className="text-red-200 text-sm mt-2">
-                        This PDF is password-protected. Please enter the correct password above and try again.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                      onClick={processPdf}
-                      disabled={isProcessing}
-                      className="bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Extracting Cards...
-                        </>
-                      ) : (
-                        <>
-                          <Scissors className="h-4 w-4 mr-2" />
-                          Extract PAN Cards
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button 
-                      onClick={openModal}
-                      variant="outline"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                    >
-                      Terms & Conditions
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Results Section */}
-            {panCards.length > 1 && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-purple-500" />
-                    PAN Card Previews
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Preview 1: Front */}
-                  <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Front Card</h3>
-                    <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-                      <img src={panCards[0].image} alt="PAN Front" className="max-w-full max-h-full object-contain" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleDownload(panCards[0], 0)}
-                        className="flex-1 bg-indigo-500 text-white hover:bg-indigo-600"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Front PNG
-                      </Button>
-                      <Button
-                        onClick={() => handlePrint(panCards[0], 0)}
-                        className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
-                      >
-                        <Printer className="h-4 w-4 mr-2" />
-                        Print
-                      </Button>
-                    </div>
-                  </div>
-                  {/* Preview 2: Back */}
-                  <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Back Card</h3>
-                    <div className="aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-                      <img src={panCards[1].image} alt="PAN Back" className="max-w-full max-h-full object-contain" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleDownload(panCards[1], 1)}
-                        className="flex-1 bg-purple-500 text-white hover:bg-purple-600"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Back PNG
-                      </Button>
-                      <Button
-                        onClick={() => handlePrint(panCards[1], 1)}
-                        className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
-                      >
-                        <Printer className="h-4 w-4 mr-2" />
-                        Print
-                      </Button>
-                    </div>
-                  </div>
-                  {/* Preview 3: Combined PDF */}
-                  <div className="bg-gray-800/30 rounded-lg p-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Combined PDF (A4 Sheet)</h3>
-                    <div className="aspect-[2.1/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-                      {/* Show both images side by side as preview */}
-                      <div className="flex gap-4">
-                        <img src={panCards[0].image} alt="PAN Front" className="max-w-[45%] max-h-full object-contain rounded" />
-                        <img src={panCards[1].image} alt="PAN Back" className="max-w-[45%] max-h-full object-contain rounded" />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleDownloadCombined(panCards[0].image, panCards[1].image, 0)}
-                        className="flex-1 bg-green-500 text-white hover:bg-green-600"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Combined PDF
-                      </Button>
-                      <Button
-                        onClick={() => handlePrintCombined(panCards[0].image, panCards[1].image, 0)}
-                        className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
-                      >
-                        <Printer className="h-4 w-4 mr-2" />
-                        Print PDF
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Preview Modal */}
-            {selectedCardIndex !== null && (
-              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+            {/* Notice */}
+            <div className="w-full flex justify-center">
+              <div className="bg-green-900/90 text-green-200 font-semibold rounded-lg px-8 py-4 mb-4 text-center max-w-2xl">
+                <span className="text-lg font-bold">Notice</span>
+                <br />
+                We only support original PAN PDF files. Please do not upload any other file.
+              </div>
+            </div>
+            {/* Main two-column layout */}
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Left: Upload/Form */}
+              <div className="flex-1 min-w-[320px]">
+                {/* Upload Section */}
+                <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+                  <CardHeader>
                     <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
-                      <ZoomIn className="h-5 w-5 text-yellow-500" />
-                      Card Preview - PAN {selectedCardIndex + 1}
+                      <Upload className="h-5 w-5 text-blue-500" />
+                      Upload PAN PDF
                     </CardTitle>
-                    <Button
-                      onClick={() => setSelectedCardIndex(null)}
-                      variant="outline"
-                      size="sm"
-                      className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
-                    >
-                      Close
-                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center">
+                      {selectedPdf ? (
+                        <div className="space-y-3">
+                          <FileText className="h-16 w-16 mx-auto text-blue-500" />
+                          <p className="text-white font-medium">{selectedPdf.name}</p>
+                          <p className="text-gray-400 text-sm">
+                            Size: {(selectedPdf.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                          <Button
+                            variant="outline"
+                            onClick={triggerFileUpload}
+                            className="bg-gray-800/50 text-gray-300 border-gray-700 hover:bg-gray-700/50"
+                          >
+                            Choose Different File
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Upload className="h-16 w-16 mx-auto text-gray-500" />
+                          <div>
+                            <p className="text-white font-medium">Drop your PAN PDF here or click to browse</p>
+                            <p className="text-gray-400 text-sm">Supports PDF files with PAN cards up to 50MB</p>
+                          </div>
+                          <Button
+                            onClick={triggerFileUpload}
+                            className="bg-indigo-500 text-white hover:bg-indigo-600"
+                          >
+                            Choose PDF File
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="hidden"
+                      onChange={handlePdfUpload}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Processing Section */}
+                {selectedPdf && (
+                  <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-green-500" />
+                        Extract PAN Cards
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Password Input Section */}
+                      {selectedPdf && (
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Lock className="h-5 w-5 text-blue-500" />
+                            <h4 className="font-medium text-blue-300">PDF Password (if required)</h4>
+                          </div>
+                          <p className="text-blue-200 text-sm">
+                            If your PDF is password-protected, enter the password below. Leave empty if no password is required.
+                          </p>
+                          <div className="space-y-3">
+                            <Label htmlFor="pdf-password" className="text-white font-medium">
+                              PDF Password (Optional)
+                            </Label>
+                            <Input
+                              id="pdf-password"
+                              type="password"
+                              placeholder="Enter PDF password if required"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  processPdf()
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Error message for wrong password */}
+                      {needsPassword && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                          <div className="flex items-center gap-2">
+                            <Lock className="h-5 w-5 text-red-500" />
+                            <h4 className="font-medium text-red-300">Password Required</h4>
+                          </div>
+                          <p className="text-red-200 text-sm mt-2">
+                            This PDF is password-protected. Please enter the correct password above and try again.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          onClick={processPdf}
+                          disabled={isProcessing}
+                          className="bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Extracting Cards...
+                            </>
+                          ) : (
+                            <>
+                              <Scissors className="h-4 w-4 mr-2" />
+                              Extract PAN Cards
+                            </>
+                          )}
+                        </Button>
+                        
+                        <Button 
+                          onClick={openModal}
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                        >
+                          Terms & Conditions
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+              {/* Right: Card Previews (Carousel) */}
+              <div className="flex-1 min-w-[320px] flex flex-col gap-6">
+                <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                      Front and Back
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center gap-6">
+                      {/* Carousel */}
+                      <div className="w-full aspect-[1.6/1] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center mb-2 relative">
+                        {/* Left Button */}
+                        <button
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-gray-700/70 hover:bg-gray-800/90 rounded-full p-2 z-10"
+                          onClick={() => setCarouselIndex((prev) => (prev === 0 ? 1 : 0))}
+                          disabled={panCards.length < 2}
+                          aria-label="Previous"
+                          style={{ visibility: panCards.length < 2 ? 'hidden' : 'visible' }}
+                        >
+                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 17l-5-5 5-5"/></svg>
+                        </button>
+                        {/* Card Image */}
+                        {panCards.length > carouselIndex && panCards[carouselIndex]?.image ? (
+                          <img
+                            src={panCards[carouselIndex].image}
+                            alt={carouselIndex === 0 ? "PAN Front" : "PAN Back"}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="text-gray-500 text-center w-full">
+                            {carouselIndex === 0 ? "Front card preview will appear here" : "Back card preview will appear here"}
+                          </div>
+                        )}
+                        {/* Right Button */}
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-700/70 hover:bg-gray-800/90 rounded-full p-2 z-10"
+                          onClick={() => setCarouselIndex((prev) => (prev === 1 ? 0 : 1))}
+                          disabled={panCards.length < 2}
+                          aria-label="Next"
+                          style={{ visibility: panCards.length < 2 ? 'hidden' : 'visible' }}
+                        >
+                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 7l5 5-5 5"/></svg>
+                        </button>
+                        {/* Carousel label */}
+                        {panCards.length > 1 && (
+                          <span className="absolute bottom-2 right-1/2 translate-x-1/2 bg-gray-900/80 text-xs text-white px-3 py-1 rounded-full">
+                            {carouselIndex === 0 ? "Front" : "Back"}
+                          </span>
+                        )}
+                      </div>
+                      {/* Download/Print Buttons */}
+                      <div className="flex gap-2 w-full mt-4">
+                        <Button
+                          onClick={() => handleDownload(panCards[carouselIndex], carouselIndex)}
+                          className={`flex-1 ${carouselIndex === 0 ? "bg-indigo-500 hover:bg-indigo-600" : "bg-purple-500 hover:bg-purple-600"} text-white`}
+                          disabled={!(panCards.length > carouselIndex && panCards[carouselIndex].image)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download {carouselIndex === 0 ? "Front" : "Back"}
+                        </Button>
+                        <Button
+                          onClick={() => handlePrint(panCards[carouselIndex], carouselIndex)}
+                          className="flex-1 bg-blue-500 text-white hover:bg-blue-600"
+                          disabled={!(panCards.length > carouselIndex && panCards[carouselIndex].image)}
+                        >
+                          <Printer className="h-4 w-4 mr-2" />
+                          Print {carouselIndex === 0 ? "Front" : "Back"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            {/* A4 PDF Preview */}
+            <div>
+              <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 mt-6">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-white flex items-center gap-3">
+                    A4 size PDF.
+                  </CardTitle>
+                  <div className="text-gray-400 text-xs mt-1">
+                    This is A4 size page. This page might not work for PVC card.
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    <div className="bg-gray-800 rounded-lg p-4 relative">
-                      <img
-                        src={panCards[selectedCardIndex].image}
-                        alt="PAN Preview"
-                        className="w-full h-auto rounded-lg"
+                  <div className="w-full bg-black rounded-lg overflow-hidden border border-gray-800">
+                    {a4PdfUrl ? (
+                      <iframe
+                        src={a4PdfUrl}
+                        title="A4 PDF Preview"
+                        className="w-full min-h-[400px] rounded-lg"
                       />
-                    </div>
+                    ) : (
+                      <div className="text-gray-500 text-center py-16">A4 PDF preview will appear here</div>
+                    )}
+                  </div>
+                  <div className="flex justify-center mt-4 gap-2">
+                    <Button
+                      onClick={() => {
+                        if (a4PdfUrl) {
+                          const link = document.createElement('a');
+                          link.href = a4PdfUrl;
+                          link.download = "pan_card_a4.pdf";
+                          link.click();
+                        }
+                      }}
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      disabled={!a4PdfUrl}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (a4PdfUrl) {
+                          const printWindow = window.open(a4PdfUrl, '_blank');
+                          if (printWindow) {
+                            printWindow.onload = function () {
+                              printWindow.focus();
+                              printWindow.print();
+                            };
+                          }
+                        }
+                      }}
+                      className="bg-blue-500 text-white hover:bg-blue-600"
+                      disabled={!a4PdfUrl}
+                    >
+                      <Printer className="h-4 w-4 mr-2" />
+                      Print PDF
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-            )}
-
+            </div>
             {/* Instructions */}
             <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
               <CardHeader>
@@ -805,3 +780,4 @@ export function Pan2() {
 }
 
 export default Pan2;
+             
