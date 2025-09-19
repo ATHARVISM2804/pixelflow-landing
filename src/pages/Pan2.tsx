@@ -780,4 +780,3 @@ export function Pan2() {
 }
 
 export default Pan2;
-             
