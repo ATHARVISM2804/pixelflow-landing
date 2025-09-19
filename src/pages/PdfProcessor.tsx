@@ -33,6 +33,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { configurePdfJs, getDefaultPdfOptions } from '@/utils/pdfConfig'
 import axios from "axios";
 import { auth } from "../auth/firebase"
+import { useAuth } from "../auth/AuthContext"
 import { useTermsNCondition } from "@/components/TermsNCondition"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -49,6 +50,7 @@ interface AadhaarCardData {
 }
 
 export function PdfProcessor() {
+  const { user } = useAuth(); // Use useAuth hook for reliable user state
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [aadhaarCards, setAadhaarCards] = useState<AadhaarCardData[]>([])
@@ -78,10 +80,7 @@ export function PdfProcessor() {
     width: 595.28,  // 210mm in points
     height: 841.89, // 297mm in points
     margin: 40      // margin in points
-  }
-
-  const uid = auth.currentUser?.uid;
-  console.log("User ID:", uid); 
+  } 
 
   // Modified handleSubmit to show terms modal before download
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
@@ -105,8 +104,18 @@ export function PdfProcessor() {
         // Original download logic
         (async () => {
           try {
+            // Only proceed if user is authenticated
+            if (!user?.uid) {
+              toast({
+                title: "Authentication Error",
+                description: "Please log in to download cards.",
+                variant: "destructive"
+              });
+              return;
+            }
+
             const transaction = {
-              uid: uid,
+              uid: user.uid,
               cardName: 'Aadhar',
               amount: 1,
               type: 'CARD_CREATION',

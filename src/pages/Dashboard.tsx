@@ -32,7 +32,6 @@ import { Button } from "@/components/ui/button"
 import Sidebar from "@/components/Sidebar"
 import DashboardHeader from "@/components/DashboardHeader"
 import axios from "axios";
-import { auth } from "../auth/firebase.ts";
 import { useAuth } from '../auth/AuthContext';
 import { fetchCardPrices } from '../services/cardPrice';
 import { useWallet } from '@/context/WalletContext';
@@ -52,11 +51,8 @@ interface Transaction {
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export function Dashboard() {
-  // Assuming you have the user's UID from authentication
-  // console.log(auth.currentUser?.uid);
-  const uid = auth.currentUser?.uid;
-  console.log("User ID:", uid);
-  // const { transactions, loading, error, createCard } = useTransactions(uid);
+  // Get user authentication state from useAuth hook for reliable user data
+  const { user } = useAuth();
   const [isCreatingCard, setIsCreatingCard] = useState(false);
   const [data, setData] = useState();
 
@@ -66,10 +62,10 @@ export function Dashboard() {
     transactionCount: 0,
     // payments: 0
   });
-
-  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [payments, setPayments] = useState<any[]>([]); // Add payments state
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(true); // Add payment loading state
   const [page, setPage] = useState(1);
   const pageSize = 5;
   const [prices, setPrices] = useState<Record<string, number>>({});
@@ -109,8 +105,16 @@ export function Dashboard() {
 
   useEffect(() => {
     const fetchTransactions = async () => {
+      // Only fetch transactions if user is authenticated
+      if (!user?.uid) {
+        console.log("No authenticated user found, skipping transaction fetch");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await axios.get(`${BACKEND_URL}/api/transactions/user/${uid}`);
+        console.log("Fetching transactions for user:", user.uid);
+        const response = await axios.get(`${BACKEND_URL}/api/transactions/user/${user.uid}`);
         setTransactions(response.data);
 
         // Calculate stats and set
@@ -123,7 +127,32 @@ export function Dashboard() {
     };
 
     fetchTransactions();
-  }, []);
+  }, [user?.uid]); // Re-fetch when user authentication state changes
+
+  // Fetch payments for the authenticated user
+  useEffect(() => {
+    const fetchPayments = async () => {
+      // Only fetch payments if user is authenticated
+      if (!user?.uid) {
+        console.log("No authenticated user found, skipping payment fetch");
+        setPaymentLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Fetching payments for user:", user.uid);
+        const response = await axios.get(`${BACKEND_URL}/api/payments/user/${user.uid}`);
+        setPayments(response.data.payments || []);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+        setPayments([]);
+      } finally {
+        setPaymentLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, [user?.uid]); // Re-fetch when user authentication state changes
 
   // const handleCreateCard = async () => {
   //   try {
@@ -448,7 +477,7 @@ export function Dashboard() {
           </Card>
 
           {/* Payment History */}
-          {/* <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+          <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
             <CardHeader className="pb-2 sm:pb-4">
               <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
@@ -461,38 +490,76 @@ export function Dashboard() {
                   <TableHeader>
                     <TableRow className="border-gray-800/50 hover:bg-gray-800/20">
                       <TableHead className="text-slate-300 text-xs sm:text-sm">Order ID</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm">Txn ID</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm">Type</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm">Amount</TableHead>
                       <TableHead className="text-slate-300 text-xs sm:text-sm">Date</TableHead>
-                      <TableHead className="text-slate-300 text-xs sm:text-sm">Payment Ship</TableHead>
+                      <TableHead className="text-slate-300 text-xs sm:text-sm">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 sm:py-12">
-                        <div className="text-slate-400">
-                          <DollarSign className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 opacity-50" />
-                          <p className="text-base sm:text-lg font-medium">No Data Found</p>
-                          <p className="text-xs sm:text-sm mt-1">Your payment history will appear here</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    {paymentLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : payments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 sm:py-12">
+                          <div className="text-slate-400">
+                            <DollarSign className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 opacity-50" />
+                            <p className="text-base sm:text-lg font-medium">No Payments Found</p>
+                            <p className="text-xs sm:text-sm mt-1">Your payment history will appear here</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      payments.slice(0, 5).map((payment) => (
+                        <TableRow key={payment._id} className="border-gray-800/50 hover:bg-gray-800/20">
+                          <TableCell className="text-slate-300 text-xs sm:text-sm">
+                            {payment.transactionId || payment._id.slice(-8)}
+                          </TableCell>
+                          <TableCell className="text-slate-300 text-xs sm:text-sm">
+                            {payment.type.replace('_', ' ')}
+                          </TableCell>
+                          <TableCell className="text-slate-300 text-xs sm:text-sm">
+                            ₹{payment.amount}
+                          </TableCell>
+                          <TableCell className="text-slate-300 text-xs sm:text-sm">
+                            {payment.date ? new Date(payment.date).toLocaleDateString() : ""}
+                          </TableCell>
+                          <TableCell className="text-slate-300 text-xs sm:text-sm">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              payment.status === 'success' 
+                                ? 'bg-green-500/20 text-green-400' 
+                                : payment.status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-red-500/20 text-red-400'
+                            }`}>
+                              {payment.status || 'completed'}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-4 text-xs sm:text-sm text-slate-400 gap-2">
-                  <span>Showing 1 to 5 of 0 entries</span>
+                  <span>Showing 1 to {Math.min(5, payments.length)} of {payments.length} entries</span>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs">
+                    <Button variant="outline" size="sm" className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs" disabled>
                       ← Prev
                     </Button>
-                    <Button variant="outline" size="sm" className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs">
+                    <Button variant="outline" size="sm" className="bg-slate-700/50 border-slate-600 text-slate-300 text-xs" disabled>
                       Next →
                     </Button>
                   </div>
                 </div>
               </div>
             </CardContent>
-          </Card> */}
+          </Card>
         </main>
       </div>
     </div>

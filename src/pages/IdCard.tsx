@@ -32,11 +32,13 @@ import { PDFDocument, rgb } from 'pdf-lib'
 import html2canvas from 'html2canvas'
 import axios from "axios";
 import { auth } from '../auth/firebase'
+import { useAuth } from '../auth/AuthContext'
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
 
 export function IdCard() {
+  const { user } = useAuth() // Add useAuth hook for reliable user authentication
   const { toast } = useToast()
   const { openModal, modal } = useTermsNCondition()
   const [formData, setFormData] = useState({
@@ -626,9 +628,20 @@ export function IdCard() {
   const handleSubmit = async (card: AadhaarCardData, index: number) => {
     // Confirmation popup
     if (!window.confirm("Are you sure you want to download this ID card?")) return;
+    
     try {
+      // Check if user is authenticated
+      if (!user?.uid) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to create cards.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const transaction = {
-        uid: auth.currentUser?.uid,
+        uid: user.uid,
         cardName: 'IdCard',
         amount: 2,
         type: 'CARD_CREATION',
@@ -639,7 +652,7 @@ export function IdCard() {
       // Save card data to backend
       const cardData = {
         ...formData,
-        userId: auth.currentUser?.uid,
+        userId: user.uid,
         createdAt: new Date().toISOString(),
         templateData: templateConfigs[formData.template],
         customFields: customFields.filter(f => f.key && f.value)
