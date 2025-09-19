@@ -8,10 +8,14 @@ import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, sign
 import { auth } from '../../auth/firebase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_RECAPTCHA_SITE_KEY";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -37,8 +41,28 @@ const Signup = () => {
       alert("Passwords do not match");
       return;
     }
+
+    if (!captchaToken) {
+      alert("Please complete the CAPTCHA verification");
+      return;
+    }
   
     try {
+      // Verify CAPTCHA with backend
+      const captchaResponse = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+
+      const captchaResult = await captchaResponse.json();
+      if (!captchaResult.success) {
+        alert("CAPTCHA verification failed. Please try again.");
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: `${firstName} ${lastName}` });
   
@@ -219,6 +243,15 @@ const Signup = () => {
                   Privacy Policy
                 </a>
               </label>
+            </div>
+
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+                theme="dark"
+              />
             </div>
 
             <Button

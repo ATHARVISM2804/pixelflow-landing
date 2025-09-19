@@ -8,9 +8,13 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 
 import { auth } from '../../auth/firebase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_RECAPTCHA_SITE_KEY";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -19,7 +23,28 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      alert("Please complete the CAPTCHA verification");
+      return;
+    }
+
     try {
+      // Verify CAPTCHA with backend
+      const captchaResponse = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+
+      const captchaResult = await captchaResponse.json();
+      if (!captchaResult.success) {
+        alert("CAPTCHA verification failed. Please try again.");
+        return;
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       console.log(formData.email, formData.password);
       const token = await userCredential.user.getIdToken(); 
@@ -136,6 +161,15 @@ const Login = () => {
               <Link href="/forgot-password" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
                 Forgot your password?
               </Link>
+            </div>
+
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+                theme="dark"
+              />
             </div>
 
             <Button
