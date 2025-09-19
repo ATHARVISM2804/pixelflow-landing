@@ -14,9 +14,7 @@ import DashboardHeader from "@/components/DashboardHeader"
 import { useTermsNCondition } from "@/components/TermsNCondition"
 
 const cardTypes = {
-  aadhar: { name: "Aadhar Card", icon: "🆔", fields: ["aadharNumber", "name", "dob"] },
   aapar: { name: "AAPAR Card", icon: "📊", fields: ["employeeId", "name", "department"] },
-  abc: { name: "ABC Card", icon: "🎓", fields: ["studentId", "name", "institution"] },
   ayushman: { name: "Advance Ayushman Card", icon: "🏥", fields: ["beneficiaryId", "name", "familyId"] },
   ration: { name: "Ration Card", icon: "🌾", fields: ["rationNumber", "headOfFamily", "familyMembers"] },
   voter: { name: "Voter ID Card", icon: "🗳️", fields: ["epicNumber", "name", "constituency"] },

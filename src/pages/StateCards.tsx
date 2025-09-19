@@ -116,6 +116,7 @@ export function StateCards() {
               if (card.id === "ayushman") to = "/abha";
               if (card.id === "did") to = "/did";
               if (card.id === "uan") to = "/uan";
+              if (card.id === "abc") to = "/abc";
               return (
                 <Link key={card.id} href={to}>
                   <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50 hover:border-gray-700/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer group">
