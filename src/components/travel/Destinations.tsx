@@ -1,56 +1,74 @@
 import { Card } from "@/components/ui/card";
 import Slider from "react-slick";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-
 const destinations = [
-       {
-	       id: 1,
-	       title: "Create Resumes Effortlessly",
-	       image: "/assets/slider1.png",
-	       description:
-		       "Craft stunning resumes effortlessly with our easy-to-use builder — professional templates, zero hassle.",
-       },
-       {
-	       id: 2,
-	       title: "Create Passport Size Images with Perfection",
-	       image: "/assets/home1.png",
-	       description:
-		       "Upload your photo, adjust the frame, and download high-quality passport-size images instantly — ready for print or online use.",
-       },
-       {
-	       id: 3,
-	       title: "Edit Images According to your Requirnment",
-	       image: "/assets/slider2.png",
-	       description:
-		       "Crop, resize, and enhance images with precision — no design skills needed.",
-       },
-       {
-	       id: 4,
-	       title: "Free Kundli Downloader",
-	       image: "/assets/slider3.png",
-	       description:
-		       "Generate your Vedic horoscope in seconds — accurate, personalized, and downloadable.",
-       },
-       {
-	       id: 5,
-	       title: "Create School IDs",
-	       image: "/assets/slider4.png",
-	       description:
-		       "Design and download school ID cards for students, teachers, and staff in minutes",
-       },
+	{
+		id: 1,
+		title: "Create Resumes Effortlessly",
+		image: "/assets/slider1.png",
+		description:
+			"Craft stunning resumes effortlessly with our easy-to-use builder — professional templates, zero hassle.",
+	},
+	{
+		id: 2,
+		title: "Create Passport Size Images with Perfection",
+		image: "/assets/home1.png",
+		description:
+			"Upload your photo, adjust the frame, and download high-quality passport-size images instantly — ready for print or online use.",
+	},
+	{
+		id: 3,
+		title: "Edit Images According to your Requirnment",
+		image: "/assets/slider2.png",
+		description:
+			"Crop, resize, and enhance images with precision — no design skills needed.",
+	},
+	{
+		id: 4,
+		title: "Free Kundli Downloader",
+		image: "/assets/slider3.png",
+		description:
+			"Generate your Vedic horoscope in seconds — accurate, personalized, and downloadable.",
+	},
+	{
+		id: 5,
+		title: "Create School IDs",
+		image: "/assets/slider4.png",
+		description:
+			"Design and download school ID cards for students, teachers, and staff in minutes",
+	},
 ];
 
 const Destinations = () => {
+	const [windowWidth, setWindowWidth] = useState(0);
+
+	useEffect(() => {
+		const handleResize = () => {
+			setWindowWidth(window.innerWidth);
+		};
+
+		// Set initial width
+		setWindowWidth(window.innerWidth);
+
+		// Add event listener
+		window.addEventListener("resize", handleResize);
+
+		// Cleanup
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
 	const sliderSettings = {
 		dots: true,
 		infinite: true,
 		speed: 600,
 		autoplay: true,
 		autoplaySpeed: 2500,
-		slidesToShow: 3,
+		slidesToShow:
+			windowWidth >= 1024 ? 3 : windowWidth >= 768 ? 2 : 1,
 		slidesToScroll: 1,
 		pauseOnHover: true,
 		cssEase: "ease-in-out",
@@ -60,6 +78,8 @@ const Destinations = () => {
 				settings: {
 					slidesToShow: 2,
 					slidesToScroll: 1,
+					dots: true,
+					arrows: true,
 				},
 			},
 			{
@@ -68,6 +88,7 @@ const Destinations = () => {
 					slidesToShow: 1,
 					slidesToScroll: 1,
 					dots: true,
+					arrows: true,
 				},
 			},
 			{
@@ -75,12 +96,19 @@ const Destinations = () => {
 				settings: {
 					slidesToShow: 1,
 					slidesToScroll: 1,
-					dots: false,
+					dots: true,
 					arrows: false,
 				},
 			},
 		],
 	};
+
+	// Don't render until we have window width
+	if (windowWidth === 0) {
+		return (
+			<div className="py-10 sm:py-16 lg:py-20 bg-gradient-to-br from-gray-900 via-gray-950 to-black min-h-[400px]" />
+		);
+	}
 
 	return (
 		<section className="py-10 sm:py-16 lg:py-20 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
@@ -95,7 +123,7 @@ const Destinations = () => {
 					</p>
 				</div>
 
-				<Slider {...sliderSettings}>
+				<Slider {...sliderSettings} key={windowWidth}>
 					{destinations.map((destination) => (
 						<div key={destination.id} className="px-2 sm:px-3 group">
 							<Card className="rounded-xl sm:rounded-2xl overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full min-h-[350px] sm:min-h-[400px] flex flex-col justify-around bg-gray-900 mx-1 sm:mx-0">
