@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -44,7 +44,7 @@ interface AbcCardData {
   originalPage?: number;
 }
 
-export function AbcCard() {
+function AbcCard() {
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [abcCards, setAbcCards] = useState<AbcCardData[]>([])
@@ -73,6 +73,20 @@ export function AbcCard() {
 
   const uid = auth.currentUser?.uid;
   const [pendingAction, setPendingAction] = useState<null | { type: "download" | "print", card: AbcCardData, index: number }>(null);
+
+  // Helper function to download image
+  const downloadImage = (imageUrl: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({
+      title: "Download Success",
+      description: `${filename} downloaded successfully.`,
+    });
+  };
 
   // Parse text for ABC card (similar to APAAR)
   const parseExtractedText = (lines: string[]): AbcCardData | null => {
@@ -394,7 +408,7 @@ export function AbcCard() {
   };
 
   // Effect to handle the action after agreeing to terms
-  React.useEffect(() => {
+  useEffect(() => {
     if (!modal.props?.open && pendingAction) {
       // Only proceed if modal was just closed and there is a pending action
       const { type, card, index } = pendingAction;
@@ -430,7 +444,7 @@ export function AbcCard() {
         handlePrintA4(card, index);
       }
     }
-  }, [modal.props?.open, pendingAction]);
+  }, [modal.props?.open, pendingAction, uid, toast]);
 
   // Download single card as PDF
   const handleDownload = async (card: AbcCardData, index: number) => {
