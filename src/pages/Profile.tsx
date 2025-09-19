@@ -76,7 +76,16 @@ export function Profile() {
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setProfileData(prev => ({ ...prev, [field]: value }))
+    // Special handling for phone number to allow only numeric input
+    if (field === 'phone') {
+      // Remove any non-numeric characters
+      const numericValue = value.replace(/\D/g, '');
+      // Limit to 10 digits
+      const limitedValue = numericValue.slice(0, 10);
+      setProfileData(prev => ({ ...prev, [field]: limitedValue }));
+    } else {
+      setProfileData(prev => ({ ...prev, [field]: value }))
+    }
   }
 
   const handleSave = async () => {
@@ -84,6 +93,16 @@ export function Profile() {
 
     try {
       setIsLoading(true);
+
+      // Validate phone number length if provided
+      if (profileData.phone && profileData.phone.length !== 10) {
+        toast({
+          title: "Invalid Phone Number",
+          description: "Phone number must be exactly 10 digits",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Check if profile would be complete after this save
       const isComplete = !!(
@@ -417,11 +436,27 @@ export function Profile() {
                       <div>
                         <Label className="text-white text-sm">Phone Number</Label>
                         {isEditing ? (
-                          <Input
-                            value={profileData.phone}
-                            onChange={(e) => handleInputChange('phone', e.target.value)}
-                            className="mt-1 bg-gray-800/50 border-gray-700/50 text-white"
-                          />
+                          <div>
+                            <Input
+                              value={profileData.phone}
+                              onChange={(e) => handleInputChange('phone', e.target.value)}
+                              className={`mt-1 bg-gray-800/50 border-gray-700/50 text-white ${
+                                profileData.phone && profileData.phone.length !== 10 
+                                  ? 'border-red-500 focus:border-red-500' 
+                                  : ''
+                              }`}
+                              type="tel"
+                              pattern="[0-9]{10}"
+                              minLength={10}
+                              maxLength={10}
+                              placeholder="Enter 10-digit phone number"
+                            />
+                            {profileData.phone && profileData.phone.length !== 10 && (
+                              <p className="text-red-400 text-xs mt-1">
+                                Phone number must be exactly 10 digits ({profileData.phone.length}/10)
+                              </p>
+                            )}
+                          </div>
                         ) : (
                           <p className="mt-1 text-gray-300 p-2">{profileData.phone}</p>
                         )}

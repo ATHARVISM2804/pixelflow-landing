@@ -89,10 +89,23 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
+        
+        // Special handling for phone number
+        if (name === 'phoneNumber') {
+            // Remove any non-numeric characters
+            const numericValue = value.replace(/\D/g, '');
+            // Limit to 10 digits
+            const limitedValue = numericValue.slice(0, 10);
+            setFormData({
+                ...formData,
+                [name]: limitedValue,
+            });
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value,
+            });
+        }
     };
 
     const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -117,6 +130,11 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
 
             if (!formData.phoneNumber || !formData.dateOfBirth || !formData.address) {
                 throw new Error("Please fill all required fields");
+            }
+
+            // Validate phone number length
+            if (formData.phoneNumber.length !== 10) {
+                throw new Error("Phone number must be exactly 10 digits");
             }
 
             // Save user profile data to Firestore
@@ -194,10 +212,22 @@ const CompleteSignup: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                                 type="tel"
                                 value={formData.phoneNumber}
                                 onChange={handleInputChange}
-                                placeholder="Enter your phone number"
+                                placeholder="Enter 10-digit phone number"
+                                pattern="[0-9]{10}"
+                                minLength={10}
+                                maxLength={10}
                                 required
-                                className="mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-400"
+                                className={`mt-1 bg-gray-800/50 border-gray-700/50 text-white placeholder:text-gray-400 ${
+                                    formData.phoneNumber && formData.phoneNumber.length !== 10 
+                                        ? 'border-red-500 focus:border-red-500' 
+                                        : ''
+                                }`}
                             />
+                            {formData.phoneNumber && formData.phoneNumber.length !== 10 && (
+                                <p className="text-red-400 text-xs mt-1">
+                                    Phone number must be exactly 10 digits ({formData.phoneNumber.length}/10)
+                                </p>
+                            )}
                         </div>
 
                         <div>
