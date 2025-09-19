@@ -40,7 +40,7 @@ interface WalletProviderProps {
   userId?: string
 }
 
-export const WalletProvider: React.FC<WalletProviderProps> = ({ children, userId = 'test_user_123' }) => {
+export const WalletProvider: React.FC<WalletProviderProps> = ({ children, userId }) => {
   const [balance, setBalance] = useState(0)
   const [transactions, setTransactions] = useState<WalletTransaction[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -51,6 +51,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children, userId
     try {
       setIsLoading(true)
       setError(null)
+      
+      // Don't fetch if no user is authenticated
+      if (!userId) {
+        setBalance(0)
+        setIsLoading(false)
+        return
+      }
       
       const response = await getWalletBalance(userId)
       if (response.success && response.wallet) {
@@ -72,6 +79,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children, userId
       setIsLoading(true)
       setError(null)
       
+      // Don't fetch if no user is authenticated
+      if (!userId) {
+        setTransactions([])
+        setIsLoading(false)
+        return
+      }
+      
       const response = await getTransactionHistory(userId, { limit: 20 })
       if (response.success && response.transactions) {
         setTransactions(response.transactions)
@@ -88,7 +102,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children, userId
 
   // Load wallet data from backend on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && userId) {
       // First, try to sync with backend
       const syncWallet = async () => {
         try {
