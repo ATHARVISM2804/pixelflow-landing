@@ -381,6 +381,57 @@ export function AbcCard() {
     return await pdfDoc.save();
   };
 
+  // Modified download function to show terms modal
+  const handleDownloadAction = async (card: AbcCardData, index: number) => {
+    setPendingAction({ type: "download", card, index });
+    openModal();
+  };
+
+  // Modified print function to show terms modal  
+  const handlePrintAction = async (card: AbcCardData, index: number) => {
+    setPendingAction({ type: "print", card, index });
+    openModal();
+  };
+
+  // Effect to handle the action after agreeing to terms
+  React.useEffect(() => {
+    if (!modal.props?.open && pendingAction) {
+      // Only proceed if modal was just closed and there is a pending action
+      const { type, card, index } = pendingAction;
+      setPendingAction(null);
+      if (type === "download") {
+        // Original download logic
+        (async () => {
+          try {
+            const transaction = {
+              uid: uid,
+              cardName: 'ABC',
+              amount: 2,
+              type: 'CARD_CREATION',
+              date: new Date().toISOString(),
+              metadata: { page: card.originalPage }
+            };
+            await axios.post(`${BACKEND_URL}/api/transactions/card`, transaction);
+            toast({
+              title: "Transaction Success",
+              description: "Transaction and download started.",
+            });
+            await handleDownload(card, index);
+          } catch (err: any) {
+            toast({
+              title: "API Error",
+              description: err?.response?.data?.message || err.message || "Failed to create transaction.",
+              variant: "destructive"
+            });
+          }
+        })();
+      } else if (type === "print") {
+        // Original print logic
+        handlePrintA4(card, index);
+      }
+    }
+  }, [modal.props?.open, pendingAction]);
+
   // Download single card as PDF
   const handleDownload = async (card: AbcCardData, index: number) => {
     if (!card.photoUrl) return;
@@ -636,7 +687,7 @@ export function AbcCard() {
                               PNG
                             </Button>
                             <Button
-                              onClick={() => handleDownload(card, index)}
+                              onClick={() => handleDownloadAction(card, index)}
                               className="flex-1 bg-red-600 text-white hover:bg-red-700"
                               size="sm"
                             >
@@ -666,7 +717,7 @@ export function AbcCard() {
                             Download PDF
                           </Button>
                           <Button
-                            onClick={() => handlePrintA4(card, index)}
+                            onClick={() => handlePrintAction(card, index)}
                             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                             size="sm"
                           >
