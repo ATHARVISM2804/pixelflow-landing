@@ -10,13 +10,13 @@ export default function PanIndexPage() {
             href="/pan1"
             className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 text-center"
           >
-            Go to PAN Card Tool 1
+            NSDL
           </Link>
           <Link
             href="/pan2"
             className="px-6 py-3 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 text-center"
           >
-            Go to PAN Card Tool 2
+            UTIITSL
           </Link>
         </div>
       </div>
