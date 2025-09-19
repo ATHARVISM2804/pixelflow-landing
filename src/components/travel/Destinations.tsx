@@ -98,7 +98,7 @@ const Destinations = () => {
 				<Slider {...sliderSettings}>
 					{destinations.map((destination) => (
 						<div key={destination.id} className="px-2 sm:px-3 group">
-							<Card className="rounded-xl sm:rounded-2xl overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full min-h-[350px] sm:min-h-[400px] flex flex-col justify-between bg-gray-900 mx-1 sm:mx-0">
+							<Card className="rounded-xl sm:rounded-2xl overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full min-h-[350px] sm:min-h-[400px] flex flex-col justify-around bg-gray-900 mx-1 sm:mx-0">
 								<div className="relative h-40 sm:h-48 overflow-hidden rounded-t-xl sm:rounded-t-2xl">
 									<Image
 										src={destination.image}
