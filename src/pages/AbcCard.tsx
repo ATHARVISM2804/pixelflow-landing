@@ -808,7 +808,7 @@ function AbcCard() {
             )}
 
             {/* Development: Extraction Coordinates Input */}
-            <Card className="mb-6">
+            {/* <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="text-base font-bold">🛠️ Dev: Extract Card Region (Custom Coordinates)</CardTitle>
               </CardHeader>
@@ -824,7 +824,7 @@ function AbcCard() {
                 </div>
                 <p className="text-gray-400 text-xs mt-2">Current coordinates: X=198, Y=57, W=565, H=189. Extract the APAAR card region and apply ABC red overlays.</p>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </main>
         {modal}
