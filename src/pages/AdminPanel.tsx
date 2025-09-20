@@ -111,6 +111,8 @@ const AdminPanel: React.FC = () => {
 
   // Fetch total users count from Firestore
   const fetchTotalUsers = async () => {
+
+    
     setUsersLoading(true);
     try {
       const count = await fetchTotalUsersCount();
