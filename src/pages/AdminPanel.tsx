@@ -9,6 +9,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,6 +23,11 @@ import {
   DollarSign, 
   Activity, 
   Users,
+  Edit,
+  Save,
+  X,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import DashboardHeader from "@/components/DashboardHeader";
@@ -40,14 +46,29 @@ interface Transaction {
   currency?: string;
 }
 
+interface Card {
+  _id: string;
+  name: string;
+  price: number;
+}
+
 // Configure API URLs consistently with other files
 const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 const TRANSACTIONS_URL = `${API_HOST.replace(/\/$/, '')}/api/transactions`;
+const CARDS_URL = `${API_HOST.replace(/\/$/, '')}/api/cards`;
 
 const AdminPanel: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Cards state
+  const [cards, setCards] = useState<Card[]>([]);
+  const [cardsLoading, setCardsLoading] = useState(true);
+  const [editingCard, setEditingCard] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState<string>('');
+  const [newCardName, setNewCardName] = useState('');
+  const [newCardPrice, setNewCardPrice] = useState('');
   
   // Pagination state for transactions
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,10 +90,28 @@ const AdminPanel: React.FC = () => {
     setPaymentsLoading(false);
   };
 
+  // Fetch all cards
+  const fetchCards = async () => {
+    setCardsLoading(true);
+    try {
+      const res = await axios.get(CARDS_URL);
+      const cardsData: Card[] = Array.isArray(res.data) ? res.data : [];
+      setCards(cardsData);
+    } catch (err: any) {
+      console.error('Failed to fetch cards:', err);
+      setError('Failed to fetch cards');
+    }
+    setCardsLoading(false);
+  };
+
   useEffect(() => {
     fetchTransactions();
+    fetchCards();
     // Refresh every 30 seconds
-    const interval = setInterval(fetchTransactions, 30000);
+    const interval = setInterval(() => {
+      fetchTransactions();
+      fetchCards();
+    }, 30000);
     return () => clearInterval(interval);
     // eslint-disable-next-line
   }, []);
@@ -84,6 +123,67 @@ const AdminPanel: React.FC = () => {
       currency: 'INR',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Card management functions
+  const updateCardPrice = async (cardId: string, newPrice: number) => {
+    try {
+      await axios.put(`${CARDS_URL}/${cardId}/price`, { price: newPrice });
+      await fetchCards(); // Refresh cards
+      setEditingCard(null);
+      setEditingPrice('');
+    } catch (err: any) {
+      console.error('Failed to update card price:', err);
+      setError('Failed to update card price');
+    }
+  };
+
+  const addNewCard = async () => {
+    if (!newCardName.trim() || !newCardPrice.trim()) return;
+    
+    try {
+      await axios.post(CARDS_URL, { 
+        name: newCardName.trim(), 
+        price: parseFloat(newCardPrice) 
+      });
+      await fetchCards(); // Refresh cards
+      setNewCardName('');
+      setNewCardPrice('');
+    } catch (err: any) {
+      console.error('Failed to add card:', err);
+      setError('Failed to add card');
+    }
+  };
+
+  const deleteCard = async (cardId: string) => {
+    if (!confirm('Are you sure you want to delete this card?')) return;
+    
+    try {
+      await axios.delete(`${CARDS_URL}/${cardId}`);
+      await fetchCards(); // Refresh cards
+    } catch (err: any) {
+      console.error('Failed to delete card:', err);
+      setError('Failed to delete card');
+    }
+  };
+
+  const startEditingPrice = (cardId: string, currentPrice: number) => {
+    setEditingCard(cardId);
+    setEditingPrice(currentPrice.toString());
+  };
+
+  const cancelEditing = () => {
+    setEditingCard(null);
+    setEditingPrice('');
+  };
+
+  const savePrice = (cardId: string) => {
+    const price = parseFloat(editingPrice);
+    if (isNaN(price) || price < 0) {
+      setError('Please enter a valid price');
+      return;
+    }
+    updateCardPrice(cardId, price);
   };
 
   // Format date
@@ -110,9 +210,9 @@ const AdminPanel: React.FC = () => {
   const pendingTransactions = transactions.filter(t => t.status === 'pending').length;
   const failedTransactions = transactions.filter(t => t.status === 'failed').length;
 
-  if (paymentsLoading) return (
+  if (paymentsLoading || cardsLoading) return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900 flex items-center justify-center">
-      <div className="text-white text-lg">Loading payments...</div>
+      <div className="text-white text-lg">Loading...</div>
     </div>
   );
   
@@ -127,7 +227,7 @@ const AdminPanel: React.FC = () => {
       <Sidebar />
       
       <div className="lg:ml-[280px] flex flex-col min-h-screen">
-        <DashboardHeader title="Admin Panel - Payments" icon={Settings} showNewServiceButton={false} />
+        <DashboardHeader title="Admin Panel - Cards & Payments" icon={Settings} showNewServiceButton={false} />
         
         <main className="flex-1 p-3 sm:p-6 space-y-4 sm:space-y-6">
           
@@ -191,7 +291,14 @@ const AdminPanel: React.FC = () => {
           </div>
 
           {/* Refresh Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={fetchCards}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+              disabled={cardsLoading}
+            >
+              {cardsLoading ? 'Refreshing...' : 'Refresh Cards'}
+            </Button>
             <Button
               onClick={fetchTransactions}
               className="bg-indigo-600 text-white hover:bg-indigo-700"
@@ -200,6 +307,130 @@ const AdminPanel: React.FC = () => {
               {paymentsLoading ? 'Refreshing...' : 'Refresh Payments'}
             </Button>
           </div>
+
+          {/* Card Price Settings Section */}
+          <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
+                Card Price Settings
+                <span className="text-sm font-normal text-gray-400">({cards.length} cards)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Add New Card Form */}
+              <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-green-500" />
+                  Add New Card
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    placeholder="Card Name"
+                    value={newCardName}
+                    onChange={(e) => setNewCardName(e.target.value)}
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
+                  />
+                  <Input
+                    placeholder="Price (₹)"
+                    type="number"
+                    value={newCardPrice}
+                    onChange={(e) => setNewCardPrice(e.target.value)}
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
+                  />
+                  <Button
+                    onClick={addNewCard}
+                    disabled={!newCardName.trim() || !newCardPrice.trim()}
+                    className="bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Card
+                  </Button>
+                </div>
+              </div>
+
+              {/* Cards Table */}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-gray-800/50 hover:bg-gray-800/20">
+                      <TableHead className="text-gray-300">Card Name</TableHead>
+                      <TableHead className="text-gray-300">Current Price</TableHead>
+                      <TableHead className="text-gray-300">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cards.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8">
+                          <div className="text-slate-400">
+                            <Settings className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 opacity-50" />
+                            <p className="text-base sm:text-lg font-medium">No Cards Found</p>
+                            <p className="text-xs sm:text-sm mt-1">Add cards to manage their prices</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      cards.map((card) => (
+                        <TableRow key={card._id} className="border-gray-800/50 hover:bg-gray-800/20">
+                          <TableCell className="text-white font-medium">
+                            {card.name}
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {editingCard === card._id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  value={editingPrice}
+                                  onChange={(e) => setEditingPrice(e.target.value)}
+                                  className="w-24 bg-gray-700/50 border-gray-600 text-white"
+                                  autoFocus
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => savePrice(card._id)}
+                                  className="bg-green-600 text-white hover:bg-green-700 p-1"
+                                >
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={cancelEditing}
+                                  className="bg-gray-600 text-white hover:bg-gray-700 p-1"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">₹{card.price}</span>
+                                <Button
+                                  size="sm"
+                                  onClick={() => startEditingPrice(card._id, card.price)}
+                                  className="bg-blue-600 text-white hover:bg-blue-700 p-1"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              onClick={() => deleteCard(card._id)}
+                              className="bg-red-600 text-white hover:bg-red-700 p-1"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Payments Section */}
           <Card className="bg-gray-900/50 backdrop-blur-xl border border-gray-800/50">
