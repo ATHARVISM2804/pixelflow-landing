@@ -60,8 +60,13 @@ const CARDS_URL = `${API_HOST.replace(/\/$/, '')}/api/cards`;
 
 const AdminPanel: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Date filter state
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   
   // Cards state
   const [cards, setCards] = useState<Card[]>([]);
@@ -88,6 +93,7 @@ const AdminPanel: React.FC = () => {
       // Sort by date (newest first)
       transactionsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTransactions(transactionsData);
+      setFilteredTransactions(transactionsData);
     } catch (err: any) {
       console.error('Failed to fetch transactions:', err);
       setError('Failed to fetch transactions');
@@ -219,18 +225,59 @@ const AdminPanel: React.FC = () => {
     });
   };
 
-  // Pagination logic
+  // Filter transactions by date range
+  const filterTransactionsByDate = () => {
+    if (!fromDate && !toDate) {
+      setFilteredTransactions(transactions);
+      setCurrentPage(1);
+      return;
+    }
+
+    const filtered = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      const from = fromDate ? new Date(fromDate) : null;
+      const to = toDate ? new Date(toDate + 'T23:59:59') : null; // Include end of day
+
+      if (from && to) {
+        return transactionDate >= from && transactionDate <= to;
+      } else if (from) {
+        return transactionDate >= from;
+      } else if (to) {
+        return transactionDate <= to;
+      }
+      return true;
+    });
+
+    setFilteredTransactions(filtered);
+    setCurrentPage(1);
+  };
+
+  // Clear date filters
+  const clearDateFilters = () => {
+    setFromDate('');
+    setToDate('');
+    setFilteredTransactions(transactions);
+    setCurrentPage(1);
+  };
+
+  // Apply date filter when dates change
+  useEffect(() => {
+    filterTransactionsByDate();
+    // eslint-disable-next-line
+  }, [fromDate, toDate, transactions]);
+
+  // Pagination logic - use filtered transactions
   const indexOfLastTransaction = currentPage * transactionsPerPage;
   const indexOfFirstTransaction = indexOfLastTransaction - transactionsPerPage;
-  const currentTransactions = transactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
-  const totalPages = Math.ceil(transactions.length / transactionsPerPage);
+  const currentTransactions = filteredTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
+  const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
 
-  // Stats calculations
-  const totalTransactions = transactions.length;
-  const totalAmount = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-  const successfulTransactions = transactions.filter(t => t.status === 'success').length;
-  const pendingTransactions = transactions.filter(t => t.status === 'pending').length;
-  const failedTransactions = transactions.filter(t => t.status === 'failed').length;
+  // Stats calculations - use filtered transactions
+  const totalTransactions = filteredTransactions.length;
+  const totalAmount = filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const successfulTransactions = filteredTransactions.filter(t => t.status === 'success').length;
+  const pendingTransactions = filteredTransactions.filter(t => t.status === 'pending').length;
+  const failedTransactions = filteredTransactions.filter(t => t.status === 'failed').length;
 
   if (paymentsLoading || cardsLoading || usersLoading) return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900 flex items-center justify-center">
@@ -489,8 +536,54 @@ const AdminPanel: React.FC = () => {
                   <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                   <span>All User Payments</span>
                 </div>
-                <span className="text-sm font-normal text-gray-400">({totalTransactions} total)</span>
+                <span className="text-sm font-normal text-gray-400">({totalTransactions} {fromDate || toDate ? 'filtered' : 'total'})</span>
               </CardTitle>
+              
+              {/* Date Filter */}
+              <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center gap-2">
+                  <span>Filter by Date Range</span>
+                  {(fromDate || toDate) && (
+                    <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                      {filteredTransactions.length} results
+                    </span>
+                  )}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">From Date</label>
+                    <Input
+                      type="date"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                      className="bg-gray-700/50 border-gray-600 text-white text-sm h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">To Date</label>
+                    <Input
+                      type="date"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                      className="bg-gray-700/50 border-gray-600 text-white text-sm h-9"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      onClick={clearDateFilters}
+                      disabled={!fromDate && !toDate}
+                      className="bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 text-sm h-9 w-full"
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
+                  <div className="flex items-end">
+                    <div className="text-xs text-gray-400 p-2 bg-gray-700/30 rounded border border-gray-600/50 w-full">
+                      Total Revenue: <span className="font-semibold text-white">₹{totalAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="overflow-x-auto rounded-lg border border-gray-800/50">
@@ -573,10 +666,10 @@ const AdminPanel: React.FC = () => {
               </div>
               
               {/* Pagination */}
-              {transactions.length > transactionsPerPage && (
+              {filteredTransactions.length > transactionsPerPage && (
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-4 sm:mt-6 text-xs sm:text-sm text-slate-400 gap-3 sm:gap-2">
                   <span className="text-center sm:text-left">
-                    Showing {indexOfFirstTransaction + 1} to {Math.min(indexOfLastTransaction, transactions.length)} of {transactions.length} entries
+                    Showing {indexOfFirstTransaction + 1} to {Math.min(indexOfLastTransaction, filteredTransactions.length)} of {filteredTransactions.length} entries
                   </span>
                   <div className="flex items-center gap-2">
                     <Button

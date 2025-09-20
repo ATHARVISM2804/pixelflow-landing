@@ -274,28 +274,8 @@ export function Editor() {
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6">
                 {/* Control Buttons */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
-                    Brightness
-                  </Button>
-                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
-                    Saturation
-                  </Button>
-                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
-                    Inversion
-                  </Button>
-                </div>
-
-                {/* Grayscale & Quality Buttons */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
-                    Grayscale
-                  </Button>
-                  <Button className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs sm:text-sm">
-                    Quality
-                  </Button>
-                </div>
-
+               
+                
                 {/* Rotate & Flip Buttons */}
                 <div className="flex gap-2">
                   <Button
