@@ -271,12 +271,12 @@ export function Resume() {
                     {form.skills && (
                       <div className="mb-4">
                         <div className="font-bold text-base mb-1 border-b border-gray-300 pb-1">Skills</div>
-                        <div className="text-xs flex flex-wrap justify-center items-center gap-2 w-full">
+                        <div className="text-xs">
                           {form.skills.split(',')
                             .map(skill => skill.trim())
                             .filter(skill => skill.length > 0)
                             .map((skill, idx) => (
-                              <span key={idx} className="bg-gray-200 rounded px-2 py-0.5 text-gray-800">{skill}</span>
+                              <span key={idx} className="inline-block rounded px-2 py-0.5 text-gray-800 mr-2 mb-1">{skill}</span>
                             ))
                           }
                         </div>
@@ -303,7 +303,7 @@ export function Resume() {
                             .map(act => act.trim())
                             .filter(act => act.length > 0)
                             .map((act, idx) => (
-                              <span key={idx} className="bg-gray-100 rounded px-2 py-0.5 text-gray-800">{act}</span>
+                              <span key={idx} className="rounded px-2 py-0.5 text-gray-800">{act}</span>
                             ))
                           }
                         </div>
